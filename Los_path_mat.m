@@ -16,6 +16,9 @@ eta_init = [0.1, 0, 0, 0.7]';
 current = [0, 0, 0, 0]';
 des_vel = [0.1, 0, 0, 0]';
 deltah = 4;
+sat_surge = 15;
+sat_yaw = 15;
+sat_dep = 15;
 
 % Added mass
 tau_a = [-25; -2.325; -8.690; -19.4311]; % kl_dot
