@@ -13,7 +13,7 @@ damp = 0.6;
 speed0 = [0.1, 0, 0, 0]';
 depth_des = 0.5;
 eta_init = [0, 0, 0, 0]';
-current = [0, 0, 0.05, 0]';
+current = [0, 0, 0, 0]';
 des_vel = [0.1, 0, 0, 0]';
 deltah = 3;
 sat_surge = 15; sat_yaw = 15; sat_dep = 15;
