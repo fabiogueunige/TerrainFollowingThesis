@@ -12,8 +12,8 @@ damp = 0.6;
 % x initial
 speed0 = [0.1, 0, 0, 0]';
 depth_des = 0.5;
-eta_init = [0, 0, 0, 0]';
-current = [0, 0, 0, 0]';
+eta_init = [0, 0, pi, 0]';
+current = [0.09, 0, 0, 0]';
 des_vel = [0.1, 0, 0, 0]';
 deltah = 3;
 sat_surge = 15; sat_yaw = 15; sat_dep = 15;
