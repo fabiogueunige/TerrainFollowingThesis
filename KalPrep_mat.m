@@ -5,6 +5,7 @@ clc
 K1 = 0.48;
 K2 = 0.16;
 bayas = 0.5;
+eta_max = 0.4;
 
 %% With Kalman filter
 Ts = 0.001;
