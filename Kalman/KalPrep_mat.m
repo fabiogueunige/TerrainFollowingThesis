@@ -4,7 +4,7 @@ clc
 
 K1 = 0.48;
 K2 = 0.16;
-bayas = 0.5;
+bias = 0.5;
 eta_max = 0.4;
 
 %% With Kalman filter
@@ -12,10 +12,12 @@ Ts = 0.001;
 sig1 = 0.1;
 sig2 = 0.2;
 eta1 = deg2rad(1);
+eta2 = 0;
+alpha = 10;
 
 init_cond = [pi/2; 5];
-cov_ic = [10, 0;
-        0, 10];
+
+cov_ic = eye(2) * alpha;
 
 A = [1, Ts;
     0, 1];
