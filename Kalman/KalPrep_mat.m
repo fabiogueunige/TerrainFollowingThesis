@@ -2,6 +2,7 @@ close all
 clear all
 clc
 
+%% Complementary Filter
 K1 = 0.48;
 K2 = 0.16;
 bias = 0.5;

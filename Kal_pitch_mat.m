@@ -21,7 +21,7 @@ init_cond = [0; 0; 0];
 cov_ic = [1, 0, 0;
           0, 0.8, 0;
           0, 0, 0.7];
-cov_ic = cov_ic * (0.5 + 2*rand);
+cov_ic = cov_ic * (1 + 2*rand);
 
 % A, B, F, H on simulink
 %% noise (ok)

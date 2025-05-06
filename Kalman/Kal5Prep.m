@@ -4,19 +4,15 @@ clc
 
 %% With  Extended Kalman filter
 Ts = 0.001;
-sig1 = 0.1;
-sig2 = 0.2;
-eta1 = 0.15;
-pb = [3; 3];
+sig1 = 0.005;
+sig2 = 0.001;
+eta1 = 0.002;
+pb = [0.5; 0.5];
 
-init_cond = [0; 0; 1; 1];
-cov_ic = [2, 0, 0, 0;
-          0, 2, 0, 0;
-          0, 0, 3, 0;
-          0, 0, 0, 3];
-cov_ic = cov_ic * (0.5 + 2*rand);
-v0 = [3; 0];
-vc = [1.0; 1.0];
+init_cond = [0; 0; 0.02; 0.01];
+P0 = diag([1, 1.1, 0.8, 0.9]);
+cov_ic = P0 * (1 + 2*rand);
+v0 = [1; 0];
 
 % A matrix
 A = [1, 0, Ts, 0;
