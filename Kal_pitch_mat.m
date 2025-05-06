@@ -2,6 +2,13 @@ close all
 clear all
 clc
 
+%% Measuraments Variables
+pr0 = [0,0]';
+beta = pi/6;
+qt = - 20;
+m1_lambda = -1; % +45 deg to z-r axis
+m2_gamma = +1; % -45 deg to z-r axis
+
 %% Extended Kalman filter
 % review of every parameter
 Ts = 0.001;
@@ -12,19 +19,21 @@ eta1 = 0.15;
 eta2 = 0.2;
 
 % velocities
-v_surge = 2; % constant (for now value)
+v_surge = 0.5; % constant (for now value)
 % v_h = should be given by a pid
-v_ver = 0.01; % (TO Replace)
+v_heave = 0.00; % vertical speed robot
+Gamma = pi/4;
+Lambda = pi/4;
 
 % !!! to change the values
-init_cond = [0; 0; 0];
+init_cond = [6; 0; pi/10];
 cov_ic = [1, 0, 0;
           0, 0.8, 0;
           0, 0, 0.7];
 cov_ic = cov_ic * (1 + 2*rand);
 
 % A, B, F, H on simulink
-%% noise (ok)
+%% noise 
 % R measurament noise
 R = [eta1, 0;
      0, eta2];
