@@ -3,8 +3,8 @@ clear all
 % terrain construction
 %% Measuraments Variables
 pr = [0,0]';
-beta = -pi/5;
-theta = -pi/7;
+beta = pi/6;
+theta = -pi/10;
 qt = - 5;
 Gamma = -pi/6;
 Lambda = pi/6;
@@ -34,8 +34,8 @@ ang2 = Lambda - (beta - theta);
 % valore da ottenere di h
 h = (abs(mt*pr(1) - pr(2) + qt))/ (sqrt(mt^2 + 1))
 y1m
-y1 = h/(cos(Gamma - (beta - theta)))
+y1 = h/abs((cos(Gamma - (beta - theta))))
 ang1
 y2m
-y2 = h/(cos(Lambda - (beta - theta)))
+y2 = h/abs((cos(Lambda - (beta - theta))))
 ang2

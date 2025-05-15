@@ -4,13 +4,10 @@ clc
 
 %% Measuraments Variables
 pr0 = [0,0]';
-beta = pi/6;
+beta = pi/10;
 qt = - 10;
 Gamma = -pi/6;
 Lambda = pi/6;
-
-m1_gamma = tan((3*pi/2 + Gamma));  
-m2_lambda = tan((3*pi/2 + Lambda));
 
 %% Extended Kalman filter
 % review of every parameter
@@ -21,7 +18,7 @@ sig3 = 0.15;
 eta1 = 0.05;
 eta2 = 0.05;
 
-% velocities
+% velocities: v = [v_surge, v_sway, v_heave]'
 v_surge = 0.5; % constant (for now value)
 % v_h = should be given by a pid
 v_heave = 0.00; % vertical speed robot
@@ -35,6 +32,7 @@ cov_ic = cov_ic * (1 + 2*rand);
 
 % A, B, F, H on simulink
 %% noise 
+% Noise on pitch = 0 because not controllable
 % R measurament noise
 R = [(eta1^2), 0;
      0, (eta2^2)];
@@ -42,7 +40,7 @@ R = [(eta1^2), 0;
 % Q state noise matrix
 Q = zeros(3,3);
 Q(1,1) = (sig1^2);
-Q(2,2) = (sig2^2);
+% Q(2,2) = (sig2^2);
 Q(3,3) = (sig3^2);
 
 % G coefficient noise matrix
