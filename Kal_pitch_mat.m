@@ -5,9 +5,12 @@ clc
 %% Measuraments Variables
 pr0 = [0,0]';
 beta = pi/6;
-qt = - 5;
-m1_gamma = +1; % -45 deg to z-r axis
-m2_lambda = -1; % +45 deg to z-r axis
+qt = - 10;
+Gamma = -pi/6;
+Lambda = pi/6;
+
+m1_gamma = tan((3*pi/2 + Gamma));  
+m2_lambda = tan((3*pi/2 + Lambda));
 
 %% Extended Kalman filter
 % review of every parameter
@@ -22,11 +25,9 @@ eta2 = 0.05;
 v_surge = 0.5; % constant (for now value)
 % v_h = should be given by a pid
 v_heave = 0.00; % vertical speed robot
-Gamma = pi/4;
-Lambda = pi/4;
 
 % !!! to change the values
-init_cond = [1; 0; pi/10];
+init_cond = [2; 0; 0];
 cov_ic = [1, 0, 0;
           0, 0.8, 0;
           0, 0, 0.7];
