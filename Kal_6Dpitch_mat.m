@@ -3,7 +3,7 @@ clear all
 clc
 
 %% Terrain Variables
-beta = pi/10;
+beta = pi/7;
 qt = - 10;
 v_s = 0.1;
 
@@ -12,16 +12,16 @@ pr0 = [0,0]'; % AUV position
 Gamma = -pi/6; % sonar angle y1
 Lambda = pi/6; % sonar angle y2
 h_ref = 7;
-% velocities: v = [v_surge, v_sway, v_heave]'
-des_vel = [0.1, 0, 0, 0]';
+% velocities: v = [v_surge, v_sway, v_heave, v_roll, v_pitch, v_yaw]'
+des_vel = [v_s, 0, 0, 0, 0, 0]';
 
 %% Extended Kalman filter parameters
 Ts = 0.001; % sampling time
-sig1 = 0.1; % state noise h
-sig2 = 0.2; % state noise pitch
-sig3 = 0.15; % state noise beta
-eta1 = 0.05; % measurament noise y1
-eta2 = 0.05; % measurament noise y2
+sig1 = 0.01; % state noise h
+sig2 = 0.02; % state noise pitch
+sig3 = 0.015; % state noise beta
+eta1 = 0.007; % measurament noise y1
+eta2 = 0.005; % measurament noise y2
 
 % Supposed Initial condition for EKF 
 init_cond = [2; 0; 0];

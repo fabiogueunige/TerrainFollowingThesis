@@ -3,9 +3,9 @@ clear all
 % terrain construction
 %% Measuraments Variables
 pr = [0,0]';
-beta = pi/6;
-theta = -pi/10;
-qt = - 5;
+beta = pi/7;
+theta = pi*2.8/4;
+qt = - 10;
 Gamma = -pi/6;
 Lambda = pi/6;
 
