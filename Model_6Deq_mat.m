@@ -6,7 +6,7 @@ wn = 0.2; % frequenza naturale (ipotizzata)
 damp = 0.6; % smorzamento (ipotizzato)
 
 % Condizioni iniziali e saturazioni
-speed0 = [0.1, 0, 0, 0, 0, 0]'; % velocità iniziale (surge=0.1 m/s)
+speed0 = [v_u, v_v, v_w, v_p, v_q, v_r]';
 sat_surge = 15; sat_dep = 15; sat_yaw = 15;
 sat_tr = 2000;
 

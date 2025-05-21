@@ -3,9 +3,15 @@ clear all
 clc
 
 %% Terrain Variables
-beta = pi/7;
+beta = pi/5;
 qt = - 10;
-v_s = 0.1;
+% velocities
+v_u = 0.1;
+v_v = 0;
+v_w = 0;
+v_p = 0;
+v_q = 0;
+v_r = 0;
 
 %% AUV Parameters
 pr0 = [0,0]'; % AUV position
@@ -13,7 +19,7 @@ Gamma = -pi/6; % sonar angle y1
 Lambda = pi/6; % sonar angle y2
 h_ref = 7;
 % velocities: v = [v_surge, v_sway, v_heave, v_roll, v_pitch, v_yaw]'
-des_vel = [v_s, 0, 0, 0, 0, 0]';
+des_vel = [v_u, v_v, v_w, v_p, v_q, v_r]';
 
 %% Extended Kalman filter parameters
 Ts = 0.001; % sampling time
@@ -28,7 +34,7 @@ init_cond = [2; 0; 0];
 cov_ic = [1, 0, 0;
           0, 0.8, 0;
           0, 0, 0.7];
-cov_ic = cov_ic * (1 + 2*rand);
+cov_ic = cov_ic * (1.1);%  + 2*rand);
 
 %% noise matrices
 % Noise on pitch = 0 because not controllable for now
