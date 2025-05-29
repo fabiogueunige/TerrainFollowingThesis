@@ -6,7 +6,7 @@ wn = 0.2;
 damp = 0.6;
 
 % Controllare che rispetti il punto di equilibrio e calcolare quello nuovo
-speed0 = [0.1, 0, 0, 0]';
+speed0 = [v_s, 0, 0, 0]';
 sat_surge = 15; sat_dep = 15; sat_yaw = 15;
 sat_tr = 2000;
 

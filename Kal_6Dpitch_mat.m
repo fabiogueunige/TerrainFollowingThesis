@@ -45,7 +45,7 @@ R = [(eta1^2), 0;
 % Q state noise matrix
 Q = zeros(3,3);
 Q(1,1) = (sig1^2);
-% Q(2,2) = (sig2^2);
+Q(2,2) = (sig2^2);
 Q(3,3) = (sig3^2);
 
 % G coefficient noise matrix
