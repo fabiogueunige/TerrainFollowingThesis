@@ -11,8 +11,8 @@ beta = pi/7;
 qt = - 10; % For line construction
 
 % Noise
-sig1 = 0.15; % State noise h
-sig2 = 0.15; % State noise beta
+sig1 = 0.077; % State noise h
+sig2 = 0.085; % State noise beta
 eta1 = 0.005; % Measurement noise y1
 eta2 = 0.005; % Measurement noise y2
 
