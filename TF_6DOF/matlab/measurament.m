@@ -1,20 +1,20 @@
-function [ymes, h, pr] = measurament(beta, qt, Gamma, Lambda, v, Ts, pr_old) 
+function [ymes, h, pr] = measurament(x, beta, qt, Gamma, Lambda, v, Ts, pr_old) 
     % terrain construction
     mt = tan(beta);
-    m1_g = tan((3*pi/2 + Gamma));  % + x(2)
-    m2_l = tan((3*pi/2 + Lambda)); %  + x(2)
-
-    theta = 0;
+    m1_g = tan((3*pi/2 + Gamma + x(3)));  % also added pitch infos
+    m2_l = tan((3*pi/2 + Lambda + x(3))); % also added pitch infos
 
     % robot position 
-    pr = pr_old + [v(1)*Ts, -v(2)*Ts]'; 
+    dx = v(1)*cos(x(3)) + v(2)*sin(x(3));
+    dz = v(1)*sin(x(3)) - v(2)*cos(x(3));
+    pr = pr_old + [dx*Ts, dz*Ts]'; 
     q1 = pr(2) - m1_g*pr(1);
     q2 = pr(2) - m2_l*pr(1);
 
     % z computation
     z_r = [0, -1]';
-    Ry_2D = [cos(theta), -sin(theta);
-          sin(theta),  cos(theta)];
+    Ry_2D = [cos(x(3)), -sin(x(3));
+          sin(x(3)),  cos(x(3))];
     z_r = Ry_2D*z_r;
 
     % computation for y1 
@@ -26,7 +26,7 @@ function [ymes, h, pr] = measurament(beta, qt, Gamma, Lambda, v, Ts, pr_old)
     visibile_y1 = dot(z_r, v_p1) > 0;
     if ~visibile_y1
         fprintf('Errore in visibilità y1 \n');
-        y1m = 500000;
+        % y1m = 500000;
     end
 
     % Computation for y2
@@ -38,7 +38,7 @@ function [ymes, h, pr] = measurament(beta, qt, Gamma, Lambda, v, Ts, pr_old)
     visibile_y2 = dot(z_r, v_p2) > 0;
     if ~visibile_y2
         fprintf('Errore in visibilità y2 \n');
-        y2m = 500000;
+        % y2m = 500000;
     end
     
     ymes = [y1m; y2m];

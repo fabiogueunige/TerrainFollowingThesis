@@ -1,7 +1,8 @@
 clc; clear; close all;
+
 %% Filter Parameters
 Ts = 0.001;       % Sampling time [s]
-Tf = 50;          % Final time [s]
+Tf = 20;          % Final time [s]
 time = 0:Ts:Tf;   % Time vector
 N = length(time); % Number of iterations
 
@@ -19,10 +20,10 @@ eta1 = 0.005; % Measurement noise y1
 eta2 = 0.005; % Measurement noise y2
 
 % AUV Parameters
-Gamma = -pi/6; % Sonar angle y1
-Lambda = pi/6; % Sonar angle y2
-p_err = 0;
-i_err = 0;
+Gamma = -pi/8; % Sonar angle y1
+Lambda = pi/8; % Sonar angle y2
+p_err = zeros(1,2);
+i_err = zeros(1,2);
 
 %% Matrix Dimensions
 n = 4; % Number of states
@@ -72,9 +73,9 @@ for k = 2:N
     %% Control Input
     [u(:,k-1), p_err, i_err] = input_control(x_est(:,k-1), Ts, p_err, i_err); % Define input
 
-    %% Simulated Measurement
+    %% Measurement
     v = mvnrnd(zeros(m,1), R)'; % Measurement noise
-    [z_meas(:,k), hmes, prob(:,k)] = measurament(beta, qt, Gamma, Lambda, u(:,k-1), Ts, prob(:,k-1));
+    [z_meas(:,k), hmes, prob(:,k)] = measurament(x_est(:,k-1), beta, qt, Gamma, Lambda, u(:,k-1), Ts, prob(:,k-1));
     z_meas(:,k) = z_meas(:,k) + v;
 
     %% True Dynamic Simulation
@@ -86,12 +87,18 @@ for k = 2:N
     x_pred = f(x_est(:,k-1), u(:,k-1), Ts); % State prediction
     F = jacobian_f(x_est(:,k-1), u(:,k-1), Ts); % Dynamics Jacobian
     P_pred = F * P * F' + Q;
-    fprintf('P_pre = [%.2f , %.2f ;\n        %.2f , %.2f]\n', P_pred(1,1), P_pred(1,2), P_pred(2,1),P_pred(2,2)')
-
+   
     %% --- EKF: Update ---
     H = jacobian_h(x_pred, Gamma, Lambda);   % Observation Jacobian
+    if any(isnan(H(:)))
+        H
+        error('Esecuzione interrotta: H contiene valori NaN.'); % Stop execution and show error
+    end
     K = P_pred * H' / (H * P_pred * H' + R); % Kalman Gain
-    fprintf('K = [%.2f , %.2f ;\n        %.2f , %.2f]\n', K(1,1), K(1,2), K(2,1), K(2,2)')
+    if any(isnan(K(:)))
+        K
+        error('Esecuzione interrotta: K contiene valori NaN.'); % Stop execution and show error
+    end
     z_pred = h(x_pred, Gamma, Lambda);        % Predicted measurement
     x_est(:,k) = x_pred + K * (z_meas(:,k) - z_pred);
     P = (eye(n) - K * H) * P_pred;
@@ -99,12 +106,12 @@ for k = 2:N
 end
 
 %% Final Plot (Example)
-figure;
 for i = 1:n
-    subplot(n,1,i);
+    figure;
     plot(time, x_true(i,:), 'b', 'DisplayName', 'True');
     hold on;
     plot(time, x_est(i,:), 'r--', 'DisplayName', 'Estimated');
     xlabel('Time [s]'); ylabel(sprintf('x_%d', i));
     legend; grid on;
+    hold off;
 end

@@ -8,5 +8,5 @@ function H = jacobian_h(x, gamma, lambda)
     
     H = [(1/(cos(delta(1)))), -val1, val1, 0;
          (1/(cos(delta(2)))), -val2, val2, 0];
-    fprintf('H = [%.2f , %.2f ;\n        %.2f , %.2f]\n', H(1,1), H(1,2), H(2,1), H(2,2));
+    
 end
