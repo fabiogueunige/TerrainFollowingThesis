@@ -1,4 +1,4 @@
-function [u, p_err, int_err] = input_control(x, Ts, prev_err, int_err)
+function [u, pid_q p_err, int_err] = input_control(x, Ts, prev_err, int_err)
     %% SYSTEM PARAMETERS
     u_star = 0.2;        % [m/s] Constant surge velocity
     w_max = 10;        % [m/s] Vertical velocity saturation
@@ -60,10 +60,11 @@ function [u, p_err, int_err] = input_control(x, Ts, prev_err, int_err)
 
     % PID
     pid_term = (Kp * err_p + Ki * int_err_p + Kd * der_err_p); % Calculate PID output
+    % Having the PID i can consider it as tau
 
     q_ref = pid_term;
 
-    % Final saturation
+    % Final saturation q_ref = tau
     q_ref = max(min(q_ref, q_max), -q_max); % Clamp pitch velocity to limits
 
     % Memory update
@@ -71,6 +72,7 @@ function [u, p_err, int_err] = input_control(x, Ts, prev_err, int_err)
 
     %% FINAL
     u = [u_star, w_ref, q_ref]'; % Output control commands (surge velocity, vertical velocity)
+    pid_q = q_ref;
     p_err = [prev_err_h, prev_err_p]';
     int_err = [int_err_h, int_err_p]';
 

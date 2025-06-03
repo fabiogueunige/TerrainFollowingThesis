@@ -8,7 +8,7 @@ function x_next = f(x, u, Ts)
     % beta_dot represents the change iof the slope of the terrain
     beta_dot = wrapToPi(x(2));
     
-    theta_dot = wrapToPi(x(3)) +  wrapToPi(x(4)*Ts);
+    theta_dot = wrapToPi(x(3) + x(4)*Ts);
 
     q_dot = x(4);
     % Display the predicted state for debugging or monitoring purposes.

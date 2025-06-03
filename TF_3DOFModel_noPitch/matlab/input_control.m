@@ -37,5 +37,6 @@ function [u, prev_err, int_err] = input_control(x, Ts, prev_err, int_err)
     prev_err = err; % Store current error for next iteration's derivative calculation
     
     u = [u_star, w_ref]'; % Output control commands (surge velocity, vertical velocity)
+
     fprintf('Predicted Alt: %.2f m | Error: %.2f | w_ref: %.3f m/s\n', x(1), err, w_ref);
 end

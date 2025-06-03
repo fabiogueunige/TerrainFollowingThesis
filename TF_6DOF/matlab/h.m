@@ -4,6 +4,7 @@ function z = h(x, gamma, lambda)
              (lambda - x(2))];
     
     z = [x(1)/(cos(delta(1)));
-         x(1)/(cos(delta(2)))];
+         x(1)/(cos(delta(2)));
+         x(3)]; % sicuri che vada bene?
     fprintf('Otput predetto (h) y1: %.2f m | y2: %.2f\n', z(1), z(2));
 end

@@ -11,6 +11,5 @@ function x_next = f(x, u, Ts)
     % Display the predicted state for debugging or monitoring purposes.
     fprintf('Predicted state (f) h: %.2f m | b: %.2f\n', h_dot, beta_dot);
 
-   
     x_next = [h_dot, beta_dot]';
 end

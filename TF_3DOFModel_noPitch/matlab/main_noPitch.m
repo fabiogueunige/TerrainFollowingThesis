@@ -7,8 +7,12 @@ N = length(time); % Number of iterations
 
 %% Design Parameters
 % Terrain
-beta = pi/7;
+beta = pi/4;
 qt = - 10; % For line construction
+% robot position
+% Initial state
+% (pi/10 =9.5106, pi/7 =9.0097, pi/4 =7.0711)
+x0 = [7.0711, beta]';      % True initial state 
 
 % Noise
 sig1 = 0.077; % State noise h
@@ -22,6 +26,10 @@ Lambda = pi/6; % Sonar angle y2
 p_err = 0;
 i_err = 0;
 
+% AUV Model Parameters
+speed0 = [0, 0]'; % only surge and heave (cambia anche in input)
+tau0 = tau0_values(speed0);
+
 %% Matrix Dimensions
 n = 2; % Number of states
 m = 2; % Number of measurements
@@ -33,12 +41,10 @@ prob = zeros(2,N);         % AUV initial position
 x_est = zeros(n, N);       % Estimated state
 x_true = zeros(n, N);      % True state
 z_meas = zeros(m, N);      % Measurements
-u = zeros(q, N);           % Known inputs
+u = zeros(q, N);           % Known real inputs
+u_star = zeros(q, N);      % Desired inputs
 
-% Initial state
-x0 = [9.0097, beta]';      % True initial state (pi/10 =9.5106, pi/7 =9.0097, pi/4 =7.0711)
 x0_est = [0, 0]';          % Estimated initial state
-
 % Initial covariance matrix
 P0 = [1, 0;
       0, 0.8];
@@ -61,13 +67,19 @@ R = zeros(m,m);
 R(1,1) = (eta1^2);
 R(2,2) = (eta2^2);
 
-u(:,1) = [0, 0]';          % Starting control
-% figure;
 
 %% EKF Simulation
 for k = 2:N
     %% Control Input
-    [u(:,k-1), p_err, i_err] = input_control(x_est(:,k-1), Ts, p_err, i_err); % Define input
+    [u_star(:,k-1), p_err, i_err] = input_control(x_est(:,k-1), Ts, p_err, i_err); % Define input desired
+    
+    if k == 2
+        tau = tau_generator(Ts, speed0, u_star(:,k-1), tau0, speed0);
+        u(:,k-1) = dynamic_model(tau, tau0, speed0, speed0, Ts);
+    else
+        tau = tau_generator(Ts, u(:,k-2), u_star(:,k-1), tau0, speed0);
+        u(:,k-1) = dynamic_model(tau, tau0, speed0, u(:,k-2), Ts);
+    end
 
     %% Simulated Measurement
     v = mvnrnd(zeros(m,1), R)'; % Measurement noise
@@ -86,8 +98,15 @@ for k = 2:N
 
     %% --- EKF: Update ---
     H = jacobian_h(x_pred, Gamma, Lambda);   % Observation Jacobian
+    if any(isnan(H(:)))
+        H
+        error('Esecuzione interrotta: H contiene valori NaN.'); % Stop execution and show error
+    end
     K = P_pred * H' / (H * P_pred * H' + R); % Kalman Gain
-    fprintf('K = [%.2f , %.2f ;\n        %.2f , %.2f]\n', K(1,1), K(1,2), K(2,1), K(2,2)')
+    if any(isnan(K(:)))
+        K
+        error('Esecuzione interrotta: K contiene valori NaN.'); % Stop execution and show error
+    end
     z_pred = h(x_pred, Gamma, Lambda);        % Predicted measurement
     x_est(:,k) = x_pred + K * (z_meas(:,k) - z_pred);
     P = (eye(n) - K * H) * P_pred;

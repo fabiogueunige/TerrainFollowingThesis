@@ -1,8 +1,10 @@
-function [ymes, h, pr] = measurament(x, beta, qt, Gamma, Lambda, v, Ts, pr_old) 
+function [ymes, h, pr] = measurament(x, beta, qt, Gamma, Lambda, v, Ts, pr_old, theta) 
     % terrain construction
     mt = tan(beta);
-    m1_g = tan((3*pi/2 + Gamma + x(3)));  % also added pitch infos
-    m2_l = tan((3*pi/2 + Lambda + x(3))); % also added pitch infos
+    thetam = wrapToPi(theta);
+
+    m1_g = tan((3*pi/2 + Gamma + thetam));  % also added pitch infos
+    m2_l = tan((3*pi/2 + Lambda + thetam)); % also added pitch infos
 
     % robot position 
     dx = v(1)*cos(x(3)) + v(2)*sin(x(3));
@@ -26,7 +28,6 @@ function [ymes, h, pr] = measurament(x, beta, qt, Gamma, Lambda, v, Ts, pr_old)
     visibile_y1 = dot(z_r, v_p1) > 0;
     if ~visibile_y1
         fprintf('Errore in visibilità y1 \n');
-        % y1m = 500000;
     end
 
     % Computation for y2
@@ -38,10 +39,9 @@ function [ymes, h, pr] = measurament(x, beta, qt, Gamma, Lambda, v, Ts, pr_old)
     visibile_y2 = dot(z_r, v_p2) > 0;
     if ~visibile_y2
         fprintf('Errore in visibilità y2 \n');
-        % y2m = 500000;
     end
     
-    ymes = [y1m; y2m];
+    ymes = [y1m; y2m; thetam];
     % value of h to obtain
     h = (abs(mt*pr(1) - pr(2) + qt))/ (sqrt(mt^2 + 1));
 

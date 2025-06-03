@@ -7,6 +7,7 @@ function H = jacobian_h(x, gamma, lambda)
     val2 = (((x(1)*sin(delta(2))) / ((cos(delta(2)))^2)));
     
     H = [(1/(cos(delta(1)))), -val1, val1, 0;
-         (1/(cos(delta(2)))), -val2, val2, 0];
+         (1/(cos(delta(2)))), -val2, val2, 0;
+         0, 0, 1, 0];
     
 end
