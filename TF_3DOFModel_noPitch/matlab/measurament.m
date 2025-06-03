@@ -1,13 +1,13 @@
-function [ymes, h, pr] = measurament(beta, qt, Gamma, Lambda, v, Ts, pr_old) 
+function [ymes, h, pr] = measurament(beta, qt, Gamma, Lambda, v, Ts, pr_old, theta) 
     % terrain construction
     mt = tan(beta);
-    m1_g = tan((3*pi/2 + Gamma));  % + x(2)
-    m2_l = tan((3*pi/2 + Lambda)); %  + x(2)
-
-    theta = 0;
+    m1_g = tan((3*pi/2 + Gamma + theta));  
+    m2_l = tan((3*pi/2 + Lambda + theta)); 
 
     % robot position 
-    pr = pr_old + [v(1)*Ts, -v(2)*Ts]'; 
+    dx = v(1)*cos(theta) + v(2)*sin(theta);
+    dz = v(1)*sin(theta) - v(2)*cos(theta);
+    pr = pr_old + [dx*Ts, dz*Ts]'; 
     q1 = pr(2) - m1_g*pr(1);
     q2 = pr(2) - m2_l*pr(1);
 
@@ -96,19 +96,4 @@ function [ymes, h, pr] = measurament(beta, qt, Gamma, Lambda, v, Ts, pr_old)
 % hold off;
 
 
-end
-
-function oRr = rotation(theta)
-    roll = 0;
-    yaw = 0;
-    Rz = [cos(yaw), -sin(yaw), 0;
-          sin(yaw), cos(yaw), 0;
-          0, 0, 1];
-    Ry = [cos(theta), 0, sin(theta);
-          0, 1, 0;
-          -sin(theta), 0, cos(theta)];
-    Rx = [1 , 0, 0
-          0, cos(roll), -sin(roll);
-          0, sin(roll), cos(roll)];
-    oRr = Rz*Ry*Rx;    
 end

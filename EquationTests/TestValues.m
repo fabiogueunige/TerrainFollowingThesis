@@ -12,8 +12,8 @@ Gamma = -pi/8;
 Lambda = pi/8;
 
 if use_specific_angles
-    beta = pi/4;
-    theta = 0;
+    beta = pi/10;
+    theta = -pi/10;
 else
     % random angles generator
     lower_bound = -pi/2;

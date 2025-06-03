@@ -1,9 +1,9 @@
-function x_next = f(x, u, Ts)
+function x_next = f(x, u, Ts, theta)
     % This function calculates the next state of the system based on the current state,
     % control input, and sampling time.
 
     % h_dot represents the change in altitude (h)
-    h_dot = x(1) - u(1)*sin(x(2))*Ts - u(2)*cos(x(2))*Ts;
+    h_dot = x(1) - u(1)*sin(x(2)-theta)*Ts - u(2)*cos(x(2)-theta)*Ts;
 
     % beta_dot represents the change iof the slope of the terrain
     beta_dot = wrapToPi(x(2));

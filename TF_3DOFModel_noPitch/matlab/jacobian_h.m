@@ -1,7 +1,7 @@
-function H = jacobian_h(x, gamma, lambda)
+function H = jacobian_h(x, gamma, lambda, theta)
     % Jacobian of the observation function with respect to x
-    delta = [gamma - x(2);
-             lambda - x(2)];
+    delta = [gamma - (x(2) - theta);
+             lambda - (x(2) - theta)];
 
     val1 = (((x(1)*sin(delta(1))) / ((cos(delta(1)))^2)));
     val2 = (((x(1)*sin(delta(2))) / ((cos(delta(2)))^2)));

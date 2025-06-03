@@ -1,4 +1,4 @@
-function [u, pid_q p_err, int_err] = input_control(x, Ts, prev_err, int_err)
+function [u, pid_q, p_err, int_err] = input_control(x, Ts, prev_err, int_err)
     %% SYSTEM PARAMETERS
     u_star = 0.2;        % [m/s] Constant surge velocity
     w_max = 10;        % [m/s] Vertical velocity saturation

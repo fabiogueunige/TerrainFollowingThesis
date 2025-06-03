@@ -1,7 +1,7 @@
 function z = h(x, gamma, lambda)
     % Funzione di osservazione: z_k = h(x_k, u_k)
-    delta = [(gamma - x(2));
-             (lambda - x(2))];
+    delta = [(gamma - (x(2) - x(3)));
+             (lambda - (x(2) - x(3)))];
     
     z = [x(1)/(cos(delta(1)));
          x(1)/(cos(delta(2)));

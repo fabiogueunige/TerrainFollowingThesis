@@ -1,4 +1,4 @@
-function [u, prev_err, int_err] = input_control(x, Ts, prev_err, int_err)
+function [u, prev_err, int_err] = input_control(x, Ts, prev_err, int_err, theta)
     %% SYSTEM PARAMETERS
     u_star = 0.2;        % [m/s] Constant surge velocity
     w_max = 10;        % [m/s] Vertical velocity saturation
@@ -28,7 +28,7 @@ function [u, prev_err, int_err] = input_control(x, Ts, prev_err, int_err)
     pid_term = (Kp * err + Ki * int_err + Kd * der_err) / cos_b; % Calculate PID output
     
     %% VERTICAL VELOCITY COMMAND
-    w_ref = -u_star * tan(x(2)) + pid_term; % Calculate reference vertical velocity
+    w_ref = (u_star*(sin(theta)-cos(theta)*tan(x(2))) + pid_term) / (cos(theta)+sin(theta)*tan(x(2)));
     
     % Final saturation
     w_ref = max(min(w_ref, w_max), -w_max); % Clamp vertical velocity to limits
