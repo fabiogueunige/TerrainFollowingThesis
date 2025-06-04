@@ -1,4 +1,4 @@
-function [new_vel] = dynamic_model(tau, tau0, speed0, old_vel, Ts)
+function [new_vel, s_dotdot] = dynamic_model(tau, tau0, speed0, old_vel, Ts)
     % deve darmi la velocità w
     % updated to bluerov model
     m = 11.5; % massa totale [kg]
@@ -36,4 +36,7 @@ function [new_vel] = dynamic_model(tau, tau0, speed0, old_vel, Ts)
     s_dotdot(3) = (tau(3) - tau0(3) - dv(3)*delta(3)) / mv(3);
   
     new_vel = old_vel + Ts * s_dotdot;
+
+    fprintf('surge: %.2f m/s | heave: %.2f m/s| q: %.3f rad/s\n', new_vel(1), new_vel(2), new_vel(3));
+    fprintf('a_surge: %.2f m/s | a_heave: %.2f m/s| a_q: %.3f rad/s\n', s_dotdot(1), s_dotdot(2), s_dotdot(3));
 end

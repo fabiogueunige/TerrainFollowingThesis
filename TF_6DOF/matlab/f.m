@@ -12,7 +12,7 @@ function x_next = f(x, u, Ts)
 
     q_dot = x(4);
     % Display the predicted state for debugging or monitoring purposes.
-    fprintf('Predicted (f) h: %.2f m | b: %.2f | th: %.2f | q: %.2f\n', h_dot, rad2deg(beta_dot), rad2deg(theta_dot), q_dot);
+    fprintf('Predicted (f) h: %.2f m | b: %.2f | pitch: %.2f | q: %.2f\n', h_dot, rad2deg(beta_dot), rad2deg(theta_dot), rad2deg(q_dot));
 
     x_next = [h_dot, beta_dot, theta_dot, q_dot]';
 end

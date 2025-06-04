@@ -3,7 +3,7 @@ function [tau, p_err, int_err] = input_control(x, Ts, prev_err, int_err, v_surge
     u_star = 0.2;        % [m/s] Constant surge velocity
     tau_u_max = 10;
     tau_w_max = 10;        % [m/s] Vertical velocity saturation
-    tau_q_max = 50;        % Pitch velocity saturation
+    tau_q_max = 10;        % Pitch velocity saturation
     h_star = 7;        % Reference altitude
     prev_err_u = prev_err(1);
     prev_err_h = prev_err(2);
@@ -76,7 +76,7 @@ function [tau, p_err, int_err] = input_control(x, Ts, prev_err, int_err, v_surge
     
     %% ERROR CALCULATION FOR THETA
     % ----------- TO IMPROVE -------------------
-    err_p = (x(2) - x(3)); % beta - theta
+    err_p = x(2) - x(3); % beta - theta
     int_err_p = int_err_p + err_p * Ts; % Accumulate integral error
     der_err_p = (err_p - prev_err_p) / Ts; % Calculate derivative error
 
@@ -100,5 +100,5 @@ function [tau, p_err, int_err] = input_control(x, Ts, prev_err, int_err, v_surge
 
     fprintf('Pred Surge: %.2f m | Error: %.2f | w_ref: %.3f m/s\n', v_surge, err_u, tau_u);
     fprintf('Pred Alt: %.2f m | Error: %.2f | w_ref: %.3f m/s\n', x(1), err_h, tau_w);
-    fprintf('Pred Pitch: %.2f | Error: %.2f | q_ref: %.3f m/s\n', rad2deg(x(3)), err_p, tau_q);
+    fprintf('Pred Pitch: %.2f | Error: %.2f \n', rad2deg(x(3)), rad2deg(err_p));
 end

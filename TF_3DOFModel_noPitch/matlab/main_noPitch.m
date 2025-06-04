@@ -125,3 +125,12 @@ for i = 1:n
     xlabel('Time [s]'); ylabel(sprintf('x_%d', i));
     legend; grid on;
 end
+
+figure; % Crea una nuova figura
+scatter(prob(1,:), prob(2,:), [], time, 'filled'); % plotta x vs y, usa t per il colore, 'filled' riempie i marker
+colorbar; % Aggiunge la barra dei colori per mostrare la scala del tempo
+colormap(jet); % Applica una colormap (es. 'jet', 'parula', 'viridis', etc.)
+xlabel('Posizione X');
+ylabel('Posizione Y');
+title('Traiettoria nel Piano XY (Colore = Tempo)');
+grid on;

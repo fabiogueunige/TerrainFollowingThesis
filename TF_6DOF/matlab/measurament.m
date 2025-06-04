@@ -1,9 +1,15 @@
-function [ymes, h, pr] = measurament(x, beta, qt, Gamma, Lambda, v, Ts, pr_old) 
+function [ymes, h, pr] = measurament(x, beta, qt, Gamma, Lambda, v, Ts, pr_old, th) 
+    %% Angle Measuraments
+    % totalmente sbagliato il sensore, ma proviamo...
+    th_acc = th + v(3)*Ts;
+
+    q_gyr = v(3);
+
     %% terrain construction
     mt = tan(beta);
 
-    m1_g = tan((3*pi/2 + Gamma + x(3)));  
-    m2_l = tan((3*pi/2 + Lambda + x(3))); 
+    m1_g = tan((3*pi/2 + Gamma + th_acc));  
+    m2_l = tan((3*pi/2 + Lambda + th_acc)); 
 
     %% robot position 
     dx = v(1)*cos(x(3)) + v(2)*sin(x(3));
@@ -40,19 +46,13 @@ function [ymes, h, pr] = measurament(x, beta, qt, Gamma, Lambda, v, Ts, pr_old)
         error('Errore in visibilità y2 \n');
     end
 
-    %% Angle Measuraments
-    ax = 2*(pr(1)-pr_old(1)-v(1)*Ts)/(Ts^2);
-    az = 2*(pr(2)-pr_old(2)-v(2)*Ts)/(Ts^2);
-    th_acc = atan(ax/(-az));
-
-    q_gyr = v(3);
-
     %% Sending Info's
     ymes = [y1m, y2m, th_acc, q_gyr]';
     % value of h to obtain
     h = (abs(mt*pr(1) - pr(2) + qt))/ (sqrt(mt^2 + 1));
 
     fprintf('h reale: %.2f m | y1m: %.2f | y2m: %.3f m/s \n', h, y1m, y2m);
+    fprintf('theta acc: %.2f | q_gyr: %.2f \n', rad2deg(th_acc), q_gyr);
     fprintf('Punto x: %.2f m | Punto y: %.2f\n', pr(1), pr(2));
 
 % %%  plot
