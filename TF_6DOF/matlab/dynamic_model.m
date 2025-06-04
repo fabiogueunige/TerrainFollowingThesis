@@ -1,4 +1,4 @@
-function [new_vel, new_pitch] = dynamic_model(tau, tau0, speed0, old_vel, Ts, old_pitch)
+function [new_vel] = dynamic_model(tau, tau0, speed0, old_vel, Ts)
     % deve darmi la velocità w
     % updated to bluerov model
     m = 11.5; % massa totale [kg]
@@ -36,5 +36,4 @@ function [new_vel, new_pitch] = dynamic_model(tau, tau0, speed0, old_vel, Ts, ol
     s_dotdot(3) = (tau(3) - tau0(3) - dv(3)*delta(3)) / mv(3);
   
     new_vel = old_vel + Ts * s_dotdot;
-    new_pitch = old_pitch + Ts * new_vel(3);
 end

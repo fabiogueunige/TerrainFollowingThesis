@@ -1,4 +1,4 @@
-function [tau] = tau_generator(Ts, old_speed, input_star, tau0, speed0, pid_q)
+function [tau] = tau_generator(Ts, old_speed, input_star, tau0, speed0)
     a_target = (input_star - old_speed) / Ts;
     
     tau = zeros(3,1);
@@ -26,10 +26,7 @@ function [tau] = tau_generator(Ts, old_speed, input_star, tau0, speed0, pid_q)
     delta = old_speed - speed0;
 
     % control generator
-    for l = 1:2
+    for l = 1:3
         tau(l) = mv(l) * a_target(l) + tau0(l) - dv(l) * delta(l);
     end
-
-    %vedi se funziona se no cambia
-    tau(3) = pid_q;
 end

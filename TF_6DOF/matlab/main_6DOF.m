@@ -6,6 +6,13 @@ Tf = 20;          % Final time [s]
 time = 0:Ts:Tf;   % Time vector
 N = length(time); % Number of iterations
 
+%% Matrix Dimensions
+n = 4; % Number of states
+m = 4; % Number of measurements
+l = 3; % Number of inputs
+q = 4; % Process noise dimension
+r = 4; % Measurement noise dimension
+
 %% Design Parameters
 % Terrain
 beta = pi/10;
@@ -22,24 +29,18 @@ sig3 = 0.083; % State noise theta
 sig4 = 0.097; % State noise q
 eta1 = 0.005; % Measurement noise y1
 eta2 = 0.005; % Measurement noise y2
-eta3 = 0.025; % Measurement noise theta
+eta3 = 0.025; % Measurement noise accelerometer
+eta4 = 0.012; % Measurament noise gyroscope
 
 % AUV Parameters
 Gamma = -pi/8; % Sonar angle y1
 Lambda = pi/8; % Sonar angle y2
-p_err = zeros(1,2);
-i_err = zeros(1,2);
+p_err = zeros(1,l);
+i_err = zeros(1,l);
 
 % AUV Model Parameters
 speed0 = [0, 0, 0]'; % surge, heave and pitch
 tau0 = tau0_values(speed0);
-
-%% Matrix Dimensions
-n = 4; % Number of states
-m = 3; % Number of measurements
-l = 3; % Number of inputs
-q = 4; % Process noise dimension
-r = 3; % Measurement noise dimension
 
 %% Initialization
 prob = zeros(2,N);         % AUV initial position
@@ -47,13 +48,13 @@ x_est = zeros(n, N);       % Estimated state
 x_true = zeros(n, N);      % True state
 z_meas = zeros(m, N);      % Measurements
 u = zeros(l, N);           % Known inputs
-u_star = zeros(l, N);      % Desired input
+tau_star = zeros(l, N);      % Desired input
 
 % Initial state
 x0_est = [0, 0, 0, 0]';          % Estimated initial state
 
 % Initial covariance matrix
-P0 = diag([1, 0.08, 0.07, 0.09]);
+P0 = diag([1, 0.08, 2, 0.09]);
 P0 = P0 * (1.1);% + 2*rand);
 
 x_true(:,1) = x0;
@@ -75,32 +76,32 @@ R = zeros(m,m);
 R(1,1) = (eta1^2);
 R(2,2) = (eta2^2);
 R(3,3) = (eta3^2);
+R(4,4) = (eta4^2);
 
 %% EKF Simulation
 for k = 2:N
     %% Control Input
-    [u_star(:,k-1), pid_q, p_err, i_err] = input_control(x_est(:,k-1), Ts, p_err, i_err); % Define input
-
     if k == 2
-        tau = tau_generator(Ts, speed0, u_star(:,k-1), tau0, speed0, pid_q);
-        [u(:,k-1), theta] = dynamic_model(tau, tau0, speed0, speed0, Ts, z_meas(3,k-1));
+        [tau_star(:,k-1), p_err, i_err] = input_control(x_est(:,k-1), Ts, p_err, i_err, speed0(1)); % Define input
+        tau = tau_generator(Ts, speed0, tau_star(:,k-1), tau0, speed0);
+        [u(:,k-1)] = dynamic_model(tau, tau0, speed0, speed0, Ts);
     else
-        tau = tau_generator(Ts, u(:,k-2), u_star(:,k-1), tau0, speed0, pid_q);
-        [u(:,k-1), theta] = dynamic_model(tau, tau0, speed0, u(:,k-2), Ts, z_meas(3,k-1));
+        [tau_star(:,k-1), p_err, i_err] = input_control(x_est(:,k-1), Ts, p_err, i_err, u(1,k-2)); % Define input
+        tau = tau_generator(Ts, u(:,k-2), tau_star(:,k-1), tau0, speed0);
+        [u(:,k-1)] = dynamic_model(tau, tau0, speed0, u(:,k-2), Ts);
     end
-
-
     %% Measurement
     v = mvnrnd(zeros(m,1), R)'; % Measurement noise
-    [z_meas(:,k), hmes, prob(:,k)] = measurament(x_est(:,k-1), beta, qt, Gamma, Lambda, u(:,k-1), Ts, prob(:,k-1), theta);
+    [z_meas(:,k), hmes, prob(:,k)] = measurament(x_est(:,k-1), beta, qt, Gamma, Lambda, u(:,k-1), Ts, prob(:,k-1));
     z_meas(:,k) = z_meas(:,k) + v;
 
     %% True Dynamic Simulation
-    x_true(:,k) = [hmes, beta, z_meas(3,k), 0]';
+    w = mvnrnd(zeros(n,1), Q)'; % Process noise
+    x_true(:,k) = [hmes, beta, beta, 0]';%  +w; % final scope
 
     %% --- EKF: Prediction ---
-    w = mvnrnd(zeros(n,1), Q)'; % Process noise
-    x_pred = f(x_est(:,k-1), u(:,k-1), Ts) + w; % State prediction with noise state
+    % per chat non ci vuole w nella x_pred
+    x_pred = f(x_est(:,k-1), u(:,k-1), Ts); %+ w; % State prediction with noise state
     F = jacobian_f(x_est(:,k-1), u(:,k-1), Ts); % Dynamics Jacobian
     P_pred = F * P * F' + Q;
    
@@ -108,12 +109,12 @@ for k = 2:N
     H = jacobian_h(x_pred, Gamma, Lambda);   % Observation Jacobian
     if any(isnan(H(:)))
         H
-        error('Esecuzione interrotta: H contiene valori NaN.'); % Stop execution and show error
+        error('Esecuzione interrotta: H contiene valori NaN.');
     end
     K = P_pred * H' / (H * P_pred * H' + R); % Kalman Gain
     if any(isnan(K(:)))
         K
-        error('Esecuzione interrotta: K contiene valori NaN.'); % Stop execution and show error
+        error('Esecuzione interrotta: K contiene valori NaN.');
     end
     z_pred = h(x_pred, Gamma, Lambda);        % Predicted measurement
     x_est(:,k) = x_pred + K * (z_meas(:,k) - z_pred);
