@@ -1,7 +1,7 @@
 clear; close all; clc;
 
 % Flag per usare angoli specifici o generati randomicamente
-use_specific_angles = true; % Imposta a 'false' per angoli randomici
+use_specific_angles = false; % Imposta a 'false' per angoli randomici
 tolerance = 1e-4;
 areDifferent = @(a, b, tol) abs(a - b) > tol * max(abs(a), abs(b));
 
@@ -10,6 +10,9 @@ pr = [0,0]';
 qt = - 10;
 Gamma = -pi/8;
 Lambda = pi/8;
+u = 200;
+w = 150;
+Ts = 0.001;
 
 if use_specific_angles
     beta = pi/10;
@@ -52,8 +55,7 @@ y1m = norm([pr(1) - xc1; pr(2) - zc1]);
 v_p1 = [xc1 - pr(1); zc1 - pr(2)];
 visibile_y1 = dot(z_r, v_p1) > 0;
 if ~visibile_y1
-    fprintf('Errore in visibilità y1 \n');
-    y1m = 500000;
+    error('Errore in visibilità y1 \n');
 end
 
 % Computation for y2
@@ -65,8 +67,7 @@ v_p2 = [xc2 - pr(1); zc2 - pr(2)];
 visibile_y2 = dot(z_r, v_p2) > 0;
 
 if ~visibile_y2
-    fprintf('Errore in visibilità y2 \n');
-    y2m = 500000;
+    error('Errore in visibilità y2 \n');
 end
 
 % valore da ottenere di h
@@ -81,6 +82,13 @@ y2 = hm/(cos(Lambda - (beta - theta)));
 % h check
 h_y1 = y1m*(cos(Gamma - (beta - theta)));
 h_y2_abs = y2m * abs(cos(Lambda - (beta - theta)));
+
+% h variation
+dx = u*cos(theta) + w*sin(theta);
+dz = u*sin(theta) - w*cos(theta);
+pr_new = pr + [dx*Ts, dz*Ts]'; 
+h_new = hm - u*sin((beta - theta))*Ts - w*cos((beta - theta))*Ts;
+hm_new = (abs(mt*pr_new(1) - pr_new(2) + qt))/ (sqrt(mt^2 + 1));
 
 fprintf('\nValori Calcolati:\n');
 fprintf('hm: %.4f\n', hm);
@@ -106,6 +114,16 @@ if areDifferent(y2m, y2_abs, tolerance) || areDifferent(y2_abs, y2, tolerance)
     fprintf('y2m: %.4f\n', y2m);
     fprintf('y2_abs: %.4f\n', y2_abs);
     fprintf('y2: %.4f\n', y2);
+end
+
+fprintf('Controllo velocità e valori h\n');
+fprintf('h nel nuovo punto dato dalle velocità: %.4f\n', hm_new);
+if areDifferent(hm_new, h_new, tolerance)
+    fprintf('Errore nella variazione di h \n');
+    fprintf('h dalle velocità: %.4f\n', h_new);
+    val_u = -u*sin((beta - theta))*Ts;
+    val_w = -w*cos((beta - theta))*Ts;
+    fprintf('velocità u: %.4f, velocità w: %.4f\n', val_u, val_w);
 end
 
 % plot
@@ -134,12 +152,13 @@ box on;
 plot(x_values, y_mt, 'r-', 'LineWidth', 1.5, 'DisplayName', 'Retta terrain (mt)');
 plot(x_values, y_m1g, 'b--', 'LineWidth', 1.5, 'DisplayName', 'Retta y1 (m1_g)');
 plot(x_values, y_m2l, 'g--', 'LineWidth', 1.5, 'DisplayName', 'Retta y2 (m2_l)');
-plot(x_values, y_mp, 'p-', 'LineWidth', 1.5, 'DisplayName', 'Retta pitch (mp)');
+plot(x_values, y_mp, 'y-', 'LineWidth', 1.5, 'DisplayName', 'Retta pitch (mp)');
 
 % Plot dei punti noti
 plot(pr(1), pr(2), 'ko', 'MarkerFaceColor', 'k', 'MarkerSize', 8, 'DisplayName', 'Punto Pr (0,0)');
 plot(xc1, zc1, 'cx', 'MarkerSize', 10, 'LineWidth', 2, 'DisplayName', 'Intersezione xc1,zc1');
 plot(xc2, zc2, 'yx', 'MarkerSize', 10, 'LineWidth', 2, 'DisplayName', 'Intersezione xc2,zc2');
+plot(pr_new(1), pr_new(2), 'ko', 'MarkerFaceColor', 'b', 'MarkerSize', 8, 'DisplayName', 'Punto Pr nuovo');
 
 plot(x_hm, y_hm, 'kd', 'MarkerFaceColor', 'r', 'MarkerSize', 8, 'DisplayName', 'Punto hm sul Terreno'); % Punto hm
 plot([pr(1), x_hm], [pr(2), y_hm], 'k:', 'LineWidth', 1, 'DisplayName', 'Segmento hm'); % Retta congiungente

@@ -11,7 +11,7 @@ beta = pi/10;
 qt = - 10; % For line construction
 % robot position
 % Initial state
-theta = -pi/10;
+theta = 0;
 % theta = 0 ->(pi/10 =9.5106, pi/7 =9.0097, pi/4 =7.0711)
 % theta = -pi/10 ->(pi/10 =9.5106, pi/7 =9.0097, pi/4 =7.0711)
 x0 = [9.5106, beta]';      % True initial state 
@@ -19,8 +19,8 @@ x0 = [9.5106, beta]';      % True initial state
 % Noise
 sig1 = 0.077; % State noise h
 sig2 = 0.085; % State noise beta
-eta1 = 0.005; % Measurement noise y1
-eta2 = 0.005; % Measurement noise y2
+eta1 = 0.055; % Measurement noise y1
+eta2 = 0.075; % Measurement noise y2
 
 % AUV Parameters
 Gamma = -pi/8; % Sonar angle y1
@@ -72,6 +72,19 @@ R(2,2) = (eta2^2);
 
 %% EKF Simulation
 for k = 2:N
+    if (k == 5000)
+        beta = 0;
+    end
+    if (k == 10000)
+        beta = pi/7;
+    end
+    if (k == 15000)
+        beta = -pi/10;
+    end
+    if (k == 40000)
+        beta = pi/6;
+    end
+
     %% Control Input
     [u_star(:,k-1), p_err, i_err] = input_control(x_est(:,k-1), Ts, p_err, i_err, theta); % Define input desired
     

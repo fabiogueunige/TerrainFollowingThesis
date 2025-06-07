@@ -2,7 +2,7 @@ clc; clear; close all;
 
 %% Filter Parameters
 Ts = 0.001;       % Sampling time [s]
-Tf = 20;          % Final time [s]
+Tf = 50;          % Final time [s]
 time = 0:Ts:Tf;   % Time vector
 N = length(time); % Number of iterations
 
@@ -26,14 +26,14 @@ sig1 = 0.077; % State noise h
 sig2 = 0.085; % State noise beta
 sig3 = 0.083; % State noise theta
 sig4 = 0.097; % State noise q
-eta1 = 0.005; % Measurement noise y1
-eta2 = 0.005; % Measurement noise y2
-eta3 = 0.030; % Measurement noise accelerometer
-eta4 = 0.017; % Measurament noise gyroscope
+eta1 = 0.077; % Measurement noise y1
+eta2 = 0.085; % Measurement noise y2
+eta3 = 0.065; % Measurement noise accelerometer
+eta4 = 0.077; % Measurament noise gyroscope
 
 % AUV Parameters
-Gamma = -pi/8; % Sonar angle y1
-Lambda = pi/8; % Sonar angle y2
+Gamma = -pi/6; % Sonar angle y1
+Lambda = pi/6; % Sonar angle y2
 p_err = zeros(1,l);
 i_err = zeros(1,l);
 
@@ -81,6 +81,18 @@ R(4,4) = (eta4^2);
 %% EKF Simulation
 for k = 2:N
     fprintf('New Lap, time = %.0f \n', k);
+    if (k == 5000)
+        beta = 0;
+    end
+    if (k == 10000)
+        beta = pi/7;
+    end
+    if (k == 15000)
+        beta = 0;
+    end
+    if (k == 40000)
+        beta = -pi/7;
+    end
     %% Control Input
     if k == 2
         [tau_star(:,k-1), p_err, i_err] = input_control(x_est(:,k-1), Ts, p_err, i_err, speed0(1)); % Define input

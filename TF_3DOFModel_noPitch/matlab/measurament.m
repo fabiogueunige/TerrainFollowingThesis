@@ -25,8 +25,7 @@ function [ymes, h, pr] = measurament(beta, qt, Gamma, Lambda, v, Ts, pr_old, the
     v_p1 = [xc1 - pr(1); zc1 - pr(2)];
     visibile_y1 = dot(z_r, v_p1) > 0;
     if ~visibile_y1
-        fprintf('Errore in visibilità y1 \n');
-        y1m = 500000;
+        error('Errore in visibilità y1 \n');
     end
 
     % Computation for y2
@@ -37,8 +36,7 @@ function [ymes, h, pr] = measurament(beta, qt, Gamma, Lambda, v, Ts, pr_old, the
     v_p2 = [xc2 - pr(1); zc2 - pr(2)];
     visibile_y2 = dot(z_r, v_p2) > 0;
     if ~visibile_y2
-        fprintf('Errore in visibilità y2 \n');
-        y2m = 500000;
+        error('Errore in visibilità y2 \n');
     end
     
     ymes = [y1m; y2m];
