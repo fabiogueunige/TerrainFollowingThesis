@@ -85,7 +85,7 @@ h_y2_abs = y2m * abs(cos(Lambda - (beta - theta)));
 
 % h variation
 dx = u*cos(theta) + w*sin(theta);
-dz = u*sin(theta) - w*cos(theta);
+dz = -(-u*sin(theta) + w*cos(theta));
 pr_new = pr + [dx*Ts, dz*Ts]'; 
 h_new = hm - u*sin((beta - theta))*Ts - w*cos((beta - theta))*Ts;
 hm_new = (abs(mt*pr_new(1) - pr_new(2) + qt))/ (sqrt(mt^2 + 1));
