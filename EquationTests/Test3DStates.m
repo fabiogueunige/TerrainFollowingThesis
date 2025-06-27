@@ -13,7 +13,7 @@ psi = 0;
 %% Angle defintions
 if use_specific_angles
     % terrain
-    beta = pi/7;
+    beta = 0;
     alpha = pi/7;
     % robot
     theta = pi/10;
@@ -41,8 +41,8 @@ if use_specific_speed
     surge = 5000;
     sway = 5000;
     heave = 2000;
-    p = (pi/10)/Ts;
-    q = (pi/10)/Ts; 
+    p = 0; %(pi/10)/Ts;
+    q = 0;%(pi/10)/Ts; 
 else
     % random angles generator
     lower_bound = 10000;
@@ -67,7 +67,7 @@ fprintf('q: %.2f\n', rad2deg(q));
 pplane = [0, 0, 10]';
 n0 = [0, 0, 1]'; % in terrain frame!!
 % Transformation (given by the sensors)
-wRt = (rotz(0)*roty(beta)*rotx(alpha));
+wRt = (rotz(0)*roty(beta)*rotx(alpha))*(rotx(pi))';
 
 %% Robot Parameters
 pr = [0, 0, 0]';
@@ -229,9 +229,9 @@ end
 % controllo senza terreno
 s_speed = (wRt)' * w_speed;
 if s_speed(3) < 0
-    fprintf('h aumenta di %.4f\n', -s_speed(3)*Ts);
+    fprintf('h diminuisce di %.4f\n', -s_speed(3)*Ts);
 else
-    fprintf('h diminuisce di %.4f\n', s_speed(3)*Ts);
+    fprintf('h aumenta di %.4f\n', s_speed(3)*Ts);
 end
 if areDifferent(s_speed(3)*Ts, (h_real_new - h_real), tolerance)
     fprintf('Cambiamento di h reale %.4f\n', (h_real_new - h_real))
