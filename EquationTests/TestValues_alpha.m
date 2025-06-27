@@ -1,4 +1,4 @@
-% clear; close all; clc;
+clear; close all; clc;
 
 % Flag per usare angoli specifici o generati randomicamente
 use_specific_angles = true; % Imposta a 'false' per angoli randomici
@@ -16,7 +16,7 @@ Ts = 0.001;
 
 if use_specific_angles
     alpha = pi/10;
-    phi = 0;
+    phi = -pi/10;
 else
     % random angles generator
     lower_bound = -pi/2;
@@ -48,9 +48,7 @@ q4 = pr(2) - m4_z*pr(1);
 qr = pr(2) - mr*pr(1);
 
 z_r = [0, -1]';
-Rx_2D = [cos(phi), -sin(phi);
-      sin(phi),  cos(phi)];
-z_r = Rx_2D*z_r;
+z_r = rotX2D(phi)*z_r;
 
 % computation for y1 
 yc3 = (q3 - qt) / (mt - m3_e);
@@ -85,21 +83,22 @@ y4 = hm/(cos(Zeta - (alpha - phi)));
 %% h check
 h_y3 = y3m*(cos(Eta - (alpha - phi)));
 h_y4_abs = y4m * abs(cos(Zeta - (alpha - phi)));
-
-%% h variation
-% Controllare!!!
+% for plot 
+y_dir = rotX2D(phi) * [-1; 0]; 
+z_dir = rotX2D(phi) * [0; -1];
+%% h variation & Motion
 dy = -(v*cos(phi) - w*sin(phi));
 dz = -(v*sin(phi) + w*cos(phi));
 pr_new = pr + [dy*Ts, dz*Ts]'; 
 h_new = hm + v*sin((alpha - phi))*Ts - w*cos((alpha - phi))*Ts;
-hm_new = (abs(mt*pr_new(1) - pr_new(2) + qt))/ (sqrt(mt^2 + 1));
+hm_new = (abs(mt*pr_new(1) - pr_new(2) + qt)) / (sqrt(mt^2 + 1));
 
-% New sensor values
+%% New sensor values
 q3_new = pr_new(2) - m3_e*pr_new(1);
 q4_new = pr_new(2) - m4_z*pr_new(1);
 qr_new = pr_new(2) - mr*pr_new(1);
 
-% computation for y1_new
+% computation for y3_new
 yc3_new = (q3_new - qt) / (mt - m3_e);
 zc3_new = mt * yc3_new + qt;
 y3m_new = norm([pr_new(1) - yc3_new; pr_new(2) - zc3_new]);
@@ -109,7 +108,7 @@ if ~visibile_y3
     error('Errore in visibilità y3 new\n');
 end
 
-% Computation for y2_new
+% Computation for y4_new
 yc4_new = (q4_new - qt) / (mt - m4_z);
 zc4_new = mt * yc4_new + qt;
 y4m_new = norm([pr_new(1) - yc4_new; pr_new(2) - zc4_new]);
@@ -189,21 +188,33 @@ hold on;
 grid on;
 box on;
 
-plot(y_values, y_mt, 'y-', 'LineWidth', 3, 'DisplayName', 'Retta terrain (mt)');
-plot([pr(1), yc3], [pr(2), zc3], 'c-', 'LineWidth', 1.5, 'DisplayName', 'Retta y3 (m3_e)');
-plot([pr(1), yc4], [pr(2), zc4], 'm-', 'LineWidth', 1.5, 'DisplayName', 'Retta y4 (m4_z)');
-plot([pr_new(1), yc3_new], [pr_new(2), zc3_new], 'c-', 'LineWidth', 1.5, 'DisplayName', 'Retta y3 new (m3_e)');
-plot([pr_new(1), yc4_new], [pr_new(2), zc4_new], 'm-', 'LineWidth', 1.5, 'DisplayName', 'Retta y4 new(m4_z)');
-plot(y_values, z_mr, 'r--', 'LineWidth', 1, 'DisplayName', 'Retta roll (mr)');
-plot(y_values, z_mr_new, 'r--', 'LineWidth', 1, 'DisplayName', 'Retta roll new (mr)');
+plot(y_values, y_mt, 'y-', 'LineWidth', 3, 'DisplayName', 'terrain');
+plot([pr(1), yc3], [pr(2), zc3], 'c-', 'LineWidth', 1.5, 'DisplayName', 'y3');
+plot([pr(1), yc4], [pr(2), zc4], 'm-', 'LineWidth', 1.5, 'DisplayName', 'y4');
+plot([pr_new(1), yc3_new], [pr_new(2), zc3_new], 'c-', 'LineWidth', 1.5, 'DisplayName', 'y3 new');
+plot([pr_new(1), yc4_new], [pr_new(2), zc4_new], 'm-', 'LineWidth', 1.5, 'DisplayName', 'y4 new');
+
+% old point
+t_tmp = 3;
+p_y_dir = pr + t_tmp * y_dir;
+p_z_dir = pr + t_tmp * z_dir;
+plot([pr(1), p_y_dir(1)], [pr(2), p_y_dir(2)], 'g--', 'LineWidth', 1, 'DisplayName', 'Asse Y rob');
+plot([pr(1), p_z_dir(1)], [pr(2), p_z_dir(2)], 'b--', 'LineWidth', 1, 'DisplayName', 'Asse Z rob');
+% new point
+y_dir_new = rotX2D(phi) * [-1; 0]; 
+z_dir_new = rotX2D(phi) * [0; -1];
+p_y_dir = pr_new + t_tmp * y_dir_new;
+p_z_dir = pr_new + t_tmp * z_dir_new;
+plot([pr_new(1), p_y_dir(1)], [pr_new(2), p_y_dir(2)], 'g--', 'LineWidth', 1, 'DisplayName', 'Asse Y rob');
+plot([pr_new(1), p_z_dir(1)], [pr_new(2), p_z_dir(2)], 'b--', 'LineWidth', 1, 'DisplayName', 'Asse Z rob');
 
 % Plot dei punti noti
-plot(pr(1), pr(2), 'ko', 'MarkerFaceColor', 'k', 'MarkerSize', 10, 'DisplayName', 'Punto Pr (0,0)');
+plot(pr(1), pr(2), 'ko', 'MarkerFaceColor', 'k', 'MarkerSize', 10, 'DisplayName', 'Initial Pr (0,0)');
 plot(yc3, zc3, 'cx', 'MarkerSize', 10, 'LineWidth', 2, 'DisplayName', 'Int yc3,zc4');
 plot(yc4, zc4, 'mx', 'MarkerSize', 10, 'LineWidth', 2, 'DisplayName', 'Int yc4,zc4');
 plot(yc3_new, zc3_new, 'cx', 'MarkerSize', 10, 'LineWidth', 2, 'DisplayName', 'New Int yc3,zc3');
 plot(yc4_new, zc4_new, 'mx', 'MarkerSize', 10, 'LineWidth', 2, 'DisplayName', 'New Int yc4,zc4');
-plot(pr_new(1), pr_new(2), 'ko', 'MarkerFaceColor', 'b', 'MarkerSize', 10, 'DisplayName', 'Punto Pr nuovo');
+plot(pr_new(1), pr_new(2), 'ko', 'MarkerFaceColor', 'b', 'MarkerSize', 10, 'DisplayName', 'New Pr');
 
 plot(y_hm, z_hm, 'kd', 'MarkerSize', 10, 'DisplayName', 'Punto hm sul Terreno'); % Punto hm
 plot([pr(1), y_hm], [pr(2), z_hm], 'k:', 'LineWidth', 1.5, 'DisplayName', 'Segmento hm'); % Retta congiungente
@@ -223,4 +234,7 @@ if isfinite(ylim_auto(1)) && isfinite(ylim_auto(2))
 end
 hold off;
 
-
+function R = rotX2D(a)
+   R = [cos(a), -sin(a);
+      sin(a),  cos(a)];
+end

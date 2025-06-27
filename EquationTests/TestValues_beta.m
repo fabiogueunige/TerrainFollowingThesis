@@ -1,4 +1,4 @@
-% clear; close all; clc;
+clear; close all; clc;
 
 % Flag per usare angoli specifici o generati randomicamente
 use_specific_angles = true; % Imposta a 'false' per angoli randomici
@@ -15,8 +15,8 @@ w = 0;
 Ts = 0.001;
 
 if use_specific_angles
-    beta = pi/10;
-    theta = 0;
+    beta = pi/7;
+    theta = -pi/10;
 else
     % random angles generator
     lower_bound = -pi/2;
@@ -48,9 +48,7 @@ q2 = pr(2) - m2_l*pr(1);
 qp = pr(2) - mp*pr(1);
 
 z_r = [0, -1]';
-Ry_2D = [cos(theta), sin(theta);
-      -sin(theta),  cos(theta)];
-z_r = Ry_2D*z_r;
+z_r = rotY2D(theta)*z_r;
 
 % computation for y1 
 xc1 = (q1 - qt) / (mt - m1_g);
@@ -86,14 +84,18 @@ y2 = hm/(cos(Lambda - (beta - theta)));
 h_y1 = y1m*(cos(Gamma - (beta - theta)));
 h_y2_abs = y2m * abs(cos(Lambda - (beta - theta)));
 
-%% h variation
+% for plot
+x_dir = rotY2D(theta) * [1; 0]; 
+z_dir = rotY2D(theta) * [0; -1];
+
+%% h variation & Motion
 dx = u*cos(theta) + w*sin(theta);
 dz = -(-u*sin(theta) + w*cos(theta));
 pr_new = pr + [dx*Ts, dz*Ts]'; 
 h_new = hm - u*sin((beta - theta))*Ts - w*cos((beta - theta))*Ts;
 hm_new = (abs(mt*pr_new(1) - pr_new(2) + qt))/ (sqrt(mt^2 + 1));
 
-% New sensor values
+%% New sensor values
 q1_new = pr_new(2) - m1_g*pr_new(1);
 q2_new = pr_new(2) - m2_l*pr_new(1);
 qp_new = pr_new(2) - mp*pr_new(1);
@@ -193,8 +195,20 @@ plot([pr(1), xc1], [pr(2), zc1], 'r-', 'LineWidth', 1.5, 'DisplayName', 'Retta y
 plot([pr(1), xc2], [pr(2), zc2], 'b-', 'LineWidth', 1.5, 'DisplayName', 'Retta y2 (m2_l)');
 plot([pr_new(1), xc1_new], [pr_new(2), zc1_new], 'r-', 'LineWidth', 1.5, 'DisplayName', 'Retta y1 new');
 plot([pr_new(1), xc2_new], [pr_new(2), zc2_new], 'b-', 'LineWidth', 1.5, 'DisplayName', 'Retta y2 new)');
-plot(x_values, y_mp, 'g--', 'LineWidth', 1, 'DisplayName', 'Retta pitch (mp)');
-plot(x_values, y_mp_new, 'g--', 'LineWidth', 1, 'DisplayName', 'Retta pitch new');
+% old point
+t_tmp = 3;
+p_x_dir = pr + t_tmp * x_dir;
+p_z_dir = pr + t_tmp * z_dir;
+plot([pr(1), p_x_dir(1)], [pr(2), p_x_dir(2)], 'r--', 'LineWidth', 1, 'DisplayName', 'Asse X rob');
+plot([pr(1), p_z_dir(1)], [pr(2), p_z_dir(2)], 'b--', 'LineWidth', 1, 'DisplayName', 'Asse Z rob');
+% new point
+x_dir_new = rotY2D(theta) * [1; 0]; 
+z_dir_new = rotY2D(theta) * [0; -1];
+p_x_dir = pr_new + t_tmp * x_dir_new;
+p_z_dir = pr_new + t_tmp * z_dir_new;
+plot([pr_new(1), p_x_dir(1)], [pr_new(2), p_x_dir(2)], 'r--', 'LineWidth', 1, 'DisplayName', 'Asse X rob');
+plot([pr_new(1), p_z_dir(1)], [pr_new(2), p_z_dir(2)], 'b--', 'LineWidth', 1, 'DisplayName', 'Asse Z rob');
+
 
 % Plot dei punti noti
 plot(pr(1), pr(2), 'ko', 'MarkerFaceColor', 'k', 'MarkerSize', 8, 'DisplayName', 'Punto Pr (0,0)');
@@ -223,3 +237,8 @@ end
 hold off;
 
 
+
+function R = rotY2D(a)
+   R = [cos(a), -sin(a);
+      sin(a),  cos(a)];
+end
