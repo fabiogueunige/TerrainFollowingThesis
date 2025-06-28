@@ -228,10 +228,6 @@ ylabel('Asse Z (val neg)');
 title('Plot delle Rette nel Piano');
 legend('Location', 'best');
 axis equal; % Assicura che le unità sugli assi siano uguali per evitare distorsioni angolari
-ylim_auto = [min([min(y_mt), qt, pr(1), pr_new(1), zc3_new, zc4_new])-5, max([max(y_mt), qt, pr(1), pr_new(1), zc3_new, zc4_new])+5];
-if isfinite(ylim_auto(1)) && isfinite(ylim_auto(2))
-    ylim(ylim_auto);
-end
 hold off;
 
 function R = rotX2D(a)

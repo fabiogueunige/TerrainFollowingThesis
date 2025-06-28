@@ -13,20 +13,20 @@ psi = 0;
 %% Angle defintions
 if use_specific_angles
     % terrain
-    beta = 0;
-    alpha = pi/7;
+    beta = pi/10;
+    alpha = 0;
     % robot
-    theta = pi/10;
-    phi = pi/10;
+    theta = 0;
+    phi = 0;
 else
     % random angles generator
-    lower_bound = -pi/2;
-    upper_bound = pi/2;
+    lower_bound = -pi/3;
+    upper_bound = pi/3;
     % Genera un singolo angolo randomico
     beta = lower_bound + (upper_bound - lower_bound) * rand();
     alpha = lower_bound + (upper_bound - lower_bound) * rand();
-    lower_bound = -pi/4;
-    upper_bound = pi/4;
+    lower_bound = -pi/5;
+    upper_bound = pi/5;
     theta = lower_bound + (upper_bound - lower_bound) * rand();
     phi = lower_bound + (upper_bound - lower_bound) * rand();
 end
@@ -38,21 +38,21 @@ fprintf('phi: %.2f\n', rad2deg(phi));
 
 %% speed definitions
 if use_specific_speed
-    surge = 5000;
-    sway = 5000;
-    heave = 2000;
-    p = 0; %(pi/10)/Ts;
+    surge = 2000;
+    sway = 0;
+    heave = 0;
+    p = (pi/7)/Ts;
     q = 0;%(pi/10)/Ts; 
 else
     % random angles generator
-    lower_bound = 10000;
-    upper_bound = -10000;
+    lower_bound = -2000;
+    upper_bound = 2000;
     % Genera un singolo angolo randomico
     surge = lower_bound + (upper_bound - lower_bound) * rand();
     sway = lower_bound + (upper_bound - lower_bound) * rand();
     heave = lower_bound + (upper_bound - lower_bound) * rand();
-    lower_bound = 10000;
-    upper_bound = -10000;
+    lower_bound = -(pi/8)/Ts;
+    upper_bound = (pi/8)/Ts;
     p = lower_bound + (upper_bound - lower_bound) * rand();
     q = lower_bound + (upper_bound - lower_bound) * rand();
 end
@@ -94,8 +94,7 @@ s(:, 4) = [0, -sin(Zeta + phi), cos(Zeta + phi)]';
 % check of consistency for the sensors
 for k = 1:num_s
     if (norm(s(:,k)) ~= 1)
-        fprintf('k = %.0f\n', k);
-        error('norm is not 1');
+        fprintf('ERROR: norm sensor k = %.0f is not 1', k);
     end
 end
 
@@ -105,7 +104,7 @@ n = wRt*n0; % in world frame
 fprintf('\nVettore superficie\n');
 fprintf('n_yx: [%.4f; %.4f; %.4f]\n', n(1), n(2), n(3));
 if (norm(n) ~= 1)
-    fprintf('norm n_yx is not 1\n');
+    fprintf('ALERT: norm n is not 1\n');
 end
 
 %% Sensor Values
@@ -128,8 +127,7 @@ for k = 1:num_s
     v_p = p_int(:, k) - pr;
     visibile = dot(z_r, v_p) > 0;
     if ~visibile
-        fprintf('Error in visibility for the sensor %0.f\n', k);
-        error('Point not visible');
+        error('Error in visibility for the sensor %0.f', k);
     end
 end
 
@@ -147,8 +145,8 @@ for k = 1:num_s
     fprintf('y%.0f = %.4f\n', k, y(k));
     y_mes(k) = (norm(p_int(:, k) - pr));
     if areDifferent(y_mes(k), y(:, k), tolerance)
-        fprintf('y: %.4f\n', y_mes(k));
-        fprintf('Errore in y per il sensore %0.f\n', k);
+        fprintf('y%.0f mesured: %.4f\n', k, y_mes(k));
+        fprintf('ERRORE: y per il sensore %0.f\n', k);
     end
 end
 % h Values
@@ -156,8 +154,8 @@ h_from_y = zeros(1, num_s);
 for k = 1:num_s
     h_from_y = y(k) * n' * s(:, k);
     if areDifferent(h_real, -h_from_y, tolerance)
-        fprintf('h got from y values: %.4f\n', -h_from_y);
-        fprintf('Errore in h per il sensore %0.f nel calcolo h from y\n', k);
+        fprintf('h got from y%.0f value: %.4f\n', k, -h_from_y);
+        fprintf('ERRORE: h per il sensore %0.f nel calcolo h from y\n', k);
     end
 end
 
@@ -166,6 +164,8 @@ end
 w_speed = wRr * r_speed(1:3);
 pr_new = pr + w_speed*Ts;
 % Angles update
+phi_old = phi;
+theta_old = theta;
 phi = phi + r_speed(4)*Ts;
 theta = theta + r_speed(5)*Ts; % !!! SEGNOOO !!!!
 % Transformation update
@@ -191,8 +191,7 @@ for k = 1:num_s
     v_p = p_int_new(:, k) - pr_new;
     visibile = dot(z_r, v_p) > 0;
     if ~visibile
-        fprintf('Error in visibility for the sensor in the new point %0.f\n', k);
-        error('Point not visible');
+        error('Error (not visible) for the sensor %0.f in the new point', k);
     end
 end
 
@@ -211,7 +210,7 @@ for k = 1:num_s
     fprintf('New y%.0f = %.4f\n', k, y_new(k));
     y_mes_new(k) = (norm(p_int_new(:, k) - pr_new));
     if areDifferent(y_mes_new(k), y_new(k), tolerance)
-        fprintf('New y%0.f: %.4f\n',k, y_mes_new(k));
+        fprintf('New y%0.f mesured was: %.4f\n',k, y_mes_new(k));
         error('Errore in y per il sensore %0.f\n', k);
     end
 end
@@ -220,7 +219,7 @@ h_from_y_new = zeros(1, num_s);
 for k = 1:num_s
     h_from_y_new(k) = y_new(k) * n' * s(:, k);
     if areDifferent(h_real_new, -h_from_y_new(k), tolerance)
-        fprintf('h(%0.f): %.4f\n',k, -h_from_y_new(k));
+        fprintf('h mesured from sensor %0.f was: %.4f\n',k, -h_from_y_new(k));
         error('Errore in h per il sensore %0.f nel calcolo new h from y\n', k);
     end
 end
@@ -228,12 +227,20 @@ end
 %% Check of the results the states
 % controllo senza terreno
 s_speed = (wRt)' * w_speed;
+% check semplificato a geometria
+% ---- ATTENZIONE VANNO USATI VECCHI VALORI DEGLI ANGOLI CON
+%                                           SEMPLIFICAZIONE ---- %
+delta = (cos(alpha)*sin(theta_old - beta))*r_speed(1) + ...
+         (sin(alpha)*cos(phi_old)-cos(alpha)*sin(phi_old)*cos(beta-theta_old))*r_speed(2) + ...
+         (-sin(alpha)*sin(phi_old)-cos(alpha)*cos(phi_old)*cos(beta-theta_old))*r_speed(3);
+deltah = delta*Ts
 if s_speed(3) < 0
     fprintf('h diminuisce di %.4f\n', -s_speed(3)*Ts);
 else
     fprintf('h aumenta di %.4f\n', s_speed(3)*Ts);
 end
 if areDifferent(s_speed(3)*Ts, (h_real_new - h_real), tolerance)
+    fprintf('ERROR: Non stesso valore di cambiamento\n');
     fprintf('Cambiamento di h reale %.4f\n', (h_real_new - h_real))
     fprintf('h calcolato corrisponde a %.4f\n', (s_speed(3)*Ts))
 end
@@ -247,8 +254,14 @@ box on;
 p_proj = pr - dot(n, pr - pplane) * n; % h projection
 colors = lines(num_s);
 
+% Plot improvement
+% x_min = min([pr(1), pr_new(1), p_int(1,1), p_int(1,2), p_int(1,3), p_int(1,4), p_int_new(1,1), ...
+%             p_int_new(1,2), p_int_new(1,3), p_int_new(1,4)]) - 10;
+% x_max = max([pr(1), pr_new(1), p_int(1,1), p_int(1,2), p_int(1,3), p_int(1,4), p_int_new(1,1), ...
+%             p_int_new(1,2), p_int_new(1,3), p_int_new(1,4)]) + 10;
+
 % Plane plot
-[xp, yp] = meshgrid(-15:0.5:15, -15:0.5:15);
+[xp, yp] = meshgrid(-17:0.5:17, -17:0.5:17);
 if abs(n(3)) > 1e-6
     fprintf('\n!!!Attivazione if disegno del piano!!!\n');
     zp = (-n(1)*(xp-pplane(1)) - n(2)*(yp-pplane(2)))/n(3) + pplane(3);
@@ -305,7 +318,7 @@ p_proj_new = pr_new - dot(n, pr_new - pplane) * n; % h projection
 if areDifferent(norm(p_proj_new - pr_new), abs(h_real_new), tolerance)
     fprintf('P projection x: %.0f, y: %.0f, z: %.0f\n', p_proj_new(1), p_proj_new(2), p_proj_new(3));
     fprintf('Valore h = %.4f projected\n', norm(p_proj_new - pr_new));
-    fprintf('Error nel calcolo della h nuova\n');
+    error('Error nel calcolo della h nuova\n');
 end
 
 plot3([pr_new(1), p_proj_new(1)], [pr_new(2), p_proj_new(2)], [pr_new(3), p_proj_new(3)], ...
