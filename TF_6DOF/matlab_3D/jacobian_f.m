@@ -8,6 +8,8 @@ function F = jacobian_f(x, u, Ts, num_n, psi, wRt, wRr)
     THETA = 5;    M_THETA = 6;
     IND_P = 6;    M_IND_P = 7;  I_IND_P = 3;
     IND_Q = 7;    M_IND_Q = 8;  I_IND_Q = 4; 
+    fprintf('       jacobian F Covariance\n')
+
     %% Computations
     F = eye(num_n);
     v = 0;
@@ -19,12 +21,11 @@ function F = jacobian_f(x, u, Ts, num_n, psi, wRt, wRr)
     h_beta = rotx(pi) * (rotx(x(ALPHA)))' * (d_roty(x(BETA)))' * wRr*r_speedTs;
     F(IND_H, ALPHA) = h_alpha(3);
     F(IND_H, BETA) = h_beta(3);
-    %% ---- CONTRTOLLARE SE GIUSTO IL TERMINE FINALE ---- %
-    h_phi = (wRt' * (rotz(psi)*roty(x(THETA))*d_rotx(x(PHI))) * r_speedTs)*x(IND_P);
-    h_theta = (wRt' * (rotz(psi)*d_roty(x(THETA))*rotx(x(PHI))) * r_speedTs)*x(IND_Q);
+    %% ---- CONTRTOLLARE SE GIUSTO IL TERMINE FINALE ---- % RIMETTEREEE
+    h_phi = (wRt' * (rotz(psi)*roty(x(THETA))*d_rotx(x(PHI))) * r_speedTs); %*x(IND_P);
+    h_theta = (wRt' * (rotz(psi)*d_roty(x(THETA))*rotx(x(PHI))) * r_speedTs); %*x(IND_Q);
     F(IND_H, PHI) = h_phi(3);
     F(IND_H, THETA) = h_theta(3);
-    % p and q are 0
 
     %% Derivatives for the angles
     F(PHI, IND_P) = Ts;

@@ -9,9 +9,9 @@ function [tau, p_err, int_err] = input_control(x, Ts, prev_err, int_err, v_surge
     IND_Q = 7;    M_IND_Q = 8;  I_IND_Q = 4;  
 
     C_U = 1;    C_H = 2;    C_ROLL = 3;     C_PITCH = 4;
-
+    fprintf('       Input Control\n');
     %% SYSTEM PARAMETERS
-    u_star = 0.2;         % [m/s] Constant surge velocity
+    u_star = 0.1;         % [m/s] Constant surge velocity
     tau_u_max = 10;       % [m/s] Robot surge velocity saturation
     tau_w_max = 10;       % [m/s] Vertical velocity saturation
     tau_p_max = 5;        % Roll velocity saturation
@@ -141,8 +141,8 @@ function [tau, p_err, int_err] = input_control(x, Ts, prev_err, int_err, v_surge
     p_err = [prev_err_u, prev_err_h, prev_err_r, prev_err_p]';
     int_err = [int_err_u, int_err_h, int_err_r, int_err_p]';
 
-    fprintf('Pred Surge: %.2f m | Error: %.2f | w_ref: %.3f m/s\n', v_surge, err_u, tau_u);
+    fprintf('Pred Surge: %.2f m | Error: %.2f | u_ref: %.3f m/s\n', v_surge, err_u, tau_u);
     fprintf('Pred Alt: %.2f m | Error: %.2f | w_ref: %.3f m/s\n', x(1), err_h, tau_w);
-    fprintf('Pred roll: %.2f | Error: %.2f \n', rad2deg(x(PHI)), rad2deg(err_r));
-    fprintf('Pred Pitch: %.2f | Error: %.2f \n', rad2deg(x(THETA)), rad2deg(err_p));
+    fprintf('Pred roll: %.2f | Error: %.2f | p_ref: %.3f\n', rad2deg(x(PHI)), rad2deg(err_r), tau_p);
+    fprintf('Pred Pitch: %.2f | Error: %.2f | p_ref: %.3f\n', rad2deg(x(THETA)), rad2deg(err_p), tau_q);
 end

@@ -14,7 +14,7 @@ psi = 0;
 if use_specific_angles
     % terrain
     beta = pi/10;
-    alpha = 0;
+    alpha = pi/7;
     % robot
     theta = 0;
     phi = 0;
@@ -39,10 +39,10 @@ fprintf('phi: %.2f\n', rad2deg(phi));
 %% speed definitions
 if use_specific_speed
     surge = 2000;
-    sway = 0;
-    heave = 0;
+    sway = 1700;
+    heave = 500;
     p = (pi/7)/Ts;
-    q = 0;%(pi/10)/Ts; 
+    q = (pi/10)/Ts; 
 else
     % random angles generator
     lower_bound = -2000;
@@ -227,13 +227,11 @@ end
 %% Check of the results the states
 % controllo senza terreno
 s_speed = (wRt)' * w_speed;
-% check semplificato a geometria
-% ---- ATTENZIONE VANNO USATI VECCHI VALORI DEGLI ANGOLI CON
-%                                           SEMPLIFICAZIONE ---- %
-delta = (cos(alpha)*sin(theta_old - beta))*r_speed(1) + ...
-         (sin(alpha)*cos(phi_old)-cos(alpha)*sin(phi_old)*cos(beta-theta_old))*r_speed(2) + ...
-         (-sin(alpha)*sin(phi_old)-cos(alpha)*cos(phi_old)*cos(beta-theta_old))*r_speed(3);
-deltah = delta*Ts
+h_rot = h_real + s_speed(3) * Ts; 
+if areDifferent(h_real_new, h_rot, tolerance)
+    fprintf('h from rotation matrices: %.4f\n', h_rot);
+    error('Errore nel calcolo della differenza di altezza');
+end
 if s_speed(3) < 0
     fprintf('h diminuisce di %.4f\n', -s_speed(3)*Ts);
 else
@@ -332,7 +330,7 @@ zlabel('Asse Z');
 set(gca, 'YDir', 'reverse', 'ZDir', 'reverse');
 
 title('AUV Situation with Sensors');
-% legend('Location', 'best');
+legend('Location', 'best');
 axis equal; 
 hold off;
 

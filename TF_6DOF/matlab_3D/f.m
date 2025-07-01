@@ -9,10 +9,10 @@ function [x_next, wRt, wRr] = f(x, u, Ts, psi)
     THETA = 5;    M_THETA = 6;
     IND_P = 6;    M_IND_P = 7;  I_IND_P = 3;
     IND_Q = 7;    M_IND_Q = 8;  I_IND_Q = 4;    
-    
+    fprintf('       f State Prediction\n');
     %% Rotation Computation
     % Terrain
-    wRt = (rotz(psi)*roty(x(BETA))*rotx(x(ALPHA)))*(rotx(pi))';
+    wRt = (rotz(0)*roty(x(BETA))*rotx(x(ALPHA)))*(rotx(pi)');
 
     % robot
     wRr = rotz(psi)*roty(x(THETA))*rotx(x(PHI));
@@ -37,8 +37,8 @@ function [x_next, wRt, wRr] = f(x, u, Ts, psi)
     q_new = x(IND_Q);
     
     % Display the predicted state for debugging or monitoring purposes.
-    fprintf('Predicted (f) h: %.2f m | b: %.2f | pitch: %.2f | q: %.2f\n', h_new, rad2deg(beta_new), rad2deg(theta_new), rad2deg(q_new));
-    
+    fprintf('Predicted h: %.2f m | a: %.2f | b: %.2f | phi: %.2f ', h_new, rad2deg(alpha_new), rad2deg(beta_new), rad2deg(phi_new));
+    fprintf('| theta: %.2f | p: %.2f | q: %.2f\n', rad2deg(theta_new), rad2deg(p_new), rad2deg(q_new));
     %% Send info
     % ---- x0 = [h, alpha, beta, phi, theta, p, q] ---- %
     x_next = [h_new, alpha_new, beta_new, phi_new theta_new, p_new, q_new]';
