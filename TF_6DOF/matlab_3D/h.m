@@ -1,4 +1,4 @@
-function z = h(x, s, num_s, num_m, wRt, n)
+function z = h(x, s, num_s, num_m, n)
     % Observation function of the predicted measuraments
     fprintf('       h output function\n');
     %% Definition

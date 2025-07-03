@@ -13,10 +13,10 @@ psi = 0;
 %% Angle defintions
 if use_specific_angles
     % terrain
-    beta = pi/10;
+    beta = 0;
     alpha = pi/7;
     % robot
-    theta = 0;
+    theta = pi/10;
     phi = 0;
 else
     % random angles generator
@@ -38,11 +38,11 @@ fprintf('phi: %.2f\n', rad2deg(phi));
 
 %% speed definitions
 if use_specific_speed
-    surge = 2000;
-    sway = 1700;
-    heave = 500;
-    p = (pi/7)/Ts;
-    q = (pi/10)/Ts; 
+    surge = 4000;
+    sway = 4000;
+    heave = 0;
+    p = 0;
+    q = 0; 
 else
     % random angles generator
     lower_bound = -2000;
@@ -72,10 +72,10 @@ wRt = (rotz(0)*roty(beta)*rotx(alpha))*(rotx(pi))';
 %% Robot Parameters
 pr = [0, 0, 0]';
 num_s = 4;
-Gamma = -pi/8; % y1 angle (rear)
-Lambda = pi/8; % y2 angle (front)
-Eta = -pi/8; % y3 angle (left)
-Zeta = pi/8; % y4 angle (right)
+Gamma = -pi/8; % y1 angle (rear) sud
+Lambda = pi/8; % y2 angle (front) nord
+Eta = pi/8; % y3 angle (left) ovest
+Zeta = -pi/8; % y4 angle (right) est
 
 r_speed = [surge, sway, heave, p, q, 0]'; 
 % Trasformation with robot frame
@@ -86,12 +86,18 @@ x_dir = wRr * [1; 0; 0];
 y_dir = wRr * [0; 1; 0];
 z_dir = wRr * [0; 0; 1];
 
-s = zeros(3,num_s);
-s(:, 1) = [-sin(Gamma + theta), 0, cos(Gamma + theta)]';
-s(:, 2) = [-sin(Lambda + theta), 0, cos(Lambda + theta)]';
-s(:, 3) = [0, -sin(Eta + phi), cos(Eta + phi)]';
-s(:, 4) = [0, -sin(Zeta + phi), cos(Zeta + phi)]';
+r_s = zeros(3,num_s);
+s = r_s;
+r_s(:, 1) = [sin(Gamma), 0, cos(Gamma)]';
+r_s(:, 2) = [sin(Lambda), 0, cos(Lambda)]';
+r_s(:, 3) = [0, -sin(Eta), cos(Eta)]';
+r_s(:, 4) = [0, -sin(Zeta), cos(Zeta)]';
 % check of consistency for the sensors
+% Trasformation in world frame
+for k = 1:num_s
+    s(:,k) = wRr*r_s(:,k);
+end
+
 for k = 1:num_s
     if (norm(s(:,k)) ~= 1)
         fprintf('ERROR: norm sensor k = %.0f is not 1', k);
@@ -102,7 +108,7 @@ end
 %  normal to the plane
 n = wRt*n0; % in world frame
 fprintf('\nVettore superficie\n');
-fprintf('n_yx: [%.4f; %.4f; %.4f]\n', n(1), n(2), n(3));
+fprintf('n: [%.4f; %.4f; %.4f]\n', n(1), n(2), n(3));
 if (norm(n) ~= 1)
     fprintf('ALERT: norm n is not 1\n');
 end
@@ -175,6 +181,10 @@ wRr = rotz(psi)*roty(theta)*rotx(phi);
 t_star_new = zeros(1, num_s);
 p_int_new = zeros(3, num_s);
 y_new = zeros(1, num_s);
+% Trasformation in world frame
+for k = 1:num_s
+    s(:,k) = wRr*r_s(:,k);
+end
 for k = 1:num_s
     if dot(s(:,k),n) == 0
         error('The line s and the plane n_yx are parallel');
@@ -292,14 +302,14 @@ plot3([pr_new(1), p_z_dir(1)], [pr_new(2), p_z_dir(2)], [pr_new(3), p_z_dir(3)],
 for k = 1:num_s
     plot3([pr(1), p_int(1, k)], [pr(2), p_int(2, k)], [pr(3), p_int(3, k)], ...
           'LineWidth', 2, 'Color', colors(k, :), ...
-          'DisplayName', sprintf('Segmento %d', k));
+          'DisplayName', sprintf('y%d', k));
     plot3([pr_new(1), p_int_new(1, k)], [pr_new(2), p_int_new(2, k)], [pr_new(3), p_int_new(3, k)], ...
           'LineWidth', 2, 'Color', colors(k, :), ...
-          'DisplayName', sprintf('Segmento %d', k));
+          'DisplayName', sprintf('y %d', k));
     plot3(p_int(1, k), p_int(2, k), p_int(3, k), 'x', 'MarkerFaceColor', colors(k, :), ...
-            'MarkerSize', 8, 'LineWidth', 2, 'DisplayName', sprintf('Intersezione sensor %d', k));
+            'MarkerSize', 8, 'LineWidth', 2, 'DisplayName', sprintf('Intersezione y%d', k));
     plot3(p_int_new(1, k), p_int_new(2, k), p_int_new(3, k), 'x', 'MarkerFaceColor', colors(k, :), ...
-            'MarkerSize', 10, 'LineWidth', 2, 'DisplayName', sprintf('Intersezione sensor %d', k));
+            'MarkerSize', 10, 'LineWidth', 2, 'DisplayName', sprintf('Intersezione y%d', k));
 end
 
 % Punto iniziale

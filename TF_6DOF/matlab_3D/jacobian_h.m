@@ -1,4 +1,4 @@
-function H = jacobian_h(x, s, num_m, num_n, num_s, n, n0, Gamma, Lambda, Eta, Zeta)
+function H = jacobian_h(x, s, num_m, num_n, num_s, n, n0, r_s, psi)
     % Jacobian of the observation function with respect to x
     fprintf('       Jacobian H covariance\n');
     %% Definition
@@ -12,27 +12,19 @@ function H = jacobian_h(x, s, num_m, num_n, num_s, n, n0, Gamma, Lambda, Eta, Ze
 
     %% Computations
     H = zeros(num_m, num_n);
-    dn_alpha_t = (roty(x(BETA)) * (d_rotx(x(ALPHA)))' * n0)';
-    dn_beta_t = (d_roty(x(BETA))' * (rotx(x(ALPHA))) * n0)';
-    d_s(:, 1) = [-cos(Gamma + x(THETA,1)), 0, -sin(Gamma + x(THETA,1))]';
-    d_s(:, 2) = [-cos(Lambda + x(THETA,1)), 0, -sin(Lambda + x(THETA,1))]';
-    d_s(:, 3) = [0, -cos(Eta + x(PHI,1)), -sin(Eta + x(PHI,1))]';
-    d_s(:, 4) = [0, -cos(Zeta + x(PHI,1)), -sin(Zeta + x(PHI,1))]';
-
+    new_n0 = rotx(pi)'*n0;
+    dn_alpha_t = (roty(x(BETA)) * (d_rotx(x(ALPHA))) * new_n0)';
+    dn_beta_t = (d_roty(x(BETA)) * (rotx(x(ALPHA))) * new_n0)';
+    ds_phi = rotz(psi) * roty(x(THETA)) * d_rotx(x(PHI));%*x(IND_P)
+    ds_theta = rotz(psi) * d_roty(x(THETA)) * rotx(x(PHI));%*x(IND_Q)
 
     for j = 1:num_s
         % Compute the observation Jacobian for each sensor
         H(j, IND_H) = 1 / (n' * s(:, j)); % Derivative with respect to h
         H(j, ALPHA) = -(x(IND_H) * dn_alpha_t * s(:, j)) / (n' * s(:, j))^2;
         H(j, BETA) = -(x(IND_H) * dn_beta_t * s(:, j)) / (n' * s(:, j))^2;
-        if j <= 2
-            H(j, M_PHI) = 0;
-            H(j, M_THETA) = -(x(IND_H) * n' * d_s(:, j)) / (n' * s(:, j))^2;
-            
-        else
-            H(j, M_PHI) = -(x(IND_H) * n' * d_s(:, j)) / (n' * s(:, j))^2;
-            H(j, M_THETA) = 0;
-        end
+        H(j,PHI) = -(x(IND_H) * n' * (ds_phi*r_s(:, j))) / (n' * s(:, j))^2;
+        H(j,THETA) = -(x(IND_H) * n' * (ds_theta*r_s(:, j))) / (n' * s(:, j))^2;
     end
     H(M_PHI, PHI) = 1;     % Derivative with respect to phi
     H(M_THETA, THETA) = 1; % Derivative with respect to theta

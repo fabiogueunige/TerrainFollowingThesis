@@ -1,4 +1,4 @@
-function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, Gamma, Lambda, Eta, Zeta, num_s, ...
+function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, ...
                                     v, Ts, pr_old, ph_o, th_o) 
     %% Definitions
     IND_H = 1;                  I_IND_U = 1;
@@ -35,13 +35,10 @@ function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, Gamma, Lambda
     
     %% Sensor Definition
     % Calcolando quello reale del robot per avere misure affidabili
-    s = zeros(3, num_s);
-    s(:, 1) = [-sin(Gamma + thm), 0, cos(Gamma + thm)]';
-    s(:, 2) = [-sin(Lambda + thm), 0, cos(Lambda + thm)]';
-    s(:, 3) = [0, -sin(Eta + phm), cos(Eta + phm)]';
-    s(:, 4) = [0, -sin(Zeta + phm), cos(Zeta + phm)]';
+    s = zeros(3,num_s);
     % check of consistency for the sensors
     for j = 1:num_s
+        s(:,j) = wRr*r_s(:,j);
         if (norm(s(:,j)) ~= 1)
             fprintf('ERROR: norm sensor k = %.0f is not 1\n', j);
         end
@@ -74,7 +71,7 @@ function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, Gamma, Lambda
     %% Sending Info's
     ymes = [y(1); y(2); y(3); y(4); phm; thm; p_gyr; q_gyr];
     h_real = (n'*(pr - pplane))/(norm(n));
-    fprintf('h reale: %.2f | y1m: %.2f | y2m: %.3f | y3m: %.2f | y4m: %.3f\n', h_real, y(1), y(2), y(3), y(4));
+    fprintf('h reale: %.3f | y1m: %.3f | y2m: %.3f | y3m: %.3f | y4m: %.3f\n', h_real, y(1), y(2), y(3), y(4));
     fprintf('phi mes new: %.2f | p_gyr: %.2f \n', rad2deg(phm), p_gyr);
     fprintf('theta mes new: %.2f | q_gyr: %.2f \n', rad2deg(thm), q_gyr);
     fprintf('Punto x: %.2f | y: %.2f | z: %.2f\n', pr(1), pr(2), pr(3));

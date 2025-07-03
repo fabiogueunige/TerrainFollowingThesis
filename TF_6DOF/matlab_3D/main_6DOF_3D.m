@@ -62,8 +62,13 @@ wRr = zeros(3,3,N);                          % robot in world rotation
 
 Gamma = -pi/8;                             % y1 angle (rear)
 Lambda = pi/8;                             % y2 angle (front)
-Eta = -pi/8;                               % y3 angle (left)
-Zeta = pi/8;                               % y4 angle (right)
+Eta = pi/8;                                % y3 angle (left)
+Zeta = -pi/8;                              % y4 angle (right)
+r_s = zeros(d_dim, num_s);
+r_s(:, 1) = [sin(Gamma), 0, cos(Gamma)]';  % y1 versor (rear)
+r_s(:, 2) = [sin(Lambda), 0, cos(Lambda)]';% y2 versor (front)
+r_s(:, 3) = [0, -sin(Eta), cos(Eta)]';     % y3 versor (left)
+r_s(:, 4) = [0, -sin(Zeta), cos(Zeta)]';   % y4 versor (right)
 
 % Control Parametrs
 speed0 = [0, 0, 0, 0]'; % surge, heave, p and q.  % (sway)? %
@@ -102,8 +107,8 @@ for k = 2:N
     %% EKF: Real Measurement
     % Measurement noise
     v = mvnrnd(zeros(m_dim,1), R)'; 
-    [z_meas(:,k), hmes, prob(:,k)] = measurament(alpha, beta, pplane, n0, Gamma, Lambda, Eta, Zeta, num_s, ...
-                                                u(:,k-1), Ts, prob(:,k-1), z_meas(M_PHI,k-1), z_meas(M_THETA,k-1));
+    [z_meas(:,k), hmes, prob(:,k)] = measurament(alpha, beta, pplane, n0, r_s, num_s, u(:,k-1), Ts, prob(:,k-1), ...
+                                                   z_meas(M_PHI,k-1), z_meas(M_THETA,k-1));
     z_meas(:,k) = z_meas(:,k); % + v;
 
     %% EKF: True State update
@@ -122,11 +127,9 @@ for k = 2:N
 
     %% Sensors Computation
     % Expected sensor values for the expected output
-    s(:, 1) = [-sin(Gamma + x_pred(THETA)), 0, cos(Gamma + x_pred(THETA))]';
-    s(:, 2) = [-sin(Lambda + x_pred(THETA)), 0, cos(Lambda + x_pred(THETA))]';
-    s(:, 3) = [0, -sin(Eta + x_pred(PHI)), cos(Eta + x_pred(PHI))]';
-    s(:, 4) = [0, -sin(Zeta + x_pred(PHI)), cos(Zeta + x_pred(PHI))]';
     for j = 1:num_s
+        % Update sensor value
+        s(:,j) = wRr(:,:,k) * r_s(:,j);
         if (norm(s(:,j)) ~= 1)
             fprintf('ALERT: norm of the !predicted! SENSOR j = %.0f is not 1\n', j);
         end
@@ -140,7 +143,7 @@ for k = 2:N
     end
    
     %% EKF: Update
-    H(:,:,k) = jacobian_h(x_pred(:,k), s, m_dim, n_dim, num_s, n(:,k), n0, Gamma, Lambda, Eta, Zeta);   % Observation Jacobian
+    H(:,:,k) = jacobian_h(x_pred(:,k), s, m_dim, n_dim, num_s, n(:,k), n0, r_s, psi);   % Observation Jacobian
     if any(isnan(H(:,:,k)))
         save('H_values.mat', 'H');
         error('Esecuzione interrotta: H contiene valori NaN. Istante %0.f', k);
@@ -153,14 +156,12 @@ for k = 2:N
     end
     
     % Measurament prediction
-    z_pred(:,k) = h(x_pred(:,k), s, num_s, m_dim, wRt(:,:,k), n(:,k));      
+    z_pred(:,k) = h(x_pred(:,k), s, num_s, m_dim, n(:,k));      
 
     %% EKF: State Update
     x_est(:,k) = x_pred(:,k) + K(:,:,k) * (z_meas(:,k) - z_pred(:,k));
     P(:,:,k) = (eye(n_dim) - K(:,:,k) * H(:,:,k)) * P_pred(:,:,k);
 end
-
-
 % save('H_values.mat', 'H');
 % save('K_values.mat', 'K');
 % save('P_pre_values.mat', 'P_pred');
