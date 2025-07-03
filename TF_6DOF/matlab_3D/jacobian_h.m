@@ -2,13 +2,12 @@ function H = jacobian_h(x, s, num_m, num_n, num_s, n, n0, r_s, psi)
     % Jacobian of the observation function with respect to x
     fprintf('       Jacobian H covariance\n');
     %% Definition
-    IND_H = 1;                  I_IND_U = 1;
-    ALPHA = 2;                  I_IND_W = 2;
+    IND_H = 1;                  
+    ALPHA = 2;                  
     BETA = 3;
-    PHI = 4;      M_PHI = 5;
-    THETA = 5;    M_THETA = 6;
-    IND_P = 6;    M_IND_P = 7;  I_IND_P = 3;
-    IND_Q = 7;    M_IND_Q = 8;  I_IND_Q = 4;    
+    PHI = 4;        M_PHI = 5;    
+    THETA = 5;      M_THETA = 6;  
+    I_IND_U = 1;    I_IND_W = 2;    I_IND_P = 3;    I_IND_Q = 4;   
 
     %% Computations
     H = zeros(num_m, num_n);
@@ -28,6 +27,6 @@ function H = jacobian_h(x, s, num_m, num_n, num_s, n, n0, r_s, psi)
     end
     H(M_PHI, PHI) = 1;     % Derivative with respect to phi
     H(M_THETA, THETA) = 1; % Derivative with respect to theta
-    H(M_IND_P, IND_P) = 1; % Derivative with respect to p
-    H(M_IND_Q, IND_Q) = 1; % Derivative with respect to q   
+    % H(M_IND_P, IND_P) = 1; % Derivative with respect to p
+    % H(M_IND_Q, IND_Q) = 1; % Derivative with respect to q  
 end

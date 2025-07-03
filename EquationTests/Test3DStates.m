@@ -13,8 +13,8 @@ psi = 0;
 %% Angle defintions
 if use_specific_angles
     % terrain
-    beta = 0;
-    alpha = pi/7;
+    beta = pi/10;
+    alpha = pi/10;
     % robot
     theta = pi/10;
     phi = 0;
@@ -111,6 +111,8 @@ fprintf('\nVettore superficie\n');
 fprintf('n: [%.4f; %.4f; %.4f]\n', n(1), n(2), n(3));
 if (norm(n) ~= 1)
     fprintf('ALERT: norm n is not 1\n');
+    n_norm = n;
+    n = n_norm / norm(n_norm);
 end
 
 %% Sensor Values
@@ -262,12 +264,6 @@ box on;
 p_proj = pr - dot(n, pr - pplane) * n; % h projection
 colors = lines(num_s);
 
-% Plot improvement
-% x_min = min([pr(1), pr_new(1), p_int(1,1), p_int(1,2), p_int(1,3), p_int(1,4), p_int_new(1,1), ...
-%             p_int_new(1,2), p_int_new(1,3), p_int_new(1,4)]) - 10;
-% x_max = max([pr(1), pr_new(1), p_int(1,1), p_int(1,2), p_int(1,3), p_int(1,4), p_int_new(1,1), ...
-%             p_int_new(1,2), p_int_new(1,3), p_int_new(1,4)]) + 10;
-
 % Plane plot
 [xp, yp] = meshgrid(-17:0.5:17, -17:0.5:17);
 if abs(n(3)) > 1e-6
@@ -332,6 +328,10 @@ end
 plot3([pr_new(1), p_proj_new(1)], [pr_new(2), p_proj_new(2)], [pr_new(3), p_proj_new(3)], ...
       'k--', 'LineWidth', 2, 'DisplayName', 'Altitude h)');
 plot3(p_proj_new(1), p_proj_new(2), p_proj_new(3), 'kd', 'MarkerSize', 10, 'LineWidth', 2, 'DisplayName', 'Point of proj h new');
+
+% Normal to the plane
+quiver3(p_proj_new(1), p_proj_new(2), p_proj_new(3), n(1), n(2), n(3), 'r', 'LineWidth', 3, 'MaxHeadSize', 5);
+quiver3(p_proj(1), p_proj(2), p_proj(3), n(1), n(2), n(3), 'r', 'LineWidth', 3, 'MaxHeadSize', 5);
 
 xlabel('Asse X');
 ylabel('Asse Y');

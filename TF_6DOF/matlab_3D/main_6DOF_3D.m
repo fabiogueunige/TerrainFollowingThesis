@@ -1,23 +1,24 @@
 clc; clear; close all;
 addpath('rotation');
+addpath('visualization');
+
 %% Definition
-IND_H = 1;                  I_IND_U = 1;
-ALPHA = 2;                  I_IND_W = 2;
+IND_H = 1;                  
+ALPHA = 2;                  
 BETA = 3;
-PHI = 4;      M_PHI = 5;
-THETA = 5;    M_THETA = 6;
-IND_P = 6;    M_IND_P = 7;  I_IND_P = 3;
-IND_Q = 7;    M_IND_Q = 8;  I_IND_Q = 4;    
+PHI = 4;        M_PHI = 5;    
+THETA = 5;      M_THETA = 6;  
+I_IND_U = 1;    I_IND_W = 2;    I_IND_P = 3;    I_IND_Q = 4;
 
 %% Filter Parameters
 Ts = 0.001;         % Sampling time [s]
-Tf = 20;            % Final time [s]
+Tf = 50;            % Final time [s]
 time = 0:Ts:Tf;     % Time vector
 N = length(time);   % Number of iterations
 
 %% Matrix Dimensions
-n_dim = 7;          % Number of states
-m_dim = 8;          % Number of measurements
+n_dim = 5;          % Number of states
+m_dim = 6;          % Number of measurements
 l_dim = 4;          % Number of inputs % (no v for now)
 d_dim = 3;          % world space total dimensions
 num_s = 4;          % number of echosonar
@@ -34,29 +35,24 @@ z_meas = zeros(m_dim, N);      % Measurements
 u = zeros(l_dim, N);           % Known inputs
 tau_star = zeros(l_dim, N);    % Desired input
 u_dot = zeros(l_dim,N);        % AUV acceleration
-p_err = zeros(1,l_dim);        % Proportional error
-i_err = zeros(1,l_dim);        % Integral error
-H = zeros(m_dim, n_dim, N);    % Covariance output matrix storage
-K = zeros(n_dim, m_dim, N);    % Kalman gain storage
-P_pred = zeros(n_dim,n_dim,N); % Covariance prediction
-P = zeros(n_dim,n_dim, N);     % Covariance of the state
 z_pred = zeros(m_dim, N);      % Predicted output
 n = zeros(d_dim,N);            % Surface vector
-
+p_err = zeros(l_dim, N);       % Proportional error
+i_err = zeros(l_dim, N);       % Integral error
 
 %% Design Parameters
 % Terrain
-alpha = 0;
-beta = pi/10;
+alpha = pi/8;
+beta = pi/8;
 pplane = [0, 0, 10]';
 n0 = [0, 0, 1]'; % terrain frame
 wRt = zeros(3,3,N);
 
 % AUV Parameters 
-psi = 0;                                   % Robot yaw
+psi = 0;                                   % Robot yaw (may be controlled in fututre)
 s = zeros(3,num_s);                        % Robot echosonar
 % x0 = [h, alpha, beta, phi, theta, p, q]
-x0 = [10, alpha, beta, 0, 0, 0, 0]';       % True initial state 
+x0 = [10, alpha, beta, 0, 0]';       % True initial state 
 x0_est = zeros(n_dim, 1);                  % Estimated initial state
 wRr = zeros(3,3,N);                          % robot in world rotation
 
@@ -65,10 +61,10 @@ Lambda = pi/8;                             % y2 angle (front)
 Eta = pi/8;                                % y3 angle (left)
 Zeta = -pi/8;                              % y4 angle (right)
 r_s = zeros(d_dim, num_s);
-r_s(:, 1) = [sin(Gamma), 0, cos(Gamma)]';  % y1 versor (rear)
-r_s(:, 2) = [sin(Lambda), 0, cos(Lambda)]';% y2 versor (front)
-r_s(:, 3) = [0, -sin(Eta), cos(Eta)]';     % y3 versor (left)
-r_s(:, 4) = [0, -sin(Zeta), cos(Zeta)]';   % y4 versor (right)
+r_s(:, 1) = [-sin(Gamma), 0, -cos(Gamma)]';  % y1 versor (rear)
+r_s(:, 2) = [-sin(Lambda), 0, -cos(Lambda)]';% y2 versor (front)
+r_s(:, 3) = [0, sin(Eta), -cos(Eta)]';     % y3 versor (left)
+r_s(:, 4) = [0, sin(Zeta), -cos(Zeta)]';   % y4 versor (right)
 
 % Control Parametrs
 speed0 = [0, 0, 0, 0]'; % surge, heave, p and q.  % (sway)? %
@@ -76,9 +72,9 @@ speed0 = [0, 0, 0, 0]'; % surge, heave, p and q.  % (sway)? %
 
 %% EKF Start
 % covariance 
-P0(:,:,1) = diag([1, 0.08, 2, 0.09, 1, 0.08, 2]);
-P0(:,:,1) = P0(:,:,1) * (1.1);% + 2*rand);
-P(:,:,1) = P0(:,:,1);
+P0 = diag([1, 0.08, 2, 0.09, 1]);
+P0 = P0 * (1.1);% + 2*rand);
+P = P0;
 % State
 x_true(:,1) = x0;
 x_est(:,1) = x0_est;
@@ -89,14 +85,14 @@ for k = 2:N
     %% EKF: Input Control Computation
     if k == 2
         % Desired input
-        [tau_star(:,k-1), p_err, i_err] = input_control(x_est(:,k-1), Ts, p_err, i_err, speed0(1));
+        [tau_star(:,k-1), p_err(:,k), i_err(:,k)] = input_control(x_est(:,k-1), Ts, p_err(:,k-1), i_err(:,k-1), speed0(1));
         % % Tau to generate the desired inptut
         % tau = tau_generator(Ts, speed0, tau_star(:,k-1), tau0, speed0);
         % % Controller application
         % [u(:,k-1), u_dot(:,k-1)] = dynamic_model(tau, tau0, speed0, speed0, Ts);
         u(:,k-1) = tau_star(:,k-1); % tmp
     else
-        [tau_star(:,k-1), p_err, i_err] = input_control(x_est(:,k-1), Ts, p_err, i_err, u(1,k-2)); % Define input
+        [tau_star(:,k-1), p_err(:,k), i_err(:,k)] = input_control(x_est(:,k-1), Ts, p_err(:,k-1), i_err(:,k-1), u(1,k-2)); % Define input
         % % Computation of the tau
         % tau = tau_generator(Ts, u(:,k-2), tau_star(:,k-1), tau0, speed0);
         % % Controller application
@@ -108,13 +104,13 @@ for k = 2:N
     % Measurement noise
     v = mvnrnd(zeros(m_dim,1), R)'; 
     [z_meas(:,k), hmes, prob(:,k)] = measurament(alpha, beta, pplane, n0, r_s, num_s, u(:,k-1), Ts, prob(:,k-1), ...
-                                                   z_meas(M_PHI,k-1), z_meas(M_THETA,k-1));
-    z_meas(:,k) = z_meas(:,k); % + v;
+                                                   z_meas(M_PHI,k-1), z_meas(M_THETA,k-1), k, psi);
+    % z_meas(:,k) = z_meas(:,k) + v;
 
     %% EKF: True State update
     % w = mvnrnd(zeros(n_dim,1), Q)'; % Process noise
     % Desired state estimation (real one)
-    x_true(:,k) = [hmes, alpha, beta, z_meas(M_PHI,k), z_meas(M_THETA,k), u(I_IND_P,k-1), u(I_IND_Q,k-1)]'; 
+    x_true(:,k) = [hmes, alpha, beta, alpha, beta]'; % z_meas(M_PHI,k), z_meas(M_THETA,k) , u(I_IND_P,k-1), u(I_IND_Q,k-1) 
 
     %% EKF: Prediction
     % per chat non ci vuole w nella x_pred !!!!
@@ -123,7 +119,7 @@ for k = 2:N
     % Dynamics Jacobian
     F = jacobian_f(x_est(:,k-1), u(:,k-1), Ts, n_dim, psi, wRt(:,:,k), wRr(:,:,k)); 
     % Covariance prediction
-    P_pred(:,:,k) = F * P(:,:,k-1) * F' + Q;
+    P_pred = F * P * F' + Q;
 
     %% Sensors Computation
     % Expected sensor values for the expected output
@@ -138,20 +134,20 @@ for k = 2:N
     %% Norm to the terrain
     n(:,k) = wRt(:,:,k)*n0;
     if (norm(n(:,k)) ~= 1)
-        fprintf('ALERT: norm n !predicted! is not 1\n');
+        fprintf('ALERT: norm n !predicted! is not 1 -> Normalizing\n');
+        n_norm = n(:,k);
+        n(:,k) = n_norm / norm(n_norm);
         fprintf('n: [%.4f; %.4f; %.4f]\n', n(1,k), n(2,k), n(3,k));
     end
    
-    %% EKF: Update
-    H(:,:,k) = jacobian_h(x_pred(:,k), s, m_dim, n_dim, num_s, n(:,k), n0, r_s, psi);   % Observation Jacobian
-    if any(isnan(H(:,:,k)))
-        save('H_values.mat', 'H');
+    %% EKF: Gain and Prediction Update
+    H = jacobian_h(x_pred(:,k), s, m_dim, n_dim, num_s, n(:,k), n0, r_s, psi);   % Observation Jacobian
+    if any(isnan(H(:)))
         error('Esecuzione interrotta: H contiene valori NaN. Istante %0.f', k);
     end
     fprintf('       Kalman Gain\n');
-    K(:,:,k) = P_pred(:,:,k) * H(:,:,k)' / (H(:,:,k) * P_pred(:,:,k) * H(:,:,k)' + R); % Kalman Gain
-    if any(isnan(K(:,:,k)))
-        save('K_values.mat', 'K');
+    K = P_pred * H' / (H * P_pred * H' + R); % Kalman Gain
+    if any(isnan(K(:)))
         error('Esecuzione interrotta: K contiene valori NaN. Istante %0.f', k);
     end
     
@@ -159,13 +155,9 @@ for k = 2:N
     z_pred(:,k) = h(x_pred(:,k), s, num_s, m_dim, n(:,k));      
 
     %% EKF: State Update
-    x_est(:,k) = x_pred(:,k) + K(:,:,k) * (z_meas(:,k) - z_pred(:,k));
-    P(:,:,k) = (eye(n_dim) - K(:,:,k) * H(:,:,k)) * P_pred(:,:,k);
+    x_est(:,k) = x_pred(:,k) + K * (z_meas(:,k) - z_pred(:,k));
+    P = (eye(n_dim) - K * H) * P_pred;
 end
-% save('H_values.mat', 'H');
-% save('K_values.mat', 'K');
-% save('P_pre_values.mat', 'P_pred');
-% save('P_values.mat', 'P');
 
 %% Final Plot
 ttl = {'altitude', 'alpha', 'beta', 'phi', 'pitch', 'p', 'q'};

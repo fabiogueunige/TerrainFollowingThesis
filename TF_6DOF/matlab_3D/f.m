@@ -1,14 +1,13 @@
-function [x_next, wRt, wRr] = f(x, u, Ts, psi)
+function [x_next, wRt, wRr] = f(x, u_input, Ts, psi)
     %This function calculates the next state of the system based on the current state,
         % control input, and sampling time.    
     %% Definitions
-    IND_H = 1;                  I_IND_U = 1;
-    ALPHA = 2;                  I_IND_W = 2;
+    IND_H = 1;                  
+    ALPHA = 2;                  
     BETA = 3;
-    PHI = 4;      M_PHI = 5;
-    THETA = 5;    M_THETA = 6;
-    IND_P = 6;    M_IND_P = 7;  I_IND_P = 3;
-    IND_Q = 7;    M_IND_Q = 8;  I_IND_Q = 4;    
+    PHI = 4;        M_PHI = 5;    
+    THETA = 5;      M_THETA = 6;  
+    I_IND_U = 1;    I_IND_W = 2;    I_IND_P = 3;    I_IND_Q = 4;  
     fprintf('       f State Prediction\n');
     %% Rotation Computation
     % Terrain
@@ -19,7 +18,7 @@ function [x_next, wRt, wRr] = f(x, u, Ts, psi)
     
     % speed in terrain frame
     v = 0; % No attuation in sway for now
-    w_speed = wRr * [u(I_IND_U); v; u(I_IND_W)];
+    w_speed = wRr * [u_input(I_IND_U); v; u_input(I_IND_W)];
     s_speed = (wRt)' * w_speed;
 
     %% Update of the values
@@ -30,16 +29,13 @@ function [x_next, wRt, wRr] = f(x, u, Ts, psi)
     alpha_new = wrapToPi(x(ALPHA));
     beta_new = wrapToPi(x(BETA));
     % Change of the angles of the robot
-    phi_new = wrapToPi(x(PHI) + x(IND_P)*Ts);
-    theta_new = wrapToPi(x(THETA) + x(IND_Q)*Ts);
-    % Change of the angular velocities
-    p_new = x(IND_P);
-    q_new = x(IND_Q);
+    phi_new = wrapToPi(x(PHI) + u_input(I_IND_P)*Ts);
+    theta_new = wrapToPi(x(THETA) + u_input(I_IND_Q)*Ts);
     
     % Display the predicted state for debugging or monitoring purposes.
-    fprintf('Predicted h: %.2f m | a: %.2f | b: %.2f | phi: %.2f ', h_new, rad2deg(alpha_new), rad2deg(beta_new), rad2deg(phi_new));
-    fprintf('| theta: %.2f | p: %.2f | q: %.2f\n', rad2deg(theta_new), rad2deg(p_new), rad2deg(q_new));
+    fprintf('Predicted h: %.2f m | a: %.2f | b: %.2f ', h_new, rad2deg(alpha_new), rad2deg(beta_new));
+    fprintf('| phi: %.2f | theta: %.2f\n', rad2deg(phi_new), rad2deg(theta_new));
     %% Send info
-    % ---- x0 = [h, alpha, beta, phi, theta, p, q] ---- %
-    x_next = [h_new, alpha_new, beta_new, phi_new theta_new, p_new, q_new]';
+    % ---- x0 = [h, alpha, beta, phi, theta] ---- %
+    x_next = [h_new, alpha_new, beta_new, phi_new theta_new]';
 end

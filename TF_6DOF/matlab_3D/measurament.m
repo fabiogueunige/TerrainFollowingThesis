@@ -1,5 +1,5 @@
 function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, ...
-                                    v, Ts, pr_old, ph_o, th_o) 
+                                    v, Ts, pr_old, ph_o, th_o, k, psi) 
     %% Definitions
     IND_H = 1;                  I_IND_U = 1;
     ALPHA = 2;                  I_IND_W = 2;
@@ -14,12 +14,10 @@ function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, 
     wRt = (rotz(0)*roty(beta)*rotx(alpha))*(rotx(pi))';
     n = wRt*n0; % in world frame
     if (norm(n) ~= 1)
-        fprintf('ALERT: norm n is not 1\n');
+        n_norm = n;
+        n = n_norm / norm(n_norm);
         fprintf('n: [%.4f; %.4f; %.4f]\n', n(1), n(2), n(3));
     end
-
-    %% AUV Parameter
-    psi = 0;
     
     %% Real Robot angle and position update
     % Valid because no noise
@@ -30,7 +28,7 @@ function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, 
     
     % Trasformation update
     wRr = rotz(psi)*roty(thm)*rotx(phm);
-    w_speed = wRr * [v(1); 0; v(2)];
+    w_speed = wRr * [v(I_IND_U); 0; v(I_IND_W)];
     pr = pr_old + w_speed*Ts;
     
     %% Sensor Definition
@@ -68,8 +66,13 @@ function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, 
         end
     end
 
+        %% Plot visualization
+    if k == 2 || mod(k, 5000) == 0
+        m_visualization(pr, pplane, n, num_s, p_int, wRr, k);
+    end
+
     %% Sending Info's
-    ymes = [y(1); y(2); y(3); y(4); phm; thm; p_gyr; q_gyr];
+    ymes = [y(1); y(2); y(3); y(4); phm; thm]; %  p_gyr; q_gyr
     h_real = (n'*(pr - pplane))/(norm(n));
     fprintf('h reale: %.3f | y1m: %.3f | y2m: %.3f | y3m: %.3f | y4m: %.3f\n', h_real, y(1), y(2), y(3), y(4));
     fprintf('phi mes new: %.2f | p_gyr: %.2f \n', rad2deg(phm), p_gyr);

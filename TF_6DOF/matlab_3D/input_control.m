@@ -1,17 +1,16 @@
 function [tau, p_err, int_err] = input_control(x, Ts, prev_err, int_err, v_surge)
     %% Definitions
-    IND_H = 1;                  I_IND_U = 1;
-    ALPHA = 2;                  I_IND_W = 2;
+    IND_H = 1;                  
+    ALPHA = 2;                  
     BETA = 3;
-    PHI = 4;      M_PHI = 5;
-    THETA = 5;    M_THETA = 6;
-    IND_P = 6;    M_IND_P = 7;  I_IND_P = 3;
-    IND_Q = 7;    M_IND_Q = 8;  I_IND_Q = 4;  
+    PHI = 4;        M_PHI = 5;    
+    THETA = 5;      M_THETA = 6;  
+    I_IND_U = 1;    I_IND_W = 2;    I_IND_P = 3;    I_IND_Q = 4;
+    C_U = 1;        C_H = 2;        C_ROLL = 3;     C_PITCH = 4;
 
-    C_U = 1;    C_H = 2;    C_ROLL = 3;     C_PITCH = 4;
     fprintf('       Input Control\n');
     %% SYSTEM PARAMETERS
-    u_star = 0.1;         % [m/s] Constant surge velocity
+    u_star = 0.2;         % [m/s] Constant surge velocity
     tau_u_max = 10;       % [m/s] Robot surge velocity saturation
     tau_w_max = 10;       % [m/s] Vertical velocity saturation
     tau_p_max = 5;        % Roll velocity saturation
@@ -40,6 +39,8 @@ function [tau, p_err, int_err] = input_control(x, Ts, prev_err, int_err, v_surge
     tau_u = u_star;
     err_u = 0;
     int_err_u = 0;
+
+    % NON FUNZIONA, Qualche problema!!
     % err_u = u_star - v_surge;
     % int_err_u = int_err_u + err_u * Ts; % Accumulate integral error
     % der_err_u = (err_u - prev_err_u) / Ts; % Calculate derivative error
@@ -53,8 +54,8 @@ function [tau, p_err, int_err] = input_control(x, Ts, prev_err, int_err, v_surge
     % 
     % % Final saturation
     % tau_u = max(min(tau_u, tau_u_max), -tau_u_max); % Clamp pitch velocity to limits
-
-    u_ref = tau_u;
+    % 
+    % u_ref = tau_u;
     % Memory update
     prev_err_u = err_u; % Store current error for next iteration's derivative calculation
 
@@ -91,45 +92,45 @@ function [tau, p_err, int_err] = input_control(x, Ts, prev_err, int_err, v_surge
     prev_err_h = err_h; % Store current error for next iteration's derivative calculation
     
     %% ERROR CALCULATION FOR PHI -> ROLL
-    err_r = 0; % tmpp
-    int_err_r = 0;
-    tau_p = 0;
+    % err_r = 0; % tmpp
+    % int_err_r = 0;
+    % tau_p = 0;
     
     % ----------- TO IMPROVE -------------------
-    % err_r = x(ALPHA) - x(PHI); % beta - theta
-    % int_err_r = int_err_r + err_r * Ts; % Accumulate integral error
-    % der_err_ = (err_r - prev_err_p) / Ts; % Calculate derivative error
-    % 
-    % % Anti-windup for the integrator
-    % int_err_r = max(min(int_err_r, integral_max), -integral_max); % Clamp integral error
-    % 
-    % % PID
-    % tau_p = (Kp * err_r + Ki * int_err_r + Kd * der_err_); % Calculate PID output
-    % 
-    % % Final saturation q_ref = tau
-    % tau_p = max(min(tau_p, tau_p_max), -tau_p_max); % Clamp pitch velocity to limits
+    err_r = x(ALPHA) - x(PHI); % beta - theta
+    int_err_r = int_err_r + err_r * Ts; % Accumulate integral error
+    der_err_ = (err_r - prev_err_p) / Ts; % Calculate derivative error
+
+    % Anti-windup for the integrator
+    int_err_r = max(min(int_err_r, integral_max), -integral_max); % Clamp integral error
+
+    % PID
+    tau_p = (Kp * err_r + Ki * int_err_r + Kd * der_err_); % Calculate PID output
+
+    % Final saturation q_ref = tau
+    tau_p = max(min(tau_p, tau_p_max), -tau_p_max); % Clamp pitch velocity to limits
 
     % Memory update
     prev_err_r = err_r; % Store current error for next iteration's derivative calculation
 
     %% ERROR CALCULATION FOR THETA -> PITCH
-    err_p = 0; % tmpp
-    int_err_p = 0;
-    tau_q = 0;
+    % err_p = 0; % tmpp
+    % int_err_p = 0;
+    % tau_q = 0;
     
     % ----------- TO IMPROVE -------------------
-    % err_p = x(BETA) - x(THETA); % beta - theta
-    % int_err_p = int_err_p + err_p * Ts; % Accumulate integral error
-    % der_err_p = (err_p - prev_err_p) / Ts; % Calculate derivative error
-    % 
-    % % Anti-windup for the integrator
-    % int_err_p = max(min(int_err_p, integral_max), -integral_max); % Clamp integral error
-    % 
-    % % PID
-    % tau_q = (Kp * err_p + Ki * int_err_p + Kd * der_err_p); % Calculate PID output
-    % 
-    % % Final saturation q_ref = tau
-    % tau_q = max(min(tau_q, tau_q_max), -tau_q_max); % Clamp pitch velocity to limits
+    err_p = x(BETA) - x(THETA); % beta - theta
+    int_err_p = int_err_p + err_p * Ts; % Accumulate integral error
+    der_err_p = (err_p - prev_err_p) / Ts; % Calculate derivative error
+
+    % Anti-windup for the integrator
+    int_err_p = max(min(int_err_p, integral_max), -integral_max); % Clamp integral error
+
+    % PID
+    tau_q = (Kp * err_p + Ki * int_err_p + Kd * der_err_p); % Calculate PID output
+
+    % Final saturation q_ref = tau
+    tau_q = max(min(tau_q, tau_q_max), -tau_q_max); % Clamp pitch velocity to limits
 
     % Memory update
     prev_err_p = err_p; % Store current error for next iteration's derivative calculation
