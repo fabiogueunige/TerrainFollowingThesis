@@ -14,8 +14,7 @@ function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, 
     wRt = (rotz(0)*roty(beta)*rotx(alpha))*(rotx(pi))';
     n = wRt*n0; % in world frame
     if (norm(n) ~= 1)
-        n_norm = n;
-        n = n_norm / norm(n_norm);
+        n = vector_normalization(n);
         fprintf('n: [%.4f; %.4f; %.4f]\n', n(1), n(2), n(3));
     end
     
@@ -38,7 +37,8 @@ function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, 
     for j = 1:num_s
         s(:,j) = wRr*r_s(:,j);
         if (norm(s(:,j)) ~= 1)
-            fprintf('ERROR: norm sensor k = %.0f is not 1\n', j);
+            fprintf('!! ERROR !!: norm Measured sensor %.0f has been normalized\n', j);
+            s(:,j) = vector_normalization(s(:,j));
         end
     end
 

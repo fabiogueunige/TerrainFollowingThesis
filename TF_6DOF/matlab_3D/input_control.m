@@ -1,4 +1,4 @@
-function [tau, p_err, int_err] = input_control(x, Ts, prev_err, int_err, v_surge)
+function [tau, p_err, int_err] = input_control(x, Ts, prev_err, int_err, v_surge, wRr, wRt)
     %% Definitions
     IND_H = 1;                  
     ALPHA = 2;                  
@@ -10,12 +10,12 @@ function [tau, p_err, int_err] = input_control(x, Ts, prev_err, int_err, v_surge
 
     fprintf('       Input Control\n');
     %% SYSTEM PARAMETERS
-    u_star = 0.2;         % [m/s] Constant surge velocity
-    tau_u_max = 10;       % [m/s] Robot surge velocity saturation
-    tau_w_max = 10;       % [m/s] Vertical velocity saturation
-    tau_p_max = 5;        % Roll velocity saturation
-    tau_q_max = 5;        % Pitch velocity saturation
+    u_star = 0.3;         % [m/s] Constant surge velocity
     h_star = 7;           % Reference altitude
+    des_u_max = 1;        % [m/s] Robot surge velocity saturation
+    des_w_max = 1;        % [m/s] Vertical velocity saturation
+    des_p_max = 5;        % Roll velocity saturation
+    des_q_max = 5;        % Pitch velocity saturation
     
     %% Redefinition
     % surge = 1; heave = 2; roll = 3; pitch = 4 %
@@ -36,11 +36,11 @@ function [tau, p_err, int_err] = input_control(x, Ts, prev_err, int_err, v_surge
     integral_max = 1.0; % Maximum allowed integral error
     
     %% ERROR CALCULATION FOR SURGE
-    tau_u = u_star;
+    u_des = u_star;
     err_u = 0;
     int_err_u = 0;
 
-    % NON FUNZIONA, Qualche problema!!
+    % % NON FUNZIONA, Qualche problema!! A SAPERE QUALE BOH
     % err_u = u_star - v_surge;
     % int_err_u = int_err_u + err_u * Ts; % Accumulate integral error
     % der_err_u = (err_u - prev_err_u) / Ts; % Calculate derivative error
@@ -49,44 +49,38 @@ function [tau, p_err, int_err] = input_control(x, Ts, prev_err, int_err, v_surge
     % int_err_u = max(min(int_err_u, integral_max), -integral_max); % Clamp integral error
     % 
     % % PID
-    % tau_u = (Kp * err_u + Ki * int_err_u + Kd * der_err_u); % Calculate PID output
-    % % Having the PID i can consider it as tau
+    % u_des = (Kp * err_u + Ki * int_err_u + Kd * der_err_u); % Calculate PID output
+    % Having the PID i can consider it as tau
     % 
     % % Final saturation
-    % tau_u = max(min(tau_u, tau_u_max), -tau_u_max); % Clamp pitch velocity to limits
-    % 
-    % u_ref = tau_u;
+    % u_des = max(min(u_des, des_u_max), -des_u_max); % Clamp pitch velocity to limits
+
     % Memory update
     prev_err_u = err_u; % Store current error for next iteration's derivative calculation
 
     %% ERROR CALCULATION FOR H
-    err_h = 0; % tmpp
-    int_err_h = 0;
-    tau_w = 0;
-    
-    % err_h = -(h_star - x(IND_H)); % Negative for robot frame velocity (error calculation)
-    % int_err_h = int_err_h + err_h * Ts; % Accumulate integral error
-    % der_err_h = (err_h - prev_err_h) / Ts; % Calculate derivative error
-    % 
-    % % --- CAMBIAREEEEE ----- %
-    % 
-    % % Anti-windup for the integrator
-    % int_err_h = max(min(int_err_h, integral_max), -integral_max); % Clamp integral error
-    % 
-    % % PID CONTROL 
-    % cos_b = cos(x(2)); % Cosine of sonar angle (works for this case)
-    % if abs(cos_b) < 1e-3
-    %     cos_b = sign(cos_b) * 1e-3;  % Numerical protection (avoid division by zero)
-    % end
-    % 
-    % % PID on altitude frame
-    % pid_term = (Kp * err_h + Ki * int_err_h + Kd * der_err_h) / cos_b; % Calculate PID output
-    % 
-    % % Using the new velocity expected from the controller
-    % tau_w = (u_ref*(sin(x(3))-cos(x(3))*tan(x(2))) + pid_term) / (cos(x(3))+sin(x(3))*tan(x(2)));
-    % 
-    % % Final saturation
-    % tau_w = max(min(tau_w, tau_w_max), -tau_w_max); % Clamp vertical velocity to limits
+    % err_h = 0; % tmpp
+    % int_err_h = 0;
+    % tau_w = 0;
+
+    % Quello vero
+    err_h = (h_star - x(IND_H)); % Negative for robot frame velocity (error calculation)
+    int_err_h = int_err_h + err_h * Ts; % Accumulate integral error
+    der_err_h = (err_h - prev_err_h) / Ts; % Calculate derivative error
+
+    % Anti-windup for the integrator
+    int_err_h = max(min(int_err_h, integral_max), -integral_max); % Clamp integral error
+
+    %% NON VA BENE: Devo considerare all'interno l'effetto del surge
+    % PID on altitude frame
+    pid = (Kp * err_h + Ki * int_err_h + Kd * der_err_h);
+
+    % PID on world and robot frame
+    tp_speed = wRr' * wRt * [0; 0; pid];
+    w_des = tp_speed(3);
+
+    % Final saturation
+    w_des = max(min(w_des, des_w_max), -des_w_max); % Clamp vertical velocity to limits
     
     % Memory update
     prev_err_h = err_h; % Store current error for next iteration's derivative calculation
@@ -97,18 +91,18 @@ function [tau, p_err, int_err] = input_control(x, Ts, prev_err, int_err, v_surge
     % tau_p = 0;
     
     % ----------- TO IMPROVE -------------------
-    err_r = x(ALPHA) - x(PHI); % beta - theta
+    err_r = x(ALPHA) - x(PHI); % alpha - phi
     int_err_r = int_err_r + err_r * Ts; % Accumulate integral error
-    der_err_ = (err_r - prev_err_p) / Ts; % Calculate derivative error
+    der_err_r = (err_r - prev_err_r) / Ts; % Calculate derivative error
 
     % Anti-windup for the integrator
     int_err_r = max(min(int_err_r, integral_max), -integral_max); % Clamp integral error
-
+    
     % PID
-    tau_p = (Kp * err_r + Ki * int_err_r + Kd * der_err_); % Calculate PID output
+    p_des = (Kp * err_r + Ki * int_err_r + Kd * der_err_r); % Calculate PID output
 
     % Final saturation q_ref = tau
-    tau_p = max(min(tau_p, tau_p_max), -tau_p_max); % Clamp pitch velocity to limits
+    p_des = max(min(p_des, des_p_max), -des_p_max); % Clamp pitch velocity to limits
 
     % Memory update
     prev_err_r = err_r; % Store current error for next iteration's derivative calculation
@@ -127,23 +121,23 @@ function [tau, p_err, int_err] = input_control(x, Ts, prev_err, int_err, v_surge
     int_err_p = max(min(int_err_p, integral_max), -integral_max); % Clamp integral error
 
     % PID
-    tau_q = (Kp * err_p + Ki * int_err_p + Kd * der_err_p); % Calculate PID output
+    des_q = (Kp * err_p + Ki * int_err_p + Kd * der_err_p); % Calculate PID output
 
     % Final saturation q_ref = tau
-    tau_q = max(min(tau_q, tau_q_max), -tau_q_max); % Clamp pitch velocity to limits
+    des_q = max(min(des_q, des_q_max), -des_q_max); % Clamp pitch velocity to limits
 
     % Memory update
     prev_err_p = err_p; % Store current error for next iteration's derivative calculation
 
     %% FINAL
     % Output control commands
-    tau = [tau_u, tau_w, tau_p, tau_q]'; 
+    tau = [u_des, w_des, p_des, des_q]'; 
     % Error update
     p_err = [prev_err_u, prev_err_h, prev_err_r, prev_err_p]';
     int_err = [int_err_u, int_err_h, int_err_r, int_err_p]';
 
-    fprintf('Pred Surge: %.2f m | Error: %.2f | u_ref: %.3f m/s\n', v_surge, err_u, tau_u);
-    fprintf('Pred Alt: %.2f m | Error: %.2f | w_ref: %.3f m/s\n', x(1), err_h, tau_w);
-    fprintf('Pred roll: %.2f | Error: %.2f | p_ref: %.3f\n', rad2deg(x(PHI)), rad2deg(err_r), tau_p);
-    fprintf('Pred Pitch: %.2f | Error: %.2f | p_ref: %.3f\n', rad2deg(x(THETA)), rad2deg(err_p), tau_q);
+    fprintf('Pred Surge: %.2f m | Error: %.2f | u_ref: %.3f m/s\n', v_surge, err_u, u_des);
+    fprintf('Pred Alt: %.2f m | Error: %.2f | w_ref: %.3f m/s\n', x(IND_H), err_h, w_des);
+    fprintf('Pred roll: %.2f | Error: %.2f | p_ref: %.3f\n', rad2deg(x(PHI)), rad2deg(err_r), p_des);
+    fprintf('Pred Pitch: %.2f | Error: %.2f | p_ref: %.3f\n', rad2deg(x(THETA)), rad2deg(err_p), des_q);
 end
