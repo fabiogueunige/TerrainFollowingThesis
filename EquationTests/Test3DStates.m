@@ -1,8 +1,8 @@
 clear; close all; clc;
 
 % Flag per usare angoli specifici o generati randomicamente
-use_specific_angles = true; % Imposta a 'false' per angoli randomici
-use_specific_speed = true; % Imposta a 'false' per velocità randomiche
+use_specific_angles = false; % Imposta a 'false' per angoli randomici
+use_specific_speed = false; % Imposta a 'false' per velocità randomiche
 tolerance = 1e-4;
 areDifferent = @(a, b, tol) abs(a - b) > tol * max(abs(a), abs(b));
 
@@ -13,10 +13,10 @@ psi = 0;
 %% Angle defintions
 if use_specific_angles
     % terrain
-    beta = pi/10;
-    alpha = pi/10;
+    beta = 0;
+    alpha = 0;
     % robot
-    theta = pi/10;
+    theta = 0;
     phi = 0;
 else
     % random angles generator
@@ -38,8 +38,8 @@ fprintf('phi: %.2f\n', rad2deg(phi));
 
 %% speed definitions
 if use_specific_speed
-    surge = 4000;
-    sway = 4000;
+    surge = 1000;
+    sway = 1000;
     heave = 0;
     p = 0;
     q = 0; 
@@ -67,7 +67,7 @@ fprintf('q: %.2f\n', rad2deg(q));
 pplane = [0, 0, 10]';
 n0 = [0, 0, 1]'; % in terrain frame!!
 % Transformation (given by the sensors)
-wRt = (rotz(0)*roty(beta)*rotx(alpha))*(rotx(pi))';
+wRt = rotz(0)*roty(beta)*rotx(alpha)*rotx(pi);
 
 %% Robot Parameters
 pr = [0, 0, 0]';
@@ -96,11 +96,9 @@ r_s(:, 4) = [0, -sin(Zeta), cos(Zeta)]';
 % Trasformation in world frame
 for k = 1:num_s
     s(:,k) = wRr*r_s(:,k);
-end
-
-for k = 1:num_s
     if (norm(s(:,k)) ~= 1)
-        fprintf('ERROR: norm sensor k = %.0f is not 1', k);
+        fprintf('ALERT: norm sensor k = %.0f is not 1', k);
+        s(:,k) = vector_normalization(s(:,k));
     end
 end
 
@@ -111,8 +109,7 @@ fprintf('\nVettore superficie\n');
 fprintf('n: [%.4f; %.4f; %.4f]\n', n(1), n(2), n(3));
 if (norm(n) ~= 1)
     fprintf('ALERT: norm n is not 1\n');
-    n_norm = n;
-    n = n_norm / norm(n_norm);
+    n = vector_normalization(n);
 end
 
 %% Sensor Values
@@ -121,7 +118,7 @@ p_int = zeros(3, num_s);
 y = zeros(1, num_s);
 for k = 1:num_s
     if dot(s(:,k),n) == 0
-        error('The line s and the plane n_yx are parallel');
+        error('The line s and the plane n are parallel');
     end
     t_star(:, k) = -(dot((pr - pplane),n))/(dot(s(:,k),n));
     p_int(:, k) = pr + t_star(:, k)*s(:, k);
@@ -141,34 +138,24 @@ end
 
 %% Altitude Computation
 % real altitude in 
-h_real = (n'*(pr - pplane))/(norm(n));
+h_real = abs((n'*(pr - pplane))/(norm(n)));
 fprintf('\nValore per altezza nel primo punto\n');
 fprintf('h: %.4f\n', h_real);
 
 %% Check of the results first point
-% y Values
+% Problema trovato -> h dalla y viene negativo !! Denominatore è negativo !!
 fprintf('\nValori dei sensori per primo punto\n');
 y_mes = zeros(1, num_s);
 for k = 1:num_s
     fprintf('y%.0f = %.4f\n', k, y(k));
-    y_mes(k) = (norm(p_int(:, k) - pr));
+    y_mes(k) = - h_real / (n' * s(:,k));
     if areDifferent(y_mes(k), y(:, k), tolerance)
         fprintf('y%.0f mesured: %.4f\n', k, y_mes(k));
         fprintf('ERRORE: y per il sensore %0.f\n', k);
     end
 end
-% h Values
-h_from_y = zeros(1, num_s);
-for k = 1:num_s
-    h_from_y = y(k) * n' * s(:, k);
-    if areDifferent(h_real, -h_from_y, tolerance)
-        fprintf('h got from y%.0f value: %.4f\n', k, -h_from_y);
-        fprintf('ERRORE: h per il sensore %0.f nel calcolo h from y\n', k);
-    end
-end
 
 %% Muovo il robot
-% --- DILEMMA: muovo e poi ruoto??? Come faccio?? ---- %
 w_speed = wRr * r_speed(1:3);
 pr_new = pr + w_speed*Ts;
 % Angles update
@@ -189,7 +176,7 @@ for k = 1:num_s
 end
 for k = 1:num_s
     if dot(s(:,k),n) == 0
-        error('The line s and the plane n_yx are parallel');
+        error('The line s and the plane n are parallel in the new point');
     end
     t_star_new(:, k) = -(dot((pr_new - pplane),n))/(dot(s(:,k),n));
     p_int_new(:, k) = pr_new + t_star_new(:, k)*s(:, k);
@@ -220,19 +207,10 @@ fprintf('\nValori dei sensori per nuovo punto\n');
 y_mes_new = zeros(1, num_s);
 for k = 1:num_s
     fprintf('New y%.0f = %.4f\n', k, y_new(k));
-    y_mes_new(k) = (norm(p_int_new(:, k) - pr_new));
+    y_mes_new(k) = -h_real_new / (n' * s(:,k));
     if areDifferent(y_mes_new(k), y_new(k), tolerance)
         fprintf('New y%0.f mesured was: %.4f\n',k, y_mes_new(k));
         error('Errore in y per il sensore %0.f\n', k);
-    end
-end
-% h Values check
-h_from_y_new = zeros(1, num_s);
-for k = 1:num_s
-    h_from_y_new(k) = y_new(k) * n' * s(:, k);
-    if areDifferent(h_real_new, -h_from_y_new(k), tolerance)
-        fprintf('h mesured from sensor %0.f was: %.4f\n',k, -h_from_y_new(k));
-        error('Errore in h per il sensore %0.f nel calcolo new h from y\n', k);
     end
 end
 
@@ -362,4 +340,8 @@ function Rz = rotz(a)
     Rz = [cos(a), -sin(a), 0;
           sin(a), cos(a), 0;
             0, 0, 1];
+end
+
+function vect = vector_normalization(t)
+    vect = t / norm(t);
 end

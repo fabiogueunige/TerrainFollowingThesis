@@ -12,7 +12,7 @@ function z = h(x, s, num_s, num_m, n)
     %% Funzione di osservazione: z_k = h(x_k, u_k)
     z = zeros(num_m, 1);
     for j = 1:num_s
-        z(j) = (x(IND_H)) / (n' * s(:,j));
+        z(j) = -(x(IND_H)) / (n' * s(:,j));
     end
 
     z(M_PHI) = x(PHI);

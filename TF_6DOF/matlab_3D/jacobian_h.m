@@ -11,7 +11,7 @@ function H = jacobian_h(x, s, num_m, num_n, num_s, n, n0, r_s, psi)
 
     %% Computations
     H = zeros(num_m, num_n);
-    new_n0 = rotx(pi)'*n0;
+    new_n0 = rotx(pi)*n0;
     dn_alpha_t = (roty(x(BETA)) * (d_rotx(x(ALPHA))) * new_n0)';
     dn_beta_t = (d_roty(x(BETA)) * (rotx(x(ALPHA))) * new_n0)';
     ds_phi = rotz(psi) * roty(x(THETA)) * d_rotx(x(PHI));%*x(IND_P)
@@ -19,11 +19,11 @@ function H = jacobian_h(x, s, num_m, num_n, num_s, n, n0, r_s, psi)
 
     for j = 1:num_s
         % Compute the observation Jacobian for each sensor
-        H(j, IND_H) = 1 / (n' * s(:, j)); % Derivative with respect to h
-        H(j, ALPHA) = -(x(IND_H) * dn_alpha_t * s(:, j)) / (n' * s(:, j))^2;
-        H(j, BETA) = -(x(IND_H) * dn_beta_t * s(:, j)) / (n' * s(:, j))^2;
-        H(j,PHI) = -(x(IND_H) * n' * (ds_phi*r_s(:, j))) / (n' * s(:, j))^2;
-        H(j,THETA) = -(x(IND_H) * n' * (ds_theta*r_s(:, j))) / (n' * s(:, j))^2;
+        H(j, IND_H) = -1 / (n' * s(:, j)); % Derivative with respect to h
+        H(j, ALPHA) = (x(IND_H) * dn_alpha_t * s(:, j)) / (n' * s(:, j))^2;
+        H(j, BETA) = (x(IND_H) * dn_beta_t * s(:, j)) / (n' * s(:, j))^2;
+        H(j,PHI) = (x(IND_H) * n' * (ds_phi*r_s(:, j))) / (n' * s(:, j))^2;
+        H(j,THETA) = (x(IND_H) * n' * (ds_theta*r_s(:, j))) / (n' * s(:, j))^2;
     end
     H(M_PHI, PHI) = 1;     % Derivative with respect to phi
     H(M_THETA, THETA) = 1; % Derivative with respect to theta

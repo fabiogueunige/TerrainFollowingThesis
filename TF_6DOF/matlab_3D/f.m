@@ -11,7 +11,7 @@ function [x_next, wRt, wRr] = f(x, u_input, Ts, psi)
     fprintf('       f State Prediction\n');
     %% Rotation Computation
     % Terrain
-    wRt = (rotz(0)*roty(x(BETA))*rotx(x(ALPHA)))*(rotx(pi)');
+    wRt = rotz(0)*roty(x(BETA))*rotx(x(ALPHA))*rotx(pi);
 
     % robot
     wRr = rotz(psi)*roty(x(THETA))*rotx(x(PHI));

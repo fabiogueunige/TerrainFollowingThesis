@@ -14,8 +14,8 @@ function [tau, p_err, int_err] = input_control(x, Ts, prev_err, int_err, v_surge
     h_star = 7;           % Reference altitude
     des_u_max = 1;        % [m/s] Robot surge velocity saturation
     des_w_max = 1;        % [m/s] Vertical velocity saturation
-    des_p_max = 5;        % Roll velocity saturation
-    des_q_max = 5;        % Pitch velocity saturation
+    des_p_max = 1;        % Roll velocity saturation
+    des_q_max = 1;        % Pitch velocity saturation
     
     %% Redefinition
     % surge = 1; heave = 2; roll = 3; pitch = 4 %
@@ -71,7 +71,8 @@ function [tau, p_err, int_err] = input_control(x, Ts, prev_err, int_err, v_surge
     % Anti-windup for the integrator
     int_err_h = max(min(int_err_h, integral_max), -integral_max); % Clamp integral error
 
-    %% NON VA BENE: Devo considerare all'interno l'effetto del surge
+    % % NON VA BENE: Devo considerare all'interno l'effetto del surge
+    % % NON VA BENE: Devo considerare all'interno l'effetto del surge
     % PID on altitude frame
     pid = (Kp * err_h + Ki * int_err_h + Kd * der_err_h);
 

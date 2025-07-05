@@ -53,7 +53,7 @@ function m_visualization(pr, pplane, n, num_s, p_int, wRr, j)
     set(gca, 'YDir', 'reverse', 'ZDir', 'reverse');
     
     title('AUV Situation with Sensors %d' , j/1000);
-    legend('Location', 'best');
+    % legend('Location', 'best');
     axis equal; 
     hold off;
 end

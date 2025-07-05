@@ -41,10 +41,12 @@ n = zeros(d_dim,N);            % Surface vector
 p_err = zeros(i_dim, N);       % Proportional error
 i_err = zeros(i_dim, N);       % Integral error
 
+h_ref = 7;
+
 %% Design Parameters
 % Terrain
-alpha = pi/7;
-beta = pi/10;
+alpha = pi/10;
+beta = pi/9;
 pplane = [0, 0, 10]';
 n0 = [0, 0, 1]'; % terrain frame
 wRt = zeros(3,3,N);
@@ -53,19 +55,20 @@ wRt = zeros(3,3,N);
 psi = 0;                                   % Robot yaw (may be controlled in fututre)
 s = zeros(3,s_dim);                        % Robot echosonar
 % x0 = [h, alpha, beta, phi, theta, p, q]
-x0 = [10, alpha, beta, 0, 0]';       % True initial state 
+x0 = [10, alpha, beta, 0, 0]';             % True initial state 
 x0_est = zeros(n_dim, 1);                  % Estimated initial state
-wRr = zeros(3,3,N);                          % robot in world rotation
+wRr = zeros(3,3,N);                        % robot in world rotation
+sensor_okay = true;
 
-Gamma = -pi/8;                             % y1 angle (rear)
-Lambda = pi/8;                             % y2 angle (front)
-Eta = pi/8;                                % y3 angle (left)
-Zeta = -pi/8;                              % y4 angle (right)
+Gamma = -pi/6;                             % y1 angle (rear)
+Lambda = pi/6;                             % y2 angle (front)
+Eta = pi/6;                                % y3 angle (left)
+Zeta = -pi/6;                              % y4 angle (right)
 r_s = zeros(d_dim, s_dim);
-r_s(:, 1) = [-sin(Gamma), 0, -cos(Gamma)]';  % y1 versor (rear)
-r_s(:, 2) = [-sin(Lambda), 0, -cos(Lambda)]';% y2 versor (front)
-r_s(:, 3) = [0, sin(Eta), -cos(Eta)]';     % y3 versor (left)
-r_s(:, 4) = [0, sin(Zeta), -cos(Zeta)]';   % y4 versor (right)
+r_s(:, 1) = [sin(Gamma), 0, cos(Gamma)]';  % y1 versor (rear)
+r_s(:, 2) = [sin(Lambda), 0, cos(Lambda)]';% y2 versor (front)
+r_s(:, 3) = [0, -sin(Eta), cos(Eta)]';     % y3 versor (left)
+r_s(:, 4) = [0, -sin(Zeta), cos(Zeta)]';   % y4 versor (right)
 
 % Control Parametrs
 speed0 = [0, 0, 0, 0]'; % surge, heave, p and q.  % (sway)? %
@@ -74,13 +77,13 @@ speed0 = [0, 0, 0, 0]'; % surge, heave, p and q.  % (sway)? %
 %% EKF Start
 % covariance 
 P0 = diag([1, 0.08, 2, 0.09, 1]);
-P0 = P0 * (1.1);% + 2*rand);
+P0 = P0 * (1.1)+ 3*rand;
 P = P0;
 % State
 x_true(:,1) = x0;
 x_est(:,1) = x0_est;
 wRr(:,:,1) = eye(d_dim);
-wRt(:,:,1) = eye(d_dim) * rotx(pi)';
+wRt(:,:,1) = eye(d_dim) * rotx(pi);
 
 %% EKF Simulation
 for k = 2:N
@@ -108,14 +111,17 @@ for k = 2:N
     %% EKF: Real Measurement
     % Measurement noise
     v = mvnrnd(zeros(m_dim,1), R)'; 
-    [z_meas(:,k), hmes, prob(:,k)] = measurament(alpha, beta, pplane, n0, r_s, s_dim, u(:,k-1), Ts, prob(:,k-1), ...
+    [z_meas(:,k), hmes, prob(:,k), sensor_okay] = measurament(alpha, beta, pplane, n0, r_s, s_dim, u(:,k-1), Ts, prob(:,k-1), ...
                                                    z_meas(M_PHI,k-1), z_meas(M_THETA,k-1), k, psi);
+    if ~sensor_okay
+        break;
+    end
     % z_meas(:,k) = z_meas(:,k) + v;
 
     %% EKF: True State update
     % w = mvnrnd(zeros(n_dim,1), Q)'; % Process noise
     % Desired state estimation (real one)
-    x_true(:,k) = [hmes, alpha, beta, alpha, beta]'; % z_meas(M_PHI,k), z_meas(M_THETA,k) , u(I_IND_P,k-1), u(I_IND_Q,k-1) 
+    x_true(:,k) = [h_ref, alpha, beta, alpha, beta]'; % z_meas(M_PHI,k), z_meas(M_THETA,k) , u(I_IND_P,k-1), u(I_IND_Q,k-1) 
 
     %% EKF: Prediction
     % per chat non ci vuole w nella x_pred !!!!

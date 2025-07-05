@@ -1,4 +1,4 @@
-function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, ...
+function [ymes, h_real, pr, visibile] = measurament(alpha, beta, pplane, n0, r_s , num_s, ...
                                     v, Ts, pr_old, ph_o, th_o, k, psi) 
     %% Definitions
     IND_H = 1;                  I_IND_U = 1;
@@ -11,7 +11,7 @@ function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, 
     fprintf('       Measurament:\n');
 
     %% Terrain Definition
-    wRt = (rotz(0)*roty(beta)*rotx(alpha))*(rotx(pi))';
+    wRt = (rotz(0)*roty(beta)*rotx(alpha))*rotx(pi);
     n = wRt*n0; % in world frame
     if (norm(n) ~= 1)
         n = vector_normalization(n);
@@ -37,7 +37,7 @@ function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, 
     for j = 1:num_s
         s(:,j) = wRr*r_s(:,j);
         if (norm(s(:,j)) ~= 1)
-            fprintf('!! ERROR !!: norm Measured sensor %.0f has been normalized\n', j);
+            fprintf('!! ALERT !!: norm Measured sensor %.0f has been normalized\n', j);
             s(:,j) = vector_normalization(s(:,j));
         end
     end
@@ -61,15 +61,21 @@ function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, 
     for j = 1:num_s
         v_p = p_int(:, j) - pr;
         visibile = dot(z_r, v_p) > 0;
-        if ~visibile
-            error('Error in visibility for the sensor %0.f', j);
+        try
+            if ~visibile
+                error('Error in visibility for the sensor %0.f', j);
+            end
+        catch 
+            visibile = false;
+            fprintf('Error in visibility for the sensor %0.f\n', j);
+            break;
         end
     end
 
         %% Plot visualization
-    if k == 2 || mod(k, 5000) == 0
-        m_visualization(pr, pplane, n, num_s, p_int, wRr, k);
-    end
+    % if k == 2 || mod(k, 5000) == 0
+    %     m_visualization(pr, pplane, n, num_s, p_int, wRr, k);
+    % end
 
     %% Sending Info's
     ymes = [y(1); y(2); y(3); y(4); phm; thm]; %  p_gyr; q_gyr
