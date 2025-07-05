@@ -1,5 +1,5 @@
-function [ymes, h_real, pr, visibile] = measurament(alpha, beta, pplane, n0, r_s , num_s, ...
-                                    v, Ts, pr_old, ph_o, th_o, k, psi) 
+function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, ...
+                                    v, Ts, pr_old, ph_o, th_o, k, psi, z_r) 
     %% Definitions
     IND_H = 1;                  I_IND_U = 1;
     ALPHA = 2;                  I_IND_W = 2;
@@ -51,31 +51,25 @@ function [ymes, h_real, pr, visibile] = measurament(alpha, beta, pplane, n0, r_s
             error('The line s and the plane n are parallel');
         end
         t_star(:, j) = -(dot((pr - pplane),n))/(dot(s(:,j),n));
+        if t_star(:,j) < 0
+            error('Negative value for sensor %.0f\n',j);
+        end
         p_int(:, j) = pr + t_star(:, j)*s(:, j);
         y(j) = norm(t_star(:, j));
-    end
-    
-    % Check of visibility
-    z_r = [0, 0, 1]'; 
-    z_r = (wRr)'*z_r; % Adjust z_r based on angles
-    for j = 1:num_s
-        v_p = p_int(:, j) - pr;
-        visibile = dot(z_r, v_p) > 0;
-        try
-            if ~visibile
-                error('Error in visibility for the sensor %0.f', j);
-            end
-        catch 
-            visibile = false;
-            fprintf('Error in visibility for the sensor %0.f\n', j);
-            break;
+        
+        % Second check visibility
+        z_r(:,j) = (wRr)*z_r(:,j);
+        v_p = p_int(:, j) - pr; % world frame
+        visibile = dot(z_r(:,j), v_p) > 0;
+        if ~visibile
+            fprintf('!! Error in visibility for the sensor %0.f !!', j);
         end
     end
 
         %% Plot visualization
-    % if k == 2 || mod(k, 5000) == 0
-    %     m_visualization(pr, pplane, n, num_s, p_int, wRr, k);
-    % end
+    if k == 2 || mod(k, 5000) == 0
+        m_visualization(pr, pplane, n, num_s, p_int, wRr, k);
+    end
 
     %% Sending Info's
     ymes = [y(1); y(2); y(3); y(4); phm; thm]; %  p_gyr; q_gyr

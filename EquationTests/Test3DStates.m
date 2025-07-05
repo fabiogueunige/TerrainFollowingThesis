@@ -2,7 +2,7 @@ clear; close all; clc;
 
 % Flag per usare angoli specifici o generati randomicamente
 use_specific_angles = false; % Imposta a 'false' per angoli randomici
-use_specific_speed = false; % Imposta a 'false' per velocità randomiche
+use_specific_speed = true; % Imposta a 'false' per velocità randomiche
 tolerance = 1e-4;
 areDifferent = @(a, b, tol) abs(a - b) > tol * max(abs(a), abs(b));
 
@@ -13,11 +13,11 @@ psi = 0;
 %% Angle defintions
 if use_specific_angles
     % terrain
-    beta = 0;
-    alpha = 0;
+    beta = -0.8884;
+    alpha = -0.9343;
     % robot
     theta = 0;
-    phi = 0;
+    phi = pi/9;
 else
     % random angles generator
     lower_bound = -pi/3;
@@ -64,7 +64,7 @@ fprintf('p: %.2f\n', rad2deg(p));
 fprintf('q: %.2f\n', rad2deg(q)); 
 
 %% Terrain Parameters
-pplane = [0, 0, 10]';
+pplane = [0, 0, 15]';
 n0 = [0, 0, 1]'; % in terrain frame!!
 % Transformation (given by the sensors)
 wRt = rotz(0)*roty(beta)*rotx(alpha)*rotx(pi);
@@ -97,7 +97,7 @@ r_s(:, 4) = [0, -sin(Zeta), cos(Zeta)]';
 for k = 1:num_s
     s(:,k) = wRr*r_s(:,k);
     if (norm(s(:,k)) ~= 1)
-        fprintf('ALERT: norm sensor k = %.0f is not 1', k);
+        fprintf('ALERT: norm sensor %.0f is not 1\n', k);
         s(:,k) = vector_normalization(s(:,k));
     end
 end
@@ -121,18 +121,30 @@ for k = 1:num_s
         error('The line s and the plane n are parallel');
     end
     t_star(:, k) = -(dot((pr - pplane),n))/(dot(s(:,k),n));
+    if t_star(:,k) < 0
+        error('Not visible sensor %.0f\n', k);
+    end
     p_int(:, k) = pr + t_star(:, k)*s(:, k);
     y(k) = norm(t_star(:, k));
 end
 
 % Check of visibility
-z_r = [0, 0, 1]'; 
-z_r = (wRr)'*z_r; % Adjust z_r based on angles
+z_r = zeros(3, num_s);
+z_r(:,1) = [1, 0, 1];
+z_r(:,2) = [1, 0, 1];
+z_r(:,3) = [0, 1, 1];
+z_r(:,4) = [0, 1, 1];
+
 for k = 1:num_s
-    v_p = p_int(:, k) - pr;
-    visibile = dot(z_r, v_p) > 0;
-    if ~visibile
-        error('Error in visibility for the sensor %0.f', k);
+    z_r(:,k) = vector_normalization(z_r(:,k));
+    z_r(:,k) = (wRr)*z_r(:,k);
+    v_p = p_int(:, k) - pr; % world frame
+    visibile = dot(z_r(:,k), v_p) > 0;
+    if ~visibile % second check
+        fprintf('Error in visibility for the sensor %0.f\n', k);
+        fprintf('Error in visibility for the sensor %0.f\n', k);
+        fprintf('Error in visibility for the sensor %0.f\n', k);
+        fprintf('Error in visibility for the sensor %0.f\n', k);
     end
 end
 
@@ -179,19 +191,11 @@ for k = 1:num_s
         error('The line s and the plane n are parallel in the new point');
     end
     t_star_new(:, k) = -(dot((pr_new - pplane),n))/(dot(s(:,k),n));
+    if t_star_new(:,k) < 0
+        error('New t_star value is negative, sensor %.0f', k);
+    end
     p_int_new(:, k) = pr_new + t_star_new(:, k)*s(:, k);
     y_new(k) = norm(t_star_new(:, k));
-end
-
-% Check of visibility
-z_r = [0, 0, 1]';
-z_r = (wRr)'*z_r; % Adjust z_r based on angles
-for k = 1:num_s
-    v_p = p_int_new(:, k) - pr_new;
-    visibile = dot(z_r, v_p) > 0;
-    if ~visibile
-        error('Error (not visible) for the sensor %0.f in the new point', k);
-    end
 end
 
 %% New Altitude Computation
@@ -318,7 +322,7 @@ zlabel('Asse Z');
 set(gca, 'YDir', 'reverse', 'ZDir', 'reverse');
 
 title('AUV Situation with Sensors');
-legend('Location', 'best');
+% legend('Location', 'best');
 axis equal; 
 hold off;
 

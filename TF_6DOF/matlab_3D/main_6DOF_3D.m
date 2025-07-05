@@ -13,7 +13,7 @@ I_IND_U = 1;    I_IND_W = 2;    I_IND_P = 3;    I_IND_Q = 4;
 
 %% Filter Parameters
 Ts = 0.001;         % Sampling time [s]
-Tf = 50;            % Final time [s]
+Tf = 25;            % Final time [s]
 time = 0:Ts:Tf;     % Time vector
 N = length(time);   % Number of iterations
 
@@ -46,8 +46,8 @@ h_ref = 7;
 %% Design Parameters
 % Terrain
 alpha = pi/10;
-beta = pi/9;
-pplane = [0, 0, 10]';
+beta = pi/7;
+pplane = [0, 0, 15]';
 n0 = [0, 0, 1]'; % terrain frame
 wRt = zeros(3,3,N);
 
@@ -70,9 +70,19 @@ r_s(:, 2) = [sin(Lambda), 0, cos(Lambda)]';% y2 versor (front)
 r_s(:, 3) = [0, -sin(Eta), cos(Eta)]';     % y3 versor (left)
 r_s(:, 4) = [0, -sin(Zeta), cos(Zeta)]';   % y4 versor (right)
 
+% Second check visibility parameters
+z_r = zeros(3, s_dim);
+z_r(:,1) = [1, 0, 1];
+z_r(:,2) = [1, 0, 1];
+z_r(:,3) = [0, 1, 1];
+z_r(:,4) = [0, 1, 1];
+
+for j = 1:s_dim
+    z_r(:,j) = vector_normalization(z_r(:,j));
+end
 % Control Parametrs
 speed0 = [0, 0, 0, 0]'; % surge, heave, p and q.  % (sway)? %
-% tau0 = tau0_values(speed0);
+tau0 = tau0_values(speed0, i_dim);
 
 %% EKF Start
 % covariance 
@@ -93,26 +103,24 @@ for k = 2:N
         % Desired input
         [tau_star(:,k-1), p_err(:,k), i_err(:,k)] = input_control(x_est(:,k-1), Ts, p_err(:,k-1), i_err(:,k-1), speed0(I_IND_U), ...
                                                                   wRr(:,:,k-1), wRt(:,:,k-1));
-        % % Tau to generate the desired inptut
-        % tau = tau_generator(Ts, speed0, tau_star(:,k-1), tau0, speed0);
-        % % Controller application
-        % [u(:,k-1), u_dot(:,k-1)] = dynamic_model(tau, tau0, speed0, speed0, Ts);
-        u(:,k-1) = tau_star(:,k-1); % tmp
+        % Tau to generate the desired inptut
+        tau = tau_generator(Ts, speed0, tau_star(:,k-1), tau0, speed0, i_dim);
+        % Controller application
+        [u(:,k-1), u_dot(:,k-1)] = dynamic_model(tau, tau0, speed0, speed0, Ts, i_dim);
     else
         [tau_star(:,k-1), p_err(:,k), i_err(:,k)] = input_control(x_est(:,k-1), Ts, p_err(:,k-1), i_err(:,k-1), u(I_IND_U,k-2), ...
                                                                     wRr(:,:,k-1), wRt(:,:,k-1)); % Define input
-        % % Computation of the tau
-        % tau = tau_generator(Ts, u(:,k-2), tau_star(:,k-1), tau0, speed0);
-        % % Controller application
-        % [u(:,k-1), u_dot(:,k-1)] = dynamic_model(tau, tau0, speed0, u(:,k-2), Ts);
-        u(:,k-1) = tau_star(:,k-1); % tmp
+        % Computation of the tau
+        tau = tau_generator(Ts, u(:,k-2), tau_star(:,k-1), tau0, speed0, i_dim);
+        % Controller application
+        [u(:,k-1), u_dot(:,k-1)] = dynamic_model(tau, tau0, speed0, u(:,k-2), Ts, i_dim);
     end
 
     %% EKF: Real Measurement
     % Measurement noise
     v = mvnrnd(zeros(m_dim,1), R)'; 
-    [z_meas(:,k), hmes, prob(:,k), sensor_okay] = measurament(alpha, beta, pplane, n0, r_s, s_dim, u(:,k-1), Ts, prob(:,k-1), ...
-                                                   z_meas(M_PHI,k-1), z_meas(M_THETA,k-1), k, psi);
+    [z_meas(:,k), hmes, prob(:,k)] = measurament(alpha, beta, pplane, n0, r_s, s_dim, u(:,k-1), Ts, prob(:,k-1), ...
+                                                   z_meas(M_PHI,k-1), z_meas(M_THETA,k-1), k, psi, z_r);
     if ~sensor_okay
         break;
     end
