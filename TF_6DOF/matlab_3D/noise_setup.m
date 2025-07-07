@@ -1,19 +1,19 @@
 function [Q, G, R] = noise_setup (q_dim, r_dim, sampling_time)
     % State Noise
     sigh = 0.999;           % State noise h
-    siga = deg2rad(1.8);    % State noise alpha
-    sigb = deg2rad(2);      % State noise beta
-    sigph = deg2rad(1.5);   % State noise phi
-    sigt = deg2rad(1.2);    % State noise theta
+    siga = deg2rad(0.8);    % State noise alpha
+    sigb = deg2rad(0.2);      % State noise beta
+    sigph = deg2rad(0.5);   % State noise phi
+    sigt = deg2rad(0.2);    % State noise theta
     % sigp = 0.097;         % State noise p
     % sigq = 0.095;         % State noise q
     % Measurament noise (added a 0 to all)
-    eta1 = 0.077;           % Measurement noise y1
-    eta2 = 0.085;           % Measurement noise y2
-    eta3 = 0.077;           % Measurement noise y3
-    eta4 = 0.085;           % Measurement noise y4
-    eta5 = deg2rad(1.3);    % Measurement noise accelerometer p
-    eta6 = deg2rad(1);      % Measurement noise accelerometer q
+    eta1 = 0.0077;           % Measurement noise y1
+    eta2 = 0.0085;           % Measurement noise y2
+    eta3 = 0.0077;           % Measurement noise y3
+    eta4 = 0.0085;           % Measurement noise y4
+    eta5 = deg2rad(0.3);    % Measurement noise accelerometer p
+    eta6 = deg2rad(0.1);      % Measurement noise accelerometer q
     % eta7 = 0.077;         % Measurament noise gyroscope p
     % eta8 = 0.077;         % Measurament noise gyroscope q
 

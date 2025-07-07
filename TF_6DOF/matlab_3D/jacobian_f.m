@@ -16,8 +16,8 @@ function F = jacobian_f(x, u_input, Ts, num_n, psi, wRt, wRr)
 
     %% Derivatives for the altitude
     % F(IND_H, IND_H) = 1;
-    h_alpha = rotx(pi)' * (d_rotx(x(ALPHA)))' * (roty(x(BETA)))' * wRr*r_speedTs;
-    h_beta = rotx(pi)' * (rotx(x(ALPHA)))' * (d_roty(x(BETA)))' * wRr*r_speedTs;
+    h_alpha = (roty(x(BETA)) * d_rotx(x(ALPHA)) * rotx(pi))' * wRr*r_speedTs;
+    h_beta = (d_roty(x(BETA)) * rotx(x(ALPHA)) * rotx(pi))' * wRr*r_speedTs;
     F(IND_H, ALPHA) = h_alpha(3);
     F(IND_H, BETA) = h_beta(3);
     %% ---- CONTRTOLLARE SE GIUSTO IL TERMINE FINALE ---- % RIMETTEREEE

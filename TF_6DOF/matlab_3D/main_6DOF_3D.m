@@ -26,6 +26,7 @@ s_dim = 4;          % number of echosonar
 
 %% Noise
 [Q, G, R] = noise_setup(n_dim, m_dim, Ts);
+% Q = G*Q*G'
 
 %% EKF Prameters
 prob = zeros(d_dim,N);         % AUV initial position
@@ -41,37 +42,38 @@ n = zeros(d_dim,N);            % Surface vector
 p_err = zeros(i_dim, N);       % Proportional error
 i_err = zeros(i_dim, N);       % Integral error
 
+%% Software Design
 h_ref = 7;
 
-%% Design Parameters
-% Terrain
+%% Terrain Parameters
 alpha = pi/10;
-beta = pi/7;
-pplane = [0, 0, 15]';
+beta = pi/10;
+pplane = [0, 0, 10]';
 n0 = [0, 0, 1]'; % terrain frame
-wRt = zeros(3,3,N);
+wRt = zeros(d_dim, d_dim, N);
+wRt_pre = zeros(d_dim, d_dim, N);
 
-% AUV Parameters 
+%% AUV Parameters 
 psi = 0;                                   % Robot yaw (may be controlled in fututre)
-s = zeros(3,s_dim);                        % Robot echosonar
+s = zeros(d_dim,s_dim);                    % Robot echosonar
 % x0 = [h, alpha, beta, phi, theta, p, q]
 x0 = [10, alpha, beta, 0, 0]';             % True initial state 
 x0_est = zeros(n_dim, 1);                  % Estimated initial state
-wRr = zeros(3,3,N);                        % robot in world rotation
-sensor_okay = true;
+wRr = zeros(d_dim, d_dim, N);              % robot in world rotation
+wRr_pre = zeros(d_dim, d_dim, N);          % robot in world predicted rotation
 
-Gamma = -pi/6;                             % y1 angle (rear)
-Lambda = pi/6;                             % y2 angle (front)
-Eta = pi/6;                                % y3 angle (left)
-Zeta = -pi/6;                              % y4 angle (right)
-r_s = zeros(d_dim, s_dim);
+Gamma = -pi/8;                             % y1 angle (rear)
+Lambda = pi/8;                             % y2 angle (front)
+Eta = pi/8;                                % y3 angle (left)
+Zeta = -pi/8;                              % y4 angle (right)
+
 r_s(:, 1) = [sin(Gamma), 0, cos(Gamma)]';  % y1 versor (rear)
 r_s(:, 2) = [sin(Lambda), 0, cos(Lambda)]';% y2 versor (front)
 r_s(:, 3) = [0, -sin(Eta), cos(Eta)]';     % y3 versor (left)
 r_s(:, 4) = [0, -sin(Zeta), cos(Zeta)]';   % y4 versor (right)
 
 % Second check visibility parameters
-z_r = zeros(3, s_dim);
+z_r = zeros(d_dim, s_dim);
 z_r(:,1) = [1, 0, 1];
 z_r(:,2) = [1, 0, 1];
 z_r(:,3) = [0, 1, 1];
@@ -93,24 +95,19 @@ P = P0;
 x_true(:,1) = x0;
 x_est(:,1) = x0_est;
 wRr(:,:,1) = eye(d_dim);
+wRr_pre(:,:,1) = wRr(:,:,1);
 wRt(:,:,1) = eye(d_dim) * rotx(pi);
+wRt_pre(:,:,1) = wRt(:,:,1);
 
 %% EKF Simulation
 for k = 2:N
     fprintf('\n New Lap, time = %.0f \n', k);
     %% EKF: Input Control Computation
-    if k == 2
+    if k >= 100
         % Desired input
-        [tau_star(:,k-1), p_err(:,k), i_err(:,k)] = input_control(x_est(:,k-1), Ts, p_err(:,k-1), i_err(:,k-1), speed0(I_IND_U), ...
-                                                                  wRr(:,:,k-1), wRt(:,:,k-1));
-        % Tau to generate the desired inptut
-        tau = tau_generator(Ts, speed0, tau_star(:,k-1), tau0, speed0, i_dim);
-        % Controller application
-        [u(:,k-1), u_dot(:,k-1)] = dynamic_model(tau, tau0, speed0, speed0, Ts, i_dim);
-    else
         [tau_star(:,k-1), p_err(:,k), i_err(:,k)] = input_control(x_est(:,k-1), Ts, p_err(:,k-1), i_err(:,k-1), u(I_IND_U,k-2), ...
                                                                     wRr(:,:,k-1), wRt(:,:,k-1)); % Define input
-        % Computation of the tau
+        % Tau to generate the desired inptut
         tau = tau_generator(Ts, u(:,k-2), tau_star(:,k-1), tau0, speed0, i_dim);
         % Controller application
         [u(:,k-1), u_dot(:,k-1)] = dynamic_model(tau, tau0, speed0, u(:,k-2), Ts, i_dim);
@@ -121,10 +118,7 @@ for k = 2:N
     v = mvnrnd(zeros(m_dim,1), R)'; 
     [z_meas(:,k), hmes, prob(:,k)] = measurament(alpha, beta, pplane, n0, r_s, s_dim, u(:,k-1), Ts, prob(:,k-1), ...
                                                    z_meas(M_PHI,k-1), z_meas(M_THETA,k-1), k, psi, z_r);
-    if ~sensor_okay
-        break;
-    end
-    % z_meas(:,k) = z_meas(:,k) + v;
+    z_meas(:,k) = z_meas(:,k) + v;
 
     %% EKF: True State update
     % w = mvnrnd(zeros(n_dim,1), Q)'; % Process noise
@@ -134,9 +128,9 @@ for k = 2:N
     %% EKF: Prediction
     % per chat non ci vuole w nella x_pred !!!!
     % State prediction
-    [x_pred(:,k), wRt(:,:,k), wRr(:,:,k)] = f(x_est(:,k-1), u(:,k-1), Ts, psi);
+    [x_pred(:,k), wRt_pre(:,:,k), wRr_pre(:,:,k)] = f(x_est(:,k-1), u(:,k-1), Ts, psi);
     % Dynamics Jacobian
-    F = jacobian_f(x_est(:,k-1), u(:,k-1), Ts, n_dim, psi, wRt(:,:,k), wRr(:,:,k)); 
+    F = jacobian_f(x_est(:,k-1), u(:,k-1), Ts, n_dim, psi, wRt_pre(:,:,k), wRr_pre(:,:,k)); 
     % Covariance prediction
     P_pred = F * P * F' + Q;
 
@@ -144,7 +138,7 @@ for k = 2:N
     % Expected sensor values for the expected output
     for j = 1:s_dim
         % Update sensor value
-        s(:,j) = wRr(:,:,k) * r_s(:,j);
+        s(:,j) = wRr_pre(:,:,k) * r_s(:,j);
         if (norm(s(:,j)) ~= 1)
             fprintf('ALERT: Norm Predicted SENSOR %.0f has been normalized\n', j);
             s(:,j) = vector_normalization(s(:,j));
@@ -152,7 +146,7 @@ for k = 2:N
     end
 
     %% Norm to the terrain
-    n(:,k) = wRt(:,:,k)*n0;
+    n(:,k) = wRt_pre(:,:,k)*n0;
     if (norm(n(:,k)) ~= 1)
         fprintf('ALERT: Norm predicted has been normalized\n');
         n(:,k) = vector_normalization(n(:,k));
@@ -176,6 +170,12 @@ for k = 2:N
     %% EKF: State Update
     x_est(:,k) = x_pred(:,k) + K * (z_meas(:,k) - z_pred(:,k));
     P = (eye(n_dim) - K * H) * P_pred;
+
+    %% Rotation Update 
+    wRt(:,:,k) = rotz(0)*roty(x_est(BETA))*rotx(x_est(ALPHA))*rotx(pi);
+
+    % robot
+    wRr(:,:,k) = rotz(psi)*roty(x_est(THETA))*rotx(x_est(PHI));
 end
 
 %% Final Plot

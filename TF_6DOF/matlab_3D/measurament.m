@@ -62,7 +62,7 @@ function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, 
         v_p = p_int(:, j) - pr; % world frame
         visibile = dot(z_r(:,j), v_p) > 0;
         if ~visibile
-            fprintf('!! Error in visibility for the sensor %0.f !!', j);
+            error('!! Error in visibility for the sensor %0.f !!', j);
         end
     end
 
