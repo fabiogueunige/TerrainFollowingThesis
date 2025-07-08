@@ -1,6 +1,7 @@
 function tau0 = tau0_values(speed0, i_dim)
     % updated to bluerov model
-    fprintf('       Tau0 generator\n');
+    global DEBUG
+    printDebug('       Tau0 generator\n');
     %% Definition
     U = 1;      V = 2;      W = 3;
     P = 4;      Q = 5;      R = 6;

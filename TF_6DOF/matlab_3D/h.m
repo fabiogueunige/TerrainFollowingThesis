@@ -1,6 +1,7 @@
 function z = h(x, s, num_s, num_m, n)
     % Observation function of the predicted measuraments
-    fprintf('       h output function\n');
+    global DEBUG
+    printDebug('       h output function\n');
     %% Definition
     IND_H = 1;                  
     ALPHA = 2;                  
@@ -21,6 +22,6 @@ function z = h(x, s, num_s, num_m, n)
     % z(M_IND_P) = x(I_IND_P);
     % z(M_IND_Q) = x(I_IND_Q);
 
-    fprintf('y1 = %.2f | y2 = %.2f | y3 = %.2f | y4 = %.2f\n', z(1), z(2), z(3), z(4));
-    fprintf('phi = %.2f | theta = %.2f\n', z(M_PHI), z(M_THETA));
+    printDebug('y1 = %.2f | y2 = %.2f | y3 = %.2f | y4 = %.2f\n', z(1), z(2), z(3), z(4));
+    printDebug('phi = %.2f | theta = %.2f\n', z(M_PHI), z(M_THETA));
 end

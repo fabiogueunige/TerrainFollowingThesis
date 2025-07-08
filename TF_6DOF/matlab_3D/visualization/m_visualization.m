@@ -1,4 +1,5 @@
 function m_visualization(pr, pplane, n, num_s, p_int, wRr, j)
+    global DEBUG    
     figure;
     hold on;
     grid on;
@@ -10,7 +11,7 @@ function m_visualization(pr, pplane, n, num_s, p_int, wRr, j)
     % Plane plot
     [xp, yp] = meshgrid(-17:0.5:17, -17:0.5:17);
     if abs(n(3)) > 1e-6
-        fprintf('\n!!!Attivazione if disegno del piano!!!\n');
+        printDebug('\n!!!Attivazione if disegno del piano!!!\n');
         zp = (-n(1)*(xp-pplane(1)) - n(2)*(yp-pplane(2)))/n(3) + pplane(3);
         surf(xp, yp, zp, 'FaceAlpha', 0.3, 'EdgeColor', 'none', 'DisplayName', 'Piano');
     end

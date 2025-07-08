@@ -1,6 +1,7 @@
 function [tau] = tau_generator(Ts, old_speed, tau_star, tau0, speed0, i_dim)
     % function to generate the tau's
-    fprintf('       Tau generator\n');
+    global DEBUG
+    printDebug('       Tau generator\n');
     %% Definition
     U = 1;      V = 2;      W = 3;
     P = 4;      Q = 5;      R = 6;

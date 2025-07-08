@@ -1,6 +1,7 @@
 function [new_vel, s_dotdot] = dynamic_model(tau, tau0, speed0, old_vel, Ts, i_dim)
     % updated to bluerov model
-    fprintf('       Dynamic Model\n');
+    global DEBUG
+    printDebug('       Dynamic Model\n');
     %% Definition
     U = 1;      V = 2;      W = 3;
     P = 4;      Q = 5;      R = 6;
@@ -55,6 +56,6 @@ function [new_vel, s_dotdot] = dynamic_model(tau, tau0, speed0, old_vel, Ts, i_d
   
     new_vel = old_vel + Ts * s_dotdot;
 
-    fprintf('surge: %.2f | heave: %.2f | p: %.3f | q: %.3f\n', new_vel(I_IND_U), new_vel(I_IND_W), new_vel(I_IND_P), new_vel(I_IND_Q));
-    fprintf('a_surge: %.2f | a_heave: %.2f | a_p: %.3f | a_q: %.3f\n', s_dotdot(I_IND_U), s_dotdot(I_IND_W), s_dotdot(I_IND_P), s_dotdot(I_IND_Q));
+    printDebug('surge: %.2f | heave: %.2f | p: %.3f | q: %.3f\n', new_vel(I_IND_U), new_vel(I_IND_W), new_vel(I_IND_P), new_vel(I_IND_Q));
+    printDebug('a_surge: %.2f | a_heave: %.2f | a_p: %.3f | a_q: %.3f\n', s_dotdot(I_IND_U), s_dotdot(I_IND_W), s_dotdot(I_IND_P), s_dotdot(I_IND_Q));
 end

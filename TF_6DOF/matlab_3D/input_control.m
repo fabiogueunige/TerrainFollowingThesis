@@ -8,7 +8,8 @@ function [tau, p_err, int_err] = input_control(x, Ts, prev_err, int_err, v_surge
     I_IND_U = 1;    I_IND_W = 2;    I_IND_P = 3;    I_IND_Q = 4;
     C_U = 1;        C_H = 2;        C_ROLL = 3;     C_PITCH = 4;
 
-    fprintf('       Input Control\n');
+    global DEBUG
+    printDebug('       Input Control\n');
     %% SYSTEM PARAMETERS
     u_star = 0.3;         % [m/s] Constant surge velocity
     h_star = 7;           % Reference altitude
@@ -137,8 +138,8 @@ function [tau, p_err, int_err] = input_control(x, Ts, prev_err, int_err, v_surge
     p_err = [prev_err_u, prev_err_h, prev_err_r, prev_err_p]';
     int_err = [int_err_u, int_err_h, int_err_r, int_err_p]';
 
-    fprintf('Pred Surge: %.2f m | Error: %.2f | u_ref: %.3f m/s\n', v_surge, err_u, u_des);
-    fprintf('Pred Alt: %.2f m | Error: %.2f | w_ref: %.3f m/s\n', x(IND_H), err_h, w_des);
-    fprintf('Pred roll: %.2f | Error: %.2f | p_ref: %.3f\n', rad2deg(x(PHI)), rad2deg(err_r), p_des);
-    fprintf('Pred Pitch: %.2f | Error: %.2f | p_ref: %.3f\n', rad2deg(x(THETA)), rad2deg(err_p), des_q);
+    printDebug('Error: %.2f | u_ref: %.3f m/s\n', err_u, u_des);
+    printDebug('Error: %.2f | w_ref: %.3f m/s\n', err_h, w_des);
+    printDebug('Error: %.2f | p_ref: %.3f rad/s\n', rad2deg(err_r), p_des);
+    printDebug('Error: %.2f | p_ref: %.3f rad/s\n', rad2deg(err_p), des_q);
 end

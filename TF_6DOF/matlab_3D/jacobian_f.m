@@ -7,11 +7,13 @@ function F = jacobian_f(x, u_input, Ts, num_n, psi, wRt, wRr)
     PHI = 4;        M_PHI = 5;    
     THETA = 5;      M_THETA = 6;  
     I_IND_U = 1;    I_IND_W = 2;    I_IND_P = 3;    I_IND_Q = 4;
-    fprintf('       jacobian F Covariance\n')
+
+    global DEBUG
+    printDebug('       jacobian F Covariance\n')
 
     %% Computations
     F = eye(num_n);
-    v = 0;
+    v = 0; % Sway for now not actuated
     r_speedTs = [u_input(I_IND_U); v; u_input(I_IND_W)] * Ts;
 
     %% Derivatives for the altitude

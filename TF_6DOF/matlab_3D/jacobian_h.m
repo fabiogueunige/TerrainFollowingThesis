@@ -1,6 +1,7 @@
 function H = jacobian_h(x, s, num_m, num_n, num_s, n, n0, r_s, psi)
     % Jacobian of the observation function with respect to x
-    fprintf('       Jacobian H covariance\n');
+    global DEBUG
+    printDebug('       Jacobian H covariance\n');
     %% Definition
     IND_H = 1;                  
     ALPHA = 2;                  

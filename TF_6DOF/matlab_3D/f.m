@@ -8,7 +8,8 @@ function [x_next, wRt_p, wRr_p] = f(x, u_input, Ts, psi)
     PHI = 4;        M_PHI = 5;    
     THETA = 5;      M_THETA = 6;  
     I_IND_U = 1;    I_IND_W = 2;    I_IND_P = 3;    I_IND_Q = 4;  
-    fprintf('       f State Prediction\n');
+    global DEBUG
+    printDebug('       f State Prediction\n');
     
     %% Update of the values
     % change of the slope of the terrain
@@ -25,7 +26,7 @@ function [x_next, wRt_p, wRr_p] = f(x, u_input, Ts, psi)
     wRr_p = rotz(psi)*roty(theta_new)*rotx(phi_new);
     
     % speed in terrain frame
-    v = 0; % No attuation in sway for now
+    v = 0; % No attuation in sway for now !!!!!!!!!
     w_speed = wRr_p * [u_input(I_IND_U); v; u_input(I_IND_W)];
     s_speed = (wRt_p)' * w_speed;
 
@@ -33,8 +34,8 @@ function [x_next, wRt_p, wRr_p] = f(x, u_input, Ts, psi)
     h_new = x(IND_H) + s_speed(I_IND_W)*Ts;
 
     % Display the predicted state for debugging or monitoring purposes.
-    fprintf('Predicted h: %.2f m | a: %.2f | b: %.2f ', h_new, rad2deg(alpha_new), rad2deg(beta_new));
-    fprintf('| phi: %.2f | theta: %.2f\n', rad2deg(phi_new), rad2deg(theta_new));
+    printDebug('Predicted h: %.2f m | a: %.2f | b: %.2f ', h_new, rad2deg(alpha_new), rad2deg(beta_new));
+    printDebug('| phi: %.2f | theta: %.2f\n', rad2deg(phi_new), rad2deg(theta_new));
     
     %% Send info
     % ---- x0 = [h, alpha, beta, phi, theta] ---- %

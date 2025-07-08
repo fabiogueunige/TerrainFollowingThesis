@@ -8,14 +8,17 @@ function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, 
     THETA = 5;    M_THETA = 6;
     IND_P = 6;    M_IND_P = 7;  I_IND_P = 3;
     IND_Q = 7;    M_IND_Q = 8;  I_IND_Q = 4;  
-    fprintf('       Measurament:\n');
+    
+    global DEBUG
+    printDebug('       Measurament:\n');
+    mistake = false;
 
     %% Terrain Definition
     wRt = (rotz(0)*roty(beta)*rotx(alpha))*rotx(pi);
     n = wRt*n0; % in world frame
     if (norm(n) ~= 1)
         n = vector_normalization(n);
-        fprintf('n: [%.4f; %.4f; %.4f]\n', n(1), n(2), n(3));
+        printDebug('n: [%.4f; %.4f; %.4f]\n', n(1), n(2), n(3));
     end
     
     %% Real Robot angle and position update
@@ -37,7 +40,7 @@ function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, 
     for j = 1:num_s
         s(:,j) = wRr*r_s(:,j);
         if (norm(s(:,j)) ~= 1)
-            fprintf('!! ALERT !!: norm Measured sensor %.0f has been normalized\n', j);
+            printDebug('!! ALERT !!: norm Measured sensor %.0f has been normalized\n', j);
             s(:,j) = vector_normalization(s(:,j));
         end
     end
@@ -52,6 +55,7 @@ function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, 
         end
         t_star(:, j) = -(dot((pr - pplane),n))/(dot(s(:,j),n));
         if t_star(:,j) < 0
+            mistake = true;
             error('Negative value for sensor %.0f\n',j);
         end
         p_int(:, j) = pr + t_star(:, j)*s(:, j);
@@ -67,15 +71,15 @@ function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, 
     end
 
         %% Plot visualization
-    if k == 2 || mod(k, 5000) == 0
+    if k == 2 || mod(k, 5000) == 0 || ~visibile || mistake
         m_visualization(pr, pplane, n, num_s, p_int, wRr, k);
     end
 
     %% Sending Info's
     ymes = [y(1); y(2); y(3); y(4); phm; thm]; %  p_gyr; q_gyr
     h_real = (n'*(pr - pplane))/(norm(n));
-    fprintf('h reale: %.3f | y1m: %.3f | y2m: %.3f | y3m: %.3f | y4m: %.3f\n', h_real, y(1), y(2), y(3), y(4));
-    fprintf('phi mes new: %.2f | p_gyr: %.2f \n', rad2deg(phm), p_gyr);
-    fprintf('theta mes new: %.2f | q_gyr: %.2f \n', rad2deg(thm), q_gyr);
-    fprintf('Punto x: %.2f | y: %.2f | z: %.2f\n', pr(1), pr(2), pr(3));
+    printDebug('h reale: %.3f | y1m: %.3f | y2m: %.3f | y3m: %.3f | y4m: %.3f\n', h_real, y(1), y(2), y(3), y(4));
+    printDebug('phi mes new: %.2f | p_gyr: %.2f \n', rad2deg(phm), p_gyr);
+    printDebug('theta mes new: %.2f | q_gyr: %.2f \n', rad2deg(thm), q_gyr);
+    printDebug('Punto x: %.2f | y: %.2f | z: %.2f\n', pr(1), pr(2), pr(3));
 end

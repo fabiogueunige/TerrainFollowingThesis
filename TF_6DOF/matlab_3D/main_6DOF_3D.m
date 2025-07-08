@@ -16,6 +16,8 @@ Ts = 0.001;         % Sampling time [s]
 Tf = 25;            % Final time [s]
 time = 0:Ts:Tf;     % Time vector
 N = length(time);   % Number of iterations
+global DEBUG;
+DEBUG = false;
 
 %% Matrix Dimensions
 n_dim = 5;          % Number of states
@@ -35,7 +37,7 @@ x_est = zeros(n_dim, N);       % Estimated state
 x_true = zeros(n_dim, N);      % True state
 z_meas = zeros(m_dim, N);      % Measurements
 u = zeros(i_dim, N);           % Known inputs
-tau_star = zeros(i_dim, N);    % Desired input
+u_star = zeros(i_dim, N);      % Desired input
 u_dot = zeros(i_dim,N);        % AUV acceleration
 z_pred = zeros(m_dim, N);      % Predicted output
 n = zeros(d_dim,N);            % Surface vector
@@ -46,8 +48,8 @@ i_err = zeros(i_dim, N);       % Integral error
 h_ref = 7;
 
 %% Terrain Parameters
-alpha = pi/10;
-beta = pi/10;
+alpha = pi/7;
+beta = pi/7;
 pplane = [0, 0, 10]';
 n0 = [0, 0, 1]'; % terrain frame
 wRt = zeros(d_dim, d_dim, N);
@@ -83,7 +85,7 @@ for j = 1:s_dim
     z_r(:,j) = vector_normalization(z_r(:,j));
 end
 % Control Parametrs
-speed0 = [0, 0, 0, 0]'; % surge, heave, p and q.  % (sway)? %
+speed0 = [0, 0, 0, 0]'; % surge, heave, p and q.  % (sway, r)? %
 tau0 = tau0_values(speed0, i_dim);
 
 %% EKF Start
@@ -101,14 +103,14 @@ wRt_pre(:,:,1) = wRt(:,:,1);
 
 %% EKF Simulation
 for k = 2:N
-    fprintf('\n New Lap, time = %.0f \n', k);
+    disp(['Processing iteration \n', num2str(k)]);
     %% EKF: Input Control Computation
-    if k >= 100
+    if k >= 15
         % Desired input
-        [tau_star(:,k-1), p_err(:,k), i_err(:,k)] = input_control(x_est(:,k-1), Ts, p_err(:,k-1), i_err(:,k-1), u(I_IND_U,k-2), ...
-                                                                    wRr(:,:,k-1), wRt(:,:,k-1)); % Define input
+        [u_star(:,k-1), p_err(:,k), i_err(:,k)] = input_control(x_est(:,k-1), Ts, p_err(:,k-1), i_err(:,k-1), u(I_IND_U,k-2), ...
+                                                                    wRr(:,:,k-1), wRt(:,:,k-1));
         % Tau to generate the desired inptut
-        tau = tau_generator(Ts, u(:,k-2), tau_star(:,k-1), tau0, speed0, i_dim);
+        tau = tau_generator(Ts, u(:,k-2), u_star(:,k-1), tau0, speed0, i_dim);
         % Controller application
         [u(:,k-1), u_dot(:,k-1)] = dynamic_model(tau, tau0, speed0, u(:,k-2), Ts, i_dim);
     end
@@ -121,12 +123,11 @@ for k = 2:N
     z_meas(:,k) = z_meas(:,k) + v;
 
     %% EKF: True State update
-    % w = mvnrnd(zeros(n_dim,1), Q)'; % Process noise
-    % Desired state estimation (real one)
+    w = mvnrnd(zeros(n_dim,1), Q)'; % Process noise
+    % TRUE state estimation (not part of EKF)
     x_true(:,k) = [h_ref, alpha, beta, alpha, beta]'; % z_meas(M_PHI,k), z_meas(M_THETA,k) , u(I_IND_P,k-1), u(I_IND_Q,k-1) 
 
     %% EKF: Prediction
-    % per chat non ci vuole w nella x_pred !!!!
     % State prediction
     [x_pred(:,k), wRt_pre(:,:,k), wRr_pre(:,:,k)] = f(x_est(:,k-1), u(:,k-1), Ts, psi);
     % Dynamics Jacobian
@@ -140,7 +141,7 @@ for k = 2:N
         % Update sensor value
         s(:,j) = wRr_pre(:,:,k) * r_s(:,j);
         if (norm(s(:,j)) ~= 1)
-            fprintf('ALERT: Norm Predicted SENSOR %.0f has been normalized\n', j);
+            printDebug('ALERT: Norm Predicted SENSOR %.0f has been normalized\n', j)
             s(:,j) = vector_normalization(s(:,j));
         end
     end
@@ -148,17 +149,18 @@ for k = 2:N
     %% Norm to the terrain
     n(:,k) = wRt_pre(:,:,k)*n0;
     if (norm(n(:,k)) ~= 1)
-        fprintf('ALERT: Norm predicted has been normalized\n');
         n(:,k) = vector_normalization(n(:,k));
-        fprintf('n: [%.4f; %.4f; %.4f]\n', n(1,k), n(2,k), n(3,k));
+        printDebug('ALERT: n normalized: [%.4f; %.4f; %.4f]\n', n(1,k), n(2,k), n(3,k));
     end
    
     %% EKF: Gain and Prediction Update
-    H = jacobian_h(x_pred(:,k), s, m_dim, n_dim, s_dim, n(:,k), n0, r_s, psi);   % Observation Jacobian
+    % Observation Jacobian
+    H = jacobian_h(x_pred(:,k), s, m_dim, n_dim, s_dim, n(:,k), n0, r_s, psi);
     if any(isnan(H(:)))
         error('Esecuzione interrotta: H contiene valori NaN. Istante %0.f', k);
     end
-    fprintf('       Kalman Gain\n');
+
+    % Kalman Gain
     K = P_pred * H' / (H * P_pred * H' + R); % Kalman Gain
     if any(isnan(K(:)))
         error('Esecuzione interrotta: K contiene valori NaN. Istante %0.f', k);
@@ -168,17 +170,20 @@ for k = 2:N
     z_pred(:,k) = h(x_pred(:,k), s, s_dim, m_dim, n(:,k));      
 
     %% EKF: State Update
+    % State 
     x_est(:,k) = x_pred(:,k) + K * (z_meas(:,k) - z_pred(:,k));
+    % Covariance
     P = (eye(n_dim) - K * H) * P_pred;
 
     %% Rotation Update 
+    % terrain
     wRt(:,:,k) = rotz(0)*roty(x_est(BETA))*rotx(x_est(ALPHA))*rotx(pi);
-
     % robot
     wRr(:,:,k) = rotz(psi)*roty(x_est(THETA))*rotx(x_est(PHI));
 end
 
-%% Final Plot
+%% Plotting
+% States
 ttl = {'altitude', 'alpha', 'beta', 'phi', 'pitch'};
 for i = 1:n_dim
     figure;
@@ -191,6 +196,7 @@ for i = 1:n_dim
     hold off;
 end
 
+% Inputs
 ttl = {'u input', 'w input', 'p input', 'q input'};
 for i = 1:i_dim
     figure;
@@ -202,7 +208,7 @@ for i = 1:i_dim
     hold off;
 end
 
-%% Points plot
+% Points
 figure;
 scatter3(prob(1,:), prob(2,:), prob(3,:), [], time);
 colorbar; 
