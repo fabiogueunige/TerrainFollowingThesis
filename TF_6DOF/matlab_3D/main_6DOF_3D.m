@@ -48,8 +48,8 @@ i_err = zeros(i_dim, N);       % Integral error
 h_ref = 7;
 
 %% Terrain Parameters
-alpha = pi/7;
-beta = pi/7;
+alpha = pi/5;
+beta = pi/3;
 pplane = [0, 0, 10]';
 n0 = [0, 0, 1]'; % terrain frame
 wRt = zeros(d_dim, d_dim, N);
@@ -130,6 +130,7 @@ for k = 2:N
     %% EKF: Prediction
     % State prediction
     [x_pred(:,k), wRt_pre(:,:,k), wRr_pre(:,:,k)] = f(x_est(:,k-1), u(:,k-1), Ts, psi);
+    % x_pred(:,k) = x_pred(:,k) + w;
     % Dynamics Jacobian
     F = jacobian_f(x_est(:,k-1), u(:,k-1), Ts, n_dim, psi, wRt_pre(:,:,k), wRr_pre(:,:,k)); 
     % Covariance prediction
@@ -187,9 +188,16 @@ end
 ttl = {'altitude', 'alpha', 'beta', 'phi', 'pitch'};
 for i = 1:n_dim
     figure;
-    plot(time, x_true(i,:), 'b', 'DisplayName', 'True');
-    hold on;
-    plot(time, x_est(i,:), 'g', 'DisplayName', 'Estimated');
+    if (i == 1)
+        plot(time, x_true(i,:), 'b', 'DisplayName', 'True');
+        hold on;
+        plot(time, x_est(i,:), 'g', 'DisplayName', 'Estimated');
+    else
+        plot(time, rad2deg(x_true(i,:)), 'b', 'DisplayName', 'True');
+        hold on;
+        plot(time, rad2deg(x_est(i,:)), 'g', 'DisplayName', 'Estimated');
+    end
+    
     xlabel('Time [s]'); ylabel(sprintf('x_%d', i));
     legend; grid on;
     title(ttl{i})
@@ -200,7 +208,11 @@ end
 ttl = {'u input', 'w input', 'p input', 'q input'};
 for i = 1:i_dim
     figure;
-    plot(time, u(i,:), 'b', 'DisplayName', ttl{i});
+    if i <= 2
+        plot(time, u(i,:), 'b', 'DisplayName', ttl{i});
+    else
+        plot(time, rad2deg(u(i,:)), 'b', 'DisplayName', ttl{i});
+    end
     hold on
     xlabel('Time [s]'); ylabel('Space [m]');
     grid on;

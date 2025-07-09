@@ -2,7 +2,7 @@ function [Q, G, R] = noise_setup (q_dim, r_dim, sampling_time)
     % State Noise
     sigh = 0.999;           % State noise h
     siga = deg2rad(0.4);    % State noise alpha
-    sigb = deg2rad(0.2);      % State noise beta
+    sigb = deg2rad(0.2);    % State noise beta
     sigph = deg2rad(0.3);   % State noise phi
     sigt = deg2rad(0.2);    % State noise theta
 
@@ -11,8 +11,8 @@ function [Q, G, R] = noise_setup (q_dim, r_dim, sampling_time)
     eta2 = 0.0085;           % Measurement noise y2
     eta3 = 0.0077;           % Measurement noise y3
     eta4 = 0.0085;           % Measurement noise y4
-    eta5 = deg2rad(0.3);    % Measurement noise accelerometer p
-    eta6 = deg2rad(0.1);      % Measurement noise accelerometer q
+    eta5 = deg2rad(0.3);     % Measurement noise accelerometer p
+    eta6 = deg2rad(0.1);     % Measurement noise accelerometer q
 
     % Initialization
     Q = zeros(q_dim,q_dim); % Process noise covariance
