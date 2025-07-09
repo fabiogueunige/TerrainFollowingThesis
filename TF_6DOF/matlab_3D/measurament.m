@@ -1,13 +1,12 @@
 function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, ...
-                                    v, Ts, pr_old, ph_o, th_o, k, psi, z_r) 
-    %% Definitions
-    IND_H = 1;                  I_IND_U = 1;
-    ALPHA = 2;                  I_IND_W = 2;
-    BETA = 3;
-    PHI = 4;      M_PHI = 5;
-    THETA = 5;    M_THETA = 6;
-    IND_P = 6;    M_IND_P = 7;  I_IND_P = 3;
-    IND_Q = 7;    M_IND_Q = 8;  I_IND_Q = 4;  
+                                    input, Ts, pr_old, wRr, k, z_r) 
+    %% Definition
+    % state
+    IND_H = 1;      ALPHA = 2;      BETA = 3;  
+    % angles               
+    PHI = 1;        THETA = 2;      PSI = 3;  
+    % input
+    I_IND_U = 1;    I_IND_W = 2;    I_IND_P = 3;    I_IND_Q = 4;  
     
     global DEBUG
     printDebug('       Measurament:\n');
@@ -23,14 +22,9 @@ function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, 
     
     %% Real Robot angle and position update
     % Valid because no noise
-    phm = ph_o + v(I_IND_P)*Ts;
-    thm = th_o + v(I_IND_Q)*Ts;
-    p_gyr = v(I_IND_P);
-    q_gyr = v(I_IND_Q);
     
     % Trasformation update
-    wRr = rotz(psi)*roty(thm)*rotx(phm);
-    w_speed = wRr * [v(I_IND_U); 0; v(I_IND_W)];
+    w_speed = wRr * [input(I_IND_U); 0; input(I_IND_W)];
     pr = pr_old + w_speed*Ts;
     
     %% Sensor Definition
@@ -76,10 +70,8 @@ function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, 
     end
 
     %% Sending Info's
-    ymes = [y(1); y(2); y(3); y(4); phm; thm]; %  p_gyr; q_gyr
+    ymes = [y(1); y(2); y(3); y(4)];
     h_real = (n'*(pr - pplane))/(norm(n));
     printDebug('h reale: %.3f | y1m: %.3f | y2m: %.3f | y3m: %.3f | y4m: %.3f\n', h_real, y(1), y(2), y(3), y(4));
-    printDebug('phi mes new: %.2f | p_gyr: %.2f \n', rad2deg(phm), p_gyr);
-    printDebug('theta mes new: %.2f | q_gyr: %.2f \n', rad2deg(thm), q_gyr);
     printDebug('Punto x: %.2f | y: %.2f | z: %.2f\n', pr(1), pr(2), pr(3));
 end
