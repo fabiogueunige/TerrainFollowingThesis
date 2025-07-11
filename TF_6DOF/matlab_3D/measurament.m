@@ -1,5 +1,5 @@
-function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, ...
-                                    input, Ts, pr_old, wRr, k, z_r) 
+function [ymes, h_real, pr, Rm] = measurament(alpha, beta, pplane, n0, r_s , num_s, ...
+                                    input, Ts, pr_old, wRr, k, Rm) 
     %% Definition
     % state
     IND_H = 1;      ALPHA = 2;      BETA = 3;  
@@ -10,7 +10,6 @@ function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, 
     
     global DEBUG
     printDebug('       Measurament:\n');
-    mistake = false;
 
     %% Terrain Definition
     wRt = (rotz(0)*roty(beta)*rotx(alpha))*rotx(pi);
@@ -49,23 +48,25 @@ function [ymes, h_real, pr] = measurament(alpha, beta, pplane, n0, r_s , num_s, 
         end
         t_star(:, j) = -(dot((pr - pplane),n))/(dot(s(:,j),n));
         if t_star(:,j) < 0
-            mistake = true;
-            error('Negative value for sensor %.0f\n',j);
+            Rm(j,j) = Rm(j,j)*50;
+            fprintf('Negative value for sensor %.0f\n',j);
+            pause(0.5);
         end
         p_int(:, j) = pr + t_star(:, j)*s(:, j);
         y(j) = norm(t_star(:, j));
-        
-        % Second check visibility
-        z_r(:,j) = (wRr)*z_r(:,j);
-        v_p = p_int(:, j) - pr; % world frame
-        visibile = dot(z_r(:,j), v_p) > 0;
-        if ~visibile
-            error('!! Error in visibility for the sensor %0.f !!', j);
-        end
+
+        % % Second check visibility
+        % z_r(:,j) = (wRr)*z_r(:,j);
+        % v_p = p_int(:, j) - pr; % world frame
+        % visibile = dot(z_r(:,j), v_p) > 0;
+        % if ~visibile
+        %     fprintf('!! Error in visibility for the sensor %0.f !!', j);
+        %     pause(0.05);
+        % end
     end
 
         %% Plot visualization
-    if k == 2 || mod(k, 5000) == 0 || ~visibile || mistake
+    if k == 2 || mod(k, 2000) == 0
         m_visualization(pr, pplane, n, num_s, p_int, wRr, k);
     end
 

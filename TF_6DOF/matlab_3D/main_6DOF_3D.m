@@ -28,104 +28,110 @@ s_dim = 4;          % number of echosonar
 a_dim = 3;          % number of angles
 
 %% Noise
-[Q, R, R_a] = noise_setup(n_dim, m_dim, a_dim);
-
-%% EKF Parameters
-prob = zeros(d_dim,N);         % AUV initial position
-x_pred = zeros(n_dim, N);      % State predicted
-x_est = zeros(n_dim, N);       % Estimated state
-x_true = zeros(n_dim, N);      % True state
-a_true = zeros(a_dim, N);      % True angles comparation
-z_meas = zeros(m_dim, N);      % Measurements
-u = zeros(i_dim, N);           % Known inputs
-u_star = zeros(i_dim, N);      % Desired input
-u_dot = zeros(i_dim,N);        % AUV acceleration
-z_pred = zeros(m_dim, N);      % Predicted output
-n = zeros(d_dim,N);            % Surface vector
-p_err = zeros(i_dim, N);       % Proportional error
-i_err = zeros(i_dim, N);       % Integral error
-
-%% Software Design
-h_ref = 7;
+[Q, R_tp, R_a] = noise_setup(n_dim, m_dim, a_dim);
 
 %% Terrain Parameters
 alpha = pi/10;
-beta = pi/10;
+beta = pi/7;
 pplane = [0, 0, 10]';
 n0 = [0, 0, 1]'; % terrain frame
 wRt = zeros(d_dim, d_dim, N);
 wRt_pre = zeros(d_dim, d_dim, N);
+n = zeros(d_dim,N);            % Surface vector
 
 %% AUV Parameters 
-psi = 0;                                   % Robot yaw (may be controlled in fututre)
-s = zeros(d_dim,s_dim);                    % Robot echosonar
-% x0 = [h, alpha, beta]
-x0 = [10, alpha, beta]';                   % True initial state 
-x0_est = zeros(n_dim, 1);                  % Estimated initial state
-rob_rot = zeros(a_dim, N);                 % Robot angles roll, pitch, yaw
-wRr = zeros(d_dim, d_dim, N);              % robot in world rotation
-wRr_real = zeros(d_dim, d_dim);            % real robot rotation
+psi = 0; % yaw to get motion
+prob = zeros(d_dim,N);         % AUV initial position
 
-Gamma = -pi/8;                             % y1 angle (rear)
-Lambda = pi/8;                             % y2 angle (front)
-Eta = pi/8;                                % y3 angle (left)
-Zeta = -pi/8;                              % y4 angle (right)
+% robot velocities & acceleration
+u = zeros(i_dim, N);           % Known inputs
+u_dot = zeros(i_dim,N);        % AUV acceleration
 
-r_s(:, 1) = [sin(Gamma), 0, cos(Gamma)]';  % y1 versor (rear)
-r_s(:, 2) = [sin(Lambda), 0, cos(Lambda)]';% y2 versor (front)
-r_s(:, 3) = [0, -sin(Eta), cos(Eta)]';     % y3 versor (left)
-r_s(:, 4) = [0, -sin(Zeta), cos(Zeta)]';   % y4 versor (right)
+% robot angles
+a_true = zeros(a_dim, N);           % True angles comparation
+rob_rot = zeros(a_dim, N);          % Robot angles roll, pitch, yaw
+clean_rot = zeros(a_dim,N);         % NO Noise Rotation
 
-% Second check visibility parameters
-z_r = zeros(d_dim, s_dim);
-z_r(:,1) = [1, 0, 1];
-z_r(:,2) = [1, 0, 1];
-z_r(:,3) = [0, 1, 1];
-z_r(:,4) = [0, 1, 1];
+% robot rotations
+wRr = zeros(d_dim, d_dim, N);       % Robot in world rotation
+wRr_real = zeros(d_dim, d_dim);     % Real robot rotation
 
-for j = 1:s_dim
-    z_r(:,j) = vector_normalization(z_r(:,j));
-end
-% Control Parametrs
+% echosonar part
+s = zeros(d_dim,s_dim);                     % Robot echosonar
+Gamma = -pi/8;                               % y1 angle (rear)
+Lambda = pi/8;                              % y2 angle (front)
+Eta = pi/8;                                 % y3 angle (left)
+Zeta = -pi/8;                               % y4 angle (right)
+r_s(:, 1) = [sin(Gamma), 0, cos(Gamma)]';   % y1 versor (rear)
+r_s(:, 2) = [sin(Lambda), 0, cos(Lambda)]'; % y2 versor (front)
+r_s(:, 3) = [0, -sin(Eta), cos(Eta)]';      % y3 versor (left)
+r_s(:, 4) = [0, -sin(Zeta), cos(Zeta)]';    % y4 versor (right)
+
+%% EKF Parameters
+x_pred = zeros(n_dim, N);      % State predicted
+x_est = zeros(n_dim, N);       % Estimated state
+x_true = zeros(n_dim, N);      % True state
+z_meas = zeros(m_dim, N);      % Measurements
+z_pred = zeros(m_dim, N);      % Predicted output
+R = zeros(m_dim, m_dim, N);    % Observation matrix
+x0 = [10, alpha, beta]';       % True initial state 
+x0_est = zeros(n_dim, 1);      % Estimated initial state
+
+%% Controller Parameters
+pid = zeros(i_dim, N);         % PID for Dynamics
+du_int_err = zeros(i_dim, N);  % integral error
+p_err = zeros(i_dim, N);
+i_err = zeros(i_dim, N);
+
+% initial controller
 speed0 = [0, 0, 0, 0]'; % surge, heave, p and q.  % (sway, r)? %
 tau0 = tau0_values(speed0, i_dim);
+
+%% Software Design
+global h_ref;
+h_ref = 7;
 
 %% EKF Start
 % covariance 
 P0 = diag([1, 0.08, 2]);
 P0 = P0 * (1.1)+ 3*rand;
 P = P0;
+
 % State
 x_true(:,1) = x0;
 x_est(:,1) = x0_est;
+
+% Rotations
 wRr(:,:,1) = eye(d_dim);
 wRt(:,:,1) = eye(d_dim) * rotx(pi);
 wRt_pre(:,:,1) = wRt(:,:,1);
 
 %% EKF Simulation
 for k = 2:N
-    disp(['Processing iteration \n', num2str(k)]);
+    if k == 2 || mod(k, 50) == 0
+        disp(['Processing iteration \n', num2str(k)]);
+    end
+    %% R setting
+    R(:,:,k) = R_tp;
     %% EKF: Input Control Computation
-    if k >= 15
-        % Desired input
-        [u_star(:,k-1), p_err(:,k), i_err(:,k)] = input_control(x_est(:,k-1), Ts, p_err(:,k-1), i_err(:,k-1), rob_rot(:,k-1), u(:,k-2), ...
-                                                                    wRr(:,:,k-1), wRt(:,:,k-1));
-        % Tau to generate the desired inptut
-        tau = tau_generator(Ts, u(:,k-2), u_star(:,k-1), tau0, speed0, i_dim);
-        % Controller application
-        [u(:,k-1), u_dot(:,k-1)] = dynamic_model(tau, tau0, speed0, u(:,k-2), Ts, i_dim);
+    if k >= 10
+        % PID Values with Saturation
+        [pid(:,k), du_int_err(:,k), p_err(:,k), i_err(:,k)] = input_control(x_est(:,k-1), rob_rot(:,k-1), pid(:,k-1), du_int_err(:,k-1), ...
+                                             u(:,k-2), u_dot(:,k-2), wRr(:,:,k-1), wRt(:,:,k-1), Ts, i_dim, p_err(:,k-1), i_err(:,k-1));
+        % Dynamic model
+        [u(:,k-1), u_dot(:,k-1)] = dynamic_model(pid(:,k), tau0, speed0, u(:,k-2), Ts, i_dim);
     end
 
     %% EKF: Real Measurement
     % Measurement noise
-    v = mvnrnd(zeros(m_dim,1), R)'; 
+    v = mvnrnd(zeros(m_dim,1), R_tp)'; 
     v_a = mvnrnd(zeros(a_dim,1), R_a)';
-    [rob_rot(:,k), wRr_real] = AHRS_measurement(rob_rot(:,k-1), u(:,k-1), Ts);
-    [z_meas(:,k), hmes, prob(:,k)] = measurament(alpha, beta, pplane, n0, r_s, s_dim, u(:,k-1), Ts, prob(:,k-1), ...
-                                                   wRr_real, k, z_r);
+    [clean_rot(:,k), wRr_real] = AHRS_measurement(clean_rot(:,k-1), u(:,k-1), Ts);
+    [z_meas(:,k), hmes, prob(:,k), R(:,:,k)] = measurament(alpha, beta, pplane, n0, r_s, s_dim, u(:,k-1), Ts,  ...
+                                                   prob(:,k-1), wRr_real, k, R(:,:,k));
     % Adding noise to real measurament
-    rob_rot(:,k) = rob_rot(:,k) + v_a;
-    z_meas(:,k) = z_meas(:,k) + v;
+    rob_rot(:,k) = clean_rot(:,k); % + v_a;
+    % z_meas(:,k) = z_meas(:,k) + v;
 
     % Robot rotation matrix computation
     wRr(:,:,k) = rotz(rob_rot(PSI,k))*roty(rob_rot(THETA,k))*rotx(rob_rot(PHI,k)); 
@@ -140,6 +146,7 @@ for k = 2:N
     w = mvnrnd(zeros(n_dim,1), Q)'; % Process noise
     [x_pred(:,k), wRt_pre(:,:,k)] = f(x_est(:,k-1), u(:,k-1), Ts, wRr(:,:,k));
     % x_pred(:,k) = x_pred(:,k) + w;
+    
     % Dynamics Jacobian
     F = jacobian_f(x_est(:,k-1), u(:,k-1), Ts, n_dim, psi, wRt_pre(:,:,k), wRr(:,:,k)); 
     % Covariance prediction
@@ -171,15 +178,15 @@ for k = 2:N
     end
 
     % Kalman Gain
-    K = P_pred * H' / (H * P_pred * H' + R); % Kalman Gain
+    K = P_pred * H' / (H * P_pred * H' + R(:,:,k)); % Kalman Gain
     if any(isnan(K(:)))
         error('Esecuzione interrotta: K contiene valori NaN. Istante %0.f', k);
     end
     
     % Measurament prediction
-    v = mvnrnd(zeros(m_dim,1), R)'; 
+    v = mvnrnd(zeros(m_dim,1), R_tp)'; 
     z_pred(:,k) = h(x_pred(:,k), s, s_dim, m_dim, n(:,k));      
-    z_pred(:,k) = z_pred(:,k) + v;
+    % z_pred(:,k) = z_pred(:,k) + v;
 
     %% EKF: State Update
     % State 
@@ -231,7 +238,7 @@ ttl = {'u input', 'w input', 'p input', 'q input'};
 for i = 1:i_dim
     figure;
     if i <= 2
-        plot(time, u(i,:), 'b', 'DisplayName', ttl{i});
+        plot(time, u(i,:), 'b', 'DisplayName', 'u');
     else
         plot(time, rad2deg(u(i,:)), 'b', 'DisplayName', ttl{i});
     end

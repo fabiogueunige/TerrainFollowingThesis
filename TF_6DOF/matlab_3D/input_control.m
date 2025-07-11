@@ -1,180 +1,146 @@
-function [tau, p_err, int_err] = input_control(x, Ts, prev_err, int_err, angles, old_input, wRr, wRt)
+function [pid, du_int, prev_err, int_err] = input_control(x, angles, old_pid, old_du_int, speed, acc, wRr, wRt,...
+                                    Ts, dim_i, prev_err, int_err)
     %% Definitions
     % state
     IND_H = 1;      ALPHA = 2;      BETA = 3;  
     % angles               
     PHI = 1;        THETA = 2;      PSI = 3;  
     % input
-    I_IND_U = 1;    I_IND_W = 2;    I_IND_P = 3;    I_IND_Q = 4;
+    SURGE = 1;      HEAVE = 2;      ROLL = 3;      PITCH = 4;
     C_U = 1;        C_H = 2;        C_ROLL = 3;     C_PITCH = 4;
 
     global DEBUG
     printDebug('       Input Control\n');
-    %% SYSTEM PARAMETERS
-    s_u_star = 0.3;       % [m/s] Constant surge velocity
-    s_v_star = 0.0;       % Constant sway velocity
-    h_star = 7;           % Reference altitude
-    des_u_max = 1;        % [m/s] Robot surge velocity saturation
-    des_w_max = 1;        % [m/s] Vertical velocity saturation
-    des_p_max = 1;        % Roll velocity saturation
-    des_q_max = 1;        % Pitch velocity saturation
     
-    %% Redefinition
-    % surge = 1; heave = 2; roll = 3; pitch = 4 %
-    prev_err_u = prev_err(C_U);
-    prev_err_h = prev_err(C_H);
-    prev_err_r = prev_err(C_ROLL);
-    prev_err_p = prev_err(C_PITCH);
-    int_err_u = int_err(C_U);
-    int_err_h = int_err(C_H);
-    int_err_r = int_err(C_ROLL);
-    int_err_p = int_err(C_PITCH);
+    %% PID parameters
+    % --- for now random parameters -- %
+    [Kp, Ki, Kd] = gainComputation(speed, dim_i);
+    Ti = zeros(dim_i, 1);
+    Td = zeros(dim_i, 1);
+    Kt = zeros(dim_i, 1);
 
-    %% PID PARAMETERS % ---- TO IMPROVE ---- %
-    Kp = 0.8;          % Proportional gain
-    Ki = 0.1;          % Integral gain
-    Kd = 0.05;         % Derivative gain
+    for j = 1:dim_i
+        Ti(j) = Kp(j)/Ki(j);
+        Td(j) = Kd(j)/Kp(j);
+        if j == SURGE
+            Kt(j) = 1/Ti(j);
+        else
+            Kt(j) = 1 / sqrt(Ti(j)*Td(j));
+        end
+    end
 
-    integral_max = 1.0; % Maximum allowed integral error
-    
-    %% General Computation
-    r_speed = [old_input(I_IND_U), 0, old_input(I_IND_W)]';
-    s_speed = wRt' * wRr * r_speed;
-    
-    %% ERROR CALCULATION FOR SURGE
-    % u_des = t_u_star;
-    % err_u = 0;
-    % int_err_u = 0;
+    %% Desiired Parameters
+    u_star = 0.3;
+    h_star = 7;
 
-    % NON FUNZIONA, Qualche problema!! A SAPERE QUALE BOH
-    err_u = s_u_star - s_speed(I_IND_U);
-    int_err_u = int_err_u + err_u * Ts; % Accumulate integral error
-    der_err_u = (err_u - prev_err_u) / Ts; % Calculate derivative error
+    %% Limitation Parameters
+    max_pid = [0.5; 1; 0.5; 0.5];
+    du_int = zeros(dim_i, 1);
+    pid = zeros(dim_i, 1);
 
-    % Anti-windup for the integrator
-    int_err_u = max(min(int_err_u, integral_max), -integral_max); % Clamp integral error
+    integral_max = 1.0;
 
-    % PID
-    pid_u = (Kp * err_u + Ki * int_err_u + Kd * der_err_u); % Calculate PID output
-    
-    % u_des
-    tp_speed = wRr' * wRt * [pid_u; 0; 0];
-    u_des = tp_speed(I_IND_U);
+    %% Errors
+    err = zeros (dim_i, 1);
+    err(SURGE) = (u_star - speed(SURGE)); % perchè il meno??
+    err(HEAVE) = (h_star - x(IND_H));
+    err(ROLL) = (x(ALPHA) - angles(PHI));
+    err(PITCH) = (x(BETA) - angles(THETA));
 
-    % final saturation
-    u_des = max(min(u_des, des_u_max), -des_u_max); % Clamp vertical velocity to limits
+    %% Controller SURGE
+    for j = 1:SURGE % Gli altri non funzionano, come anche il surge
+        d_i = Ki(j) * err(j);
+        if j == SURGE % PI Controller
+            d_p = Kp(j) * acc(j);
+            d_d = 0;
+        else % attenzione a come gestire heave
+            d_p = Kp(j) * speed(j);
+            d_d = Kd(j) * acc(j);
+        end
+        % All term toghether plus old_pid
+        term_sum = d_i + d_p + d_d - Kt(j) * old_pid(j);
+        du_int(j) = old_du_int(j) + Ts*term_sum;
+        % saturation 
+        du_sat = max(min(du_int(j), max_pid(j)), -max_pid(j));
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    u_des = s_u_star;
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        pid(j) = du_int(j) - du_sat;
+    end
 
-    % Memory update
-    prev_err_u = err_u; % Store current error for next iteration's derivative calculation
-    
-    %% ERROR CALCULATION FOR SWAY
-    pid_v = 0;
-    % NON FUNZIONA, Qualche problema!! A SAPERE QUALE BOH
-    % err_v = t_v_star - s_speed(I_IND_V);
-    % int_err_v = int_err_v + err_v * Ts; % Accumulate integral error
-    % der_err_v = (err_v - prev_err_v) / Ts; % Calculate derivative error
-    % 
-    % % Anti-windup for the integrator
-    % int_err_v = max(min(int_err_v, integral_max), -integral_max); % Clamp integral error
-    % 
-    % % PID
-    % pid_v = (Kp * err_v + Ki * int_err_v + Kd * der_err_v); % Calculate PID output
-    % 
-    % % Memory update
-    % prev_err_v = err_v; % Store current error for next iteration's derivative calculation
-
-    %% ERROR CALCULATION FOR H
-    % err_h = 0; 
-    % int_err_h = 0;
-    % tau_w = 0;
-
+    %% ERROR CALCULATION FOR THE OTHERS
     % Pid Computation
-    err_h = (h_star - x(IND_H)); % Negative for robot frame velocity (error calculation)
-    int_err_h = int_err_h + err_h * Ts; % Accumulate integral error
-    der_err_h = (err_h - prev_err_h) / Ts; % Calculate derivative error
+    for j = SURGE:dim_i
+        int_err(j) = int_err(j) + err(j) * Ts;
+        der_err = (err(j) - prev_err(j)) / Ts;
+        % Anti-windup for the integrator
+        int_err(j) = max(min(int_err(j), integral_max), -integral_max); % Clamp integral error
+        
+        % sum of the terms
+        term_sum = (Kp(j) * err(j) + Ki(j) * int_err(j) + Kd(j) * der_err);
+        if j == HEAVE
+            tp_speed = wRr' * wRt * [0; 0; term_sum];
+            pid(j) = tp_speed(3); % I_IND_W
+            term_sum = pid(j);
+        end
+        pid(j) = max(min(term_sum, max_pid(j)), -max_pid(j));
 
-    % Anti-windup for the integrator
-    int_err_h = max(min(int_err_h, integral_max), -integral_max); % Clamp integral error
-
-    % PID on altitude frame
-    pid_h = (Kp * err_h + Ki * int_err_h + Kd * der_err_h);
+        % Memory update
+        prev_err(j) = err(j);
+    end
     
-    tp_speed = wRr' * wRt * [0; 0; pid_h];
-    w_des = tp_speed(3); % I_IND_W
+    % pid(SURGE) = u_star;
+    % pid(HEAVE) = 0;
+    % pid(ROLL) = 0;
+    % pid(PITCH) = 0;
 
-    w_des = max(min(w_des, des_w_max), -des_w_max); % Clamp vertical velocity to limits
-
-    % Memory update
-    prev_err_h = err_h; % Store current error for next iteration's derivative calculation
-    
-    %% SURGE, SWAY, HEAVE DESIRED VELOCITIES
-    % PID on world and robot frame
-    % % %% %% %% %% %% %% % %
-    % Secondo me dovrebbero lavorare bene tutti quanti insieme, ma il surge
-    % non funziona
-    % tp_speed (tutti)
-    % fare le desiderate di ognuno
-
-    % v_des = max(min(v_des, des_v_max), -des_v_max); % Clamp vertical velocity to limits
-    
-
-    %% ERROR CALCULATION FOR PHI -> ROLL
-    % err_r = 0; % tmpp
-    % int_err_r = 0;
-    % tau_p = 0;
-    
-    % ----------- TO IMPROVE ------------------- %
-    err_r = x(ALPHA) - angles(PHI); % alpha - phi
-    int_err_r = int_err_r + err_r * Ts; % Accumulate integral error
-    der_err_r = (err_r - prev_err_r) / Ts; % Calculate derivative error
-
-    % Anti-windup for the integrator
-    int_err_r = max(min(int_err_r, integral_max), -integral_max); % Clamp integral error
-    
-    % PID
-    p_des = (Kp * err_r + Ki * int_err_r + Kd * der_err_r); % Calculate PID output
-
-    % Final saturation q_ref = tau
-    p_des = max(min(p_des, des_p_max), -des_p_max); % Clamp pitch velocity to limits
-
-    % Memory update
-    prev_err_r = err_r; % Store current error for next iteration's derivative calculation
-
-    %% ERROR CALCULATION FOR THETA -> PITCH
-    % err_p = 0; % tmpp
-    % int_err_p = 0;
-    % tau_q = 0;
-    
-    % ----------- TO IMPROVE ------------------- %
-    err_p = x(BETA) - angles(THETA); % beta - theta
-    int_err_p = int_err_p + err_p * Ts; % Accumulate integral error
-    der_err_p = (err_p - prev_err_p) / Ts; % Calculate derivative error
-
-    % Anti-windup for the integrator
-    int_err_p = max(min(int_err_p, integral_max), -integral_max); % Clamp integral error
-
-    % PID
-    q_des = (Kp * err_p + Ki * int_err_p + Kd * der_err_p); % Calculate PID output
-
-    % Final saturation q_ref = tau
-    q_des = max(min(q_des, des_q_max), -des_q_max); % Clamp pitch velocity to limits
-
-    % Memory update
-    prev_err_p = err_p; % Store current error for next iteration's derivative calculation
 
     %% FINAL
-    % Output control commands
-    tau = [u_des, w_des, p_des, q_des]'; 
-    % Error update
-    p_err = [prev_err_u, prev_err_h, prev_err_r, prev_err_p]';
-    int_err = [int_err_u, int_err_h, int_err_r, int_err_p]';
+    fprintf('Error: %.2f | u_ref: %.3f m/s\n', err(SURGE), pid(SURGE));
+    fprintf('Error: %.2f | w_ref: %.3f m/s\n', err(HEAVE), pid(HEAVE));
+    fprintf('Error: %.2f | p_ref: %.3f rad/s\n', rad2deg(err(ROLL)), rad2deg(pid(ROLL)));
+    fprintf('Error: %.2f | q_ref: %.3f rad/s\n', rad2deg(err(PITCH)), rad2deg(pid(PITCH)));
+end
 
-    printDebug('Error: %.2f | u_ref: %.3f m/s\n', err_u, u_des);
-    printDebug('Error: %.2f | w_ref: %.3f m/s\n', err_h, w_des);
-    printDebug('Error: %.2f | p_ref: %.3f rad/s\n', rad2deg(err_r), p_des);
-    printDebug('Error: %.2f | p_ref: %.3f rad/s\n', rad2deg(err_p), q_des);
+
+function [kp, ki, kd] = gainComputation(speed0, dim_i)
+    SURGE = 1;      HEAVE = 2;      ROLL = 3;      PITCH = 4;
+    wn = 0.2;
+    damp = 0.6;
+    p = 10;
+
+    kp = zeros(dim_i, 1);
+    ki = zeros(dim_i, 1);
+    kd = zeros(dim_i, 1);
+
+    %% Model
+    m = 11.5; % massa totale [kg]
+    I = diag([0.21, 0.245, 0.245]);
+
+    % [surge, heave, roll, pitch]  aggiungere valori ROLL blue rov
+    % Added mass
+    tau_a = [27.08; 29.9081; 1; 1]; % kl_dot 
+    
+    % Linear damping
+    tau_r = [-0.1213; -1.1130; -0.5; -0.5]; % linear_damping (kl)
+    
+    % Quadratic damping
+    tau_d = [-23.9000; -50.2780; -1; -1]; % quadratic_damping (kl_modl)
+    
+    % Virtual mass
+    mv = [m; m; I(1,1); I(2,2)] - tau_a;
+
+    % Dissipative forces (con v0 = 0.1 solo nel surge)
+    dv = -tau_r - 2 * tau_d .* abs(speed0);
+    
+    %% Computation
+    for l = 1:dim_i
+        if l == SURGE
+            kp(l) = 2*damp*wn*mv(l) - dv(l);
+            ki(l) = wn^2 * mv(l);
+            kd(l) = 0;
+        else
+            kp(l) = mv(l)*((wn^2) + 2*damp*p*wn);
+            ki(l) = p*(wn^2)*mv(l);
+            kd(l) = (p + 2*damp*wn)*mv(l) - dv(l);
+        end
+    end
 end
