@@ -19,7 +19,7 @@ function [pid, du_int, prev_err, int_err] = input_control(x, angles, old_pid, ol
     global h_ref
 
     %% Limitation Parameters
-    max_pid = ones(dim_i, 1);
+    max_pid = ones(dim_i, 1) * 0.3;
     du_int = zeros(dim_i, 1);
     term_sum = zeros(dim_i, 1);
     pid = zeros(dim_i, 1);

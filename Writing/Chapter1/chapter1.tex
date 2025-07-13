@@ -1,0 +1,133 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%2345678901234567890123456789012345678901234567890123456789012345678901234567890
+%        1         2         3         4         5         6         7         8
+% THESIS CHAPTER
+
+\chapter{Introduction}
+\label{chap:first}
+\ifpdf
+    \graphicspath{{Chapter1/Figures/PNG/}{Chapter1/Figures/PDF/}{Chapter1/Figures/}{Chapter1/Figures/EPS/}}
+\else
+    \graphicspath{{Chapter1/Figures/EPS/}{Chapter1/Figures/}}
+\fi
+
+
+\section{Content}
+In the introduction, please state clearly the context your work is framed within, and the motivations of your work. Furthermore, it is important to clarify your contribution (and not those of the group you work in - it is still an exam after all). Provide an outline of the thesis.
+
+
+\section{Basic commands}
+\label{sec:basic_commands}
+This is a citation: \cite{Aarzen1999}. Make sure to correctly enter all the bibliographic details. It is important that you double check them when retrieving the bibtex file from a source such as Google Scholar. Consistency in the references is valued by the Committee.
+
+This is an emphasized word: \emph{global}.
+
+This is a reference to another part of the thesis: Chapter \ref{chap:introduction}.
+
+This is an enumerated list:
+\begin{enumerate}
+\item first item.
+\item second item.
+\end{enumerate}
+
+This is an in-line equation: $x-$.
+
+This is a word in quotes: ``regular''.
+
+\section{Equation}
+\label{sec:equation}
+
+This is an equation:
+\begin{equation}
+{\mathcal{U}}_k(s_k) = \frac{P_k}{C_k}.
+\label{eq:normal}
+\end{equation}
+
+Equations follow the punctuation rules, as if they were inline with the text.
+
+This is an equation split over multiple lines:
+\begin{equation}\label{eq:Split}
+\begin{aligned}
+x_{k}&={\mathcal{F}}(x_{k-1},u_{k},w_{k-1}),\\
+z_{k}&={\mathcal{H}}(x_{k},v_{k}).
+\end{aligned}
+\end{equation}
+
+This is an example of equation with matrices:
+\begin{equation}
+\mathcal{Q}_l  = \frac{{d_l ^2 \sigma _\phi  ^2 }}{2} {\begin{bmatrix}
+   {2\sin ^2 \phi _l } & { - \sin 2\phi _l }  \\
+   { - \sin 2\phi _l } & {2\cos ^2 \phi _l }  \\
+\end{bmatrix}}
+ \begin{bmatrix}{cc}
+   {\frac{{\sigma _d ^2 }}{2} {\begin{array}{cc}
+   {2\cos ^2 \phi _l } & {\sin 2\phi _l }  \\
+   {\sin 2\phi _l } & {2\sin ^2 \phi _l }  \\
+\end{array}}}  \\
+\end{bmatrix}. \\
+\label{eq:defQ}
+\end{equation}
+
+This is a reference to the Equation \ref{eq:Split}. Avoid using unnumbered equations as it makes it difficult to reference them during a discussion. Also, be consistent in the use of matrix or vector notation. For example, $\dot{\vec{x}}= \mat{A}\vec{x} + \mat{B}\vec{u}$ or $\vec{y} = \alpha \vec{x}$, where the $\alpha$ is a scalar. You can change the corresponding definitions in the class file, as long as you remain consistent.
+
+\section{Figure}
+\label{sec:figure}
+
+I add a figure.
+\begin{figure}
+\centering
+\includegraphics[width=5.0in]{Views}
+\caption{Scan profiles: \emph{bottom}, \emph{mid} and \emph{top view}.}
+\label{fig:views}
+\end{figure}
+Make sure that figures axis are readable. Make sure to label all the units on both axes. The width of the lines should be also crosschecked for readability (the typical MATLAB plot might need higher line width). Double check that legends are present. Figures' captions should allow the reader to fully understand the figure.
+
+This is a reference to Figure \ref{fig:views}.
+
+\section{Table}
+The suggested packages for tables is tabular. There are many examples on the Internet. In general, avoid vertical lines, and use horizontal lines sparingly. Here S allows to align to the decimal point.
+ 
+\begin{tabular}{SSSSSSSS} \toprule
+	{$m$} & {$\Re\{\underline{\mathfrak{X}}(m)\}$} & {$-\Im\{\underline{\mathfrak{X}}(m)\}$} & {$\mathfrak{X}(m)$} & {$\frac{\mathfrak{X}(m)}{23}$} & {$A_m$} & {$\varphi(m)\ /\ ^{\circ}$} & {$\varphi_m\ /\ ^{\circ}$} \\ \midrule
+	1  & 16.128 & +8.872 & 16.128 & 1.402 & 1.373 & -146.6 & -137.6 \\
+	2  & 3.442  & -2.509 & 3.442  & 0.299 & 0.343 & 133.2  & 152.4  \\
+	3  & 1.826  & -0.363 & 1.826  & 0.159 & 0.119 & 168.5  & -161.1 \\
+	4  & 0.993  & -0.429 & 0.993  & 0.086 & 0.08  & 25.6   & 90     \\ \midrule
+	5  & 1.29   & +0.099 & 1.29   & 0.112 & 0.097 & -175.6 & -114.7 \\
+	6  & 0.483  & -0.183 & 0.483  & 0.042 & 0.063 & 22.3   & 122.5  \\
+	7  & 0.766  & -0.475 & 0.766  & 0.067 & 0.039 & 141.6  & -122   \\
+	8  & 0.624  & +0.365 & 0.624  & 0.054 & 0.04  & -35.7  & 90     \\ \midrule
+	9  & 0.641  & -0.466 & 0.641  & 0.056 & 0.045 & 133.3  & -106.3 \\
+	10 & 0.45   & +0.421 & 0.45   & 0.039 & 0.034 & -69.4  & 110.9  \\
+	11 & 0.598  & -0.597 & 0.598  & 0.052 & 0.025 & 92.3   & -109.3 \\ \bottomrule
+\end{tabular}
+\section{Algorithm} 
+\label{sec:algorithm}
+
+This is an algorithm:
+\begin{algorithm}
+\label{alg:SMS}
+\caption{Split \& Merge [\& Split]}
+\begin{algorithmic} [1]
+\REQUIRE{A scan $s$. A stack $\mathcal{L}$. A counter $j$. A threshold $\tau$}
+\ENSURE{$\lambda \leftarrow \mathcal{M}(s)$, $j=1, ..., |\lambda|$}
+\STATE{$\mathcal{L}$ = \texttt{push}($s$)}
+\STATE{$j \leftarrow 1$}
+\WHILE{$\mathcal{L}$ $\neq$ $\varnothing$}
+\STATE{$\mathcal{L}$ = \texttt{pop}($s_{top}$)}
+\STATE{$l_j$ $\leftarrow$ \texttt{fitting}($s_{top}$)}
+\STATE{$q_k = \argmax_{q}\texttt{dist(l$_j$,q)}$}
+\IF{$\texttt{dist(l$_j$,$q_k$)} < \tau$}
+\STATE{$j \leftarrow j+1$}
+\STATE{\texttt{continue}}
+\ELSE
+\STATE{$s_a \leftarrow$ \texttt{sub}($s_{top}$, 1, $k$)}
+\STATE{$s_b \leftarrow$ \texttt{sub}($s_{top}$, $k+1$, $|s|$)}
+\STATE{$\mathcal{L}$ = \texttt{push}($s_a$)}
+\STATE{$\mathcal{L}$ = \texttt{push}($s_b$)}
+\ENDIF
+\ENDWHILE
+\STATE{\{$l_j$\} $\leftarrow$ \texttt{merge}(\{$l_j$\})}
+\STATE{\{$l_j$\} $\leftarrow$ \texttt{split}(\{$l_j$\})}
+\end{algorithmic}
+\end{algorithm}
