@@ -5,7 +5,8 @@ function tau0 = tau0_values(speed0, i_dim)
     %% Definition
     U = 1;      V = 2;      W = 3;
     P = 4;      Q = 5;      R = 6;
-    I_IND_U = 1;    I_IND_W = 2;    I_IND_P = 3;    I_IND_Q = 4;
+    global SURGE; global SWAY; global HEAVE;
+    global ROLL; global PITCH; global YAW;
     
     %% Tau 0 computation
     theta0 = 0;
@@ -34,20 +35,23 @@ function tau0 = tau0_values(speed0, i_dim)
     % mv = [m; m; m; I(1,1); I(2,2); I(3,3)] - tau_a;
 
     % Dissipative forces (con v0 = 0.1 solo nel surge)
-    sp0 = [speed0(I_IND_U), 0, speed0(I_IND_W), speed0(I_IND_P), speed0(I_IND_Q), 0];
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%% TO CHANGE WITH YAW ACTUATION %%%%%%%%%%%%%
+    sp0 = [speed0(SURGE), speed0(SWAY), speed0(HEAVE), speed0(ROLL), speed0(PITCH), 0];
     dv = -tau_r - 2 * tau_d .* abs(sp0);
 
     % tau0 computation
     tau0 = zeros(i_dim,1);
 
     % surge
-    tau0(I_IND_U) = dv(U)*sp0(U);
-    % sway ...
+    tau0(SURGE) = dv(U)*sp0(U);
+    % sway
+    tau0(SWAY) = dv(V)*sp0(V);
     % heave
-    tau0(I_IND_W) = dv(W)*sp0(W);
+    tau0(HEAVE) = dv(W)*sp0(W);
     % roll
-    tau0(I_IND_P) = dv(P)*sp0(P) + z*B*sin(theta0)*sin(phi0);
+    tau0(ROLL) = dv(P)*sp0(P) + z*B*sin(theta0)*sin(phi0);
     % pitch
-    tau0(I_IND_Q) = dv(Q)*sp0(Q) + z*B*sin(theta0);
+    tau0(PITCH) = dv(Q)*sp0(Q) + z*B*sin(theta0);
     % yaw ...
 end

@@ -1,20 +1,15 @@
-function F = jacobian_f(x, u_input, Ts, num_n, psi, wRt, wRr)
+function F = jacobian_f(x, u_input, Ts, num_n, wRr)
     % Jacobian of the dynamics with respect to x and u
     %% Definition
     % state
     IND_H = 1;      ALPHA = 2;      BETA = 3;  
     % angles               
-    PHI = 1;        THETA = 2;      PSI = 3;  
-    % input
-    I_IND_U = 1;    I_IND_W = 2;    I_IND_P = 3;    I_IND_Q = 4;  
-
-    global DEBUG
+    global SURGE; global SWAY; global HEAVE;
     printDebug('       jacobian F Covariance\n')
 
     %% Computations
     F = eye(num_n);
-    v = 0; % Sway for now not actuated
-    r_speedTs = [u_input(I_IND_U); v; u_input(I_IND_W)] * Ts;
+    r_speedTs = u_input(SURGE:HEAVE) * Ts;
 
     %% Derivatives for the altitude
     % F(IND_H, IND_H) = 1;

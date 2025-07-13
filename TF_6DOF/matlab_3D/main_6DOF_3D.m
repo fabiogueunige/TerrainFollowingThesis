@@ -4,12 +4,13 @@ addpath('visualization');
 addpath('math_function');
 
 %% Definition
-% state
 IND_H = 1;      ALPHA = 2;      BETA = 3;  
-% angles               
+global PHI; global THETA; global PSI;          
 PHI = 1;        THETA = 2;      PSI = 3;  
-% input
-I_IND_U = 1;    I_IND_W = 2;    I_IND_P = 3;    I_IND_Q = 4;
+global SURGE; global SWAY; global HEAVE;
+SURGE = 1;  SWAY = 2;   HEAVE = 3;
+global ROLL; global PITCH; global YAW;
+ROLL = 4;   PITCH = 5;  YAW = 6;
 
 %% Filter Parameters
 Ts = 0.001;         % Sampling time [s]
@@ -23,7 +24,7 @@ DEBUG = false;
 %% Matrix Dimensions
 n_dim = 3;          % Number of states
 m_dim = 4;          % Number of measurements
-i_dim = 4;          % Number of inputs % (no v for now)
+i_dim = 5;          % Number of inputs % (no v for now)
 d_dim = 3;          % world space total dimensions
 s_dim = 4;          % number of echosonar
 a_dim = 3;          % number of angles
@@ -33,7 +34,7 @@ a_dim = 3;          % number of angles
 
 %% Terrain Parameters
 alpha = pi/10;
-beta = pi/7;
+beta = pi/3;
 pplane = [0, 0, 10]';
 n0 = [0, 0, 1]'; % terrain frame
 wRt = zeros(d_dim, d_dim, N);
@@ -59,7 +60,7 @@ wRr_real = zeros(d_dim, d_dim);     % Real robot rotation
 
 % echosonar part
 s = zeros(d_dim,s_dim);                     % Robot echosonar
-Gamma = -pi/8;                               % y1 angle (rear)
+Gamma = -pi/8;                              % y1 angle (rear)
 Lambda = pi/8;                              % y2 angle (front)
 Eta = pi/8;                                 % y3 angle (left)
 Zeta = -pi/8;                               % y4 angle (right)
@@ -85,7 +86,7 @@ p_err = zeros(i_dim, N);
 i_err = zeros(i_dim, N);
 
 % initial controller
-speed0 = [0, 0, 0, 0]'; % surge, heave, p and q.
+speed0 = [0, 0, 0, 0, 0]'; % surge, heave, p and q.
 tau0 = tau0_values(speed0, i_dim);
 
 %% Software Design
@@ -156,7 +157,7 @@ for k = 2:N
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     % Dynamics Jacobian
-    F = jacobian_f(x_est(:,k-1), u(:,k-1), Ts, n_dim, psi, wRt_pre(:,:,k), wRr(:,:,k)); 
+    F = jacobian_f(x_est(:,k-1), u(:,k-1), Ts, n_dim, wRr(:,:,k)); 
     % Covariance prediction
     P_pred = F * P * F' + Q;
 
@@ -180,7 +181,7 @@ for k = 2:N
    
     %% EKF: Gain and Prediction Update
     % Observation Jacobian
-    H = jacobian_h(x_pred(:,k), s, m_dim, n_dim, s_dim, n(:,k), n0, r_s, psi);
+    H = jacobian_h(x_pred(:,k), s, m_dim, n_dim, s_dim, n(:,k), n0);
     if any(isnan(H(:)))
         error('Esecuzione interrotta: H contiene valori NaN. Istante %0.f', k);
     end
@@ -240,10 +241,10 @@ for i = 1:a_dim
 end
 
 % Inputs
-ttl = {'u input', 'w input', 'p input', 'q input'};
+ttl = {'u input', 'v input', 'w input', 'p input', 'q input'};
 for i = 1:i_dim
     figure;
-    if i <= 2
+    if i <= HEAVE
         plot(time, u(i,:), 'b', 'DisplayName', 'u');
     else
         plot(time, rad2deg(u(i,:)), 'b', 'DisplayName', ttl{i});

@@ -4,12 +4,8 @@ function [x_next, wRt_p] = f(x, u_input, Ts, wRr)
     %% Definition
     % state
     IND_H = 1;      ALPHA = 2;      BETA = 3;  
-    % angles               
-    PHI = 1;        THETA = 2;      PSI = 3;  
-    % input
-    I_IND_U = 1;    I_IND_W = 2;    I_IND_P = 3;    I_IND_Q = 4;
+    global SURGE; global SWAY; global HEAVE;
 
-    global DEBUG
     printDebug('       f State Prediction\n');
     
     %% Update of the values
@@ -22,12 +18,11 @@ function [x_next, wRt_p] = f(x, u_input, Ts, wRr)
     wRt_p = rotz(0)*roty(beta_new)*rotx(alpha_new)*rotx(pi);
     
     % speed in terrain frame
-    v = 0; % No attuation in sway for now !!!!!!!!!
-    w_speed = wRr * [u_input(I_IND_U); v; u_input(I_IND_W)];
+    w_speed = wRr * u_input(SURGE:HEAVE);
     s_speed = (wRt_p)' * w_speed;
 
     % The new altitude (h)
-    h_new = x(IND_H) + s_speed(I_IND_W)*Ts;
+    h_new = x(IND_H) + s_speed(HEAVE)*Ts;
 
     % Display the predicted state for debugging or monitoring purposes.
     printDebug('Predicted h: %.2f m | a: %.2f | b: %.2f ', h_new, rad2deg(alpha_new), rad2deg(beta_new));

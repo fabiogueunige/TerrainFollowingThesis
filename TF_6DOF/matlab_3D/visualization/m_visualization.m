@@ -1,5 +1,4 @@
-function m_visualization(pr, pplane, n, num_s, p_int, wRr, j)
-    global DEBUG    
+function m_visualization(pr, pplane, n, num_s, p_int, wRr, j)   
     figure;
     hold on;
     grid on;

@@ -1,14 +1,9 @@
 function z = h(x, s, num_s, num_m, n)
     % Observation function of the predicted measuraments
-    global DEBUG
     printDebug('       h output function\n');
     %% Definition
     % state
-    IND_H = 1;      ALPHA = 2;      BETA = 3;  
-    % angles               
-    PHI = 1;        THETA = 2;      PSI = 3;  
-    % input
-    I_IND_U = 1;    I_IND_W = 2;    I_IND_P = 3;    I_IND_Q = 4;  
+    IND_H = 1;      ALPHA = 2;      BETA = 3;   
     
     %% Funzione di osservazione: z_k = h(x_k, u_k)
     z = zeros(num_m, 1);
