@@ -16,6 +16,7 @@ Ts = 0.001;         % Sampling time [s]
 Tf = 25;            % Final time [s]
 time = 0:Ts:Tf;     % Time vector
 N = length(time);   % Number of iterations
+
 global DEBUG;
 DEBUG = false;
 
@@ -84,7 +85,7 @@ p_err = zeros(i_dim, N);
 i_err = zeros(i_dim, N);
 
 % initial controller
-speed0 = [0, 0, 0, 0]'; % surge, heave, p and q.  % (sway, r)? %
+speed0 = [0, 0, 0, 0]'; % surge, heave, p and q.
 tau0 = tau0_values(speed0, i_dim);
 
 %% Software Design
@@ -130,8 +131,12 @@ for k = 2:N
     [z_meas(:,k), hmes, prob(:,k), R(:,:,k)] = measurament(alpha, beta, pplane, n0, r_s, s_dim, u(:,k-1), Ts,  ...
                                                    prob(:,k-1), wRr_real, k, R(:,:,k));
     % Adding noise to real measurament
+    %%%%%%%%%%%%%%% NO NOISE %%%%%%%%%%%%%%%%%%%%%%%
     rob_rot(:,k) = clean_rot(:,k); % + v_a;
+    %%%%%%%%%%%%%%% YES NOISE %%%%%%%%%%%%%%%%%%%%%%
+    % rob_rot(:,k) = clean_rot(:,k) + v_a;
     % z_meas(:,k) = z_meas(:,k) + v;
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     % Robot rotation matrix computation
     wRr(:,:,k) = rotz(rob_rot(PSI,k))*roty(rob_rot(THETA,k))*rotx(rob_rot(PHI,k)); 
@@ -145,7 +150,10 @@ for k = 2:N
     % State prediction
     w = mvnrnd(zeros(n_dim,1), Q)'; % Process noise
     [x_pred(:,k), wRt_pre(:,:,k)] = f(x_est(:,k-1), u(:,k-1), Ts, wRr(:,:,k));
+    %%%%%%%%%%%%%%% NO NOISE %%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%% YES NOISE %%%%%%%%%%%%%%%%%%%%%%
     % x_pred(:,k) = x_pred(:,k) + w;
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     % Dynamics Jacobian
     F = jacobian_f(x_est(:,k-1), u(:,k-1), Ts, n_dim, psi, wRt_pre(:,:,k), wRr(:,:,k)); 
@@ -184,9 +192,7 @@ for k = 2:N
     end
     
     % Measurament prediction
-    v = mvnrnd(zeros(m_dim,1), R_tp)'; 
     z_pred(:,k) = h(x_pred(:,k), s, s_dim, m_dim, n(:,k));      
-    % z_pred(:,k) = z_pred(:,k) + v;
 
     %% EKF: State Update
     % State 
