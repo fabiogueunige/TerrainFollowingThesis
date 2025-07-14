@@ -8,6 +8,10 @@ function z = h(x, s, num_s, num_m, n)
     %% Funzione di osservazione: z_k = h(x_k, u_k)
     z = zeros(num_m, 1);
     for j = 1:num_s
+        if (n'*s(:,j)) == 0
+            error('n and sensor %.0f are parallel', j);
+        end
+        % Value update
         z(j) = -(x(IND_H)) / (n' * s(:,j));
     end
 

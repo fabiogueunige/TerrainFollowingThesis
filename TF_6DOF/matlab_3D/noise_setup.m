@@ -1,14 +1,14 @@
 function [Q, R, R_ang] = noise_setup (q_dim, r_dim, a_dim)
     % State Noise
     sigh = 0.099;           % State noise h
-    siga = deg2rad(1);      % State noise alpha
-    sigb = deg2rad(1.1);    % State noise beta
+    siga = deg2rad(0.55);      % State noise alpha
+    sigb = deg2rad(0.5);    % State noise beta
 
     % Measurament noise (added a 0 to all)
-    eta1 = 0.077;           % Measurement noise y1
-    eta2 = 0.085;           % Measurement noise y2
-    eta3 = 0.077;           % Measurement noise y3
-    eta4 = 0.085;           % Measurement noise y4
+    eta1 = 0.177;           % Measurement noise y1
+    eta2 = 0.185;           % Measurement noise y2
+    eta3 = 0.177;           % Measurement noise y3
+    eta4 = 0.185;           % Measurement noise y4
 
     % Initialization
     Q = zeros(q_dim,q_dim); % Process noise covariance

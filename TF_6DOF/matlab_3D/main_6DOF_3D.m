@@ -24,7 +24,7 @@ DEBUG = false;
 %% Matrix Dimensions
 n_dim = 3;          % Number of states
 m_dim = 4;          % Number of measurements
-i_dim = 5;          % Number of inputs % (no v for now)
+i_dim = 5;          % Number of inputs 
 d_dim = 3;          % world space total dimensions
 s_dim = 4;          % number of echosonar
 a_dim = 3;          % number of angles
@@ -35,19 +35,19 @@ a_dim = 3;          % number of angles
 %% Terrain Parameters
 alpha = pi/10;
 beta = pi/10;
-pplane = [0, 0, 10]';
+pplane = [0, 0, 15]';
 n0 = [0, 0, 1]'; % terrain frame
 wRt = zeros(d_dim, d_dim, N);
 wRt_pre = zeros(d_dim, d_dim, N);
-n = zeros(d_dim,N);            % Surface vector
+n = zeros(d_dim,N);                 % Surface vector
 
 %% AUV Parameters 
 psi = 0; % yaw to get motion
-prob = zeros(d_dim,N);         % AUV initial position
+prob = zeros(d_dim,N);              % AUV initial position
 
 % robot velocities & acceleration
-u = zeros(i_dim, N);           % Known inputs
-u_dot = zeros(i_dim,N);        % AUV acceleration
+u = zeros(i_dim, N);                % Known inputs
+u_dot = zeros(i_dim,N);             % AUV acceleration
 
 % robot angles
 a_true = zeros(a_dim, N);           % True angles comparation
@@ -78,15 +78,17 @@ z_pred = zeros(m_dim, N);      % Predicted output
 R = zeros(m_dim, m_dim, N);    % Observation matrix
 x0 = [10, alpha, beta]';       % True initial state 
 x0_est = zeros(n_dim, 1);      % Estimated initial state
+ni = zeros(m_dim, N);          % Innovation
+S = zeros(m_dim, m_dim, N);    % Covariance Innovation
 
 %% Controller Parameters
 pid = zeros(i_dim, N);         % PID for Dynamics
 du_int_err = zeros(i_dim, N);  % integral error
-p_err = zeros(i_dim, N);
-i_err = zeros(i_dim, N);
+p_err = zeros(i_dim, N);       % proportional error
+i_err = zeros(i_dim, N);       % integral error
 
 % initial controller
-speed0 = [0, 0, 0, 0, 0]'; % surge, heave, p and q.
+speed0 = [0, 0, 0, 0, 0]';
 tau0 = tau0_values(speed0, i_dim);
 
 %% Software Design
@@ -96,7 +98,7 @@ h_ref = 7;
 %% EKF Start
 % covariance 
 P0 = diag([1, 0.08, 2]);
-P0 = P0 * (1.1)+ 3*rand;
+P0 = P0 * (1.1) + 5*rand;
 P = P0;
 
 % State
@@ -110,7 +112,7 @@ wRt_pre(:,:,1) = wRt(:,:,1);
 
 %% EKF Simulation
 for k = 2:N
-    if k == 2 || mod(k, 50) == 0
+    if k == 2 || mod(k, 100) == 0
         disp(['Processing iteration \n', num2str(k)]);
     end
     %% R setting
@@ -153,7 +155,7 @@ for k = 2:N
     [x_pred(:,k), wRt_pre(:,:,k)] = f(x_est(:,k-1), u(:,k-1), Ts, wRr(:,:,k));
     %%%%%%%%%%%%%%% NO NOISE %%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%% YES NOISE %%%%%%%%%%%%%%%%%%%%%%
-    x_pred(:,k) = x_pred(:,k) + w;
+    % x_pred(:,k) = x_pred(:,k) + w;
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     % Dynamics Jacobian
@@ -185,9 +187,10 @@ for k = 2:N
     if any(isnan(H(:)))
         error('Esecuzione interrotta: H contiene valori NaN. Istante %0.f', k);
     end
-
+    % Covariance Innovation
+    S(:,:,k) = (H * P_pred * H' + R(:,:,k));
     % Kalman Gain
-    K = P_pred * H' / (H * P_pred * H' + R(:,:,k)); % Kalman Gain
+    K = P_pred * H' / S(:,:,k); % Kalman Gain
     if any(isnan(K(:)))
         error('Esecuzione interrotta: K contiene valori NaN. Istante %0.f', k);
     end
@@ -197,7 +200,10 @@ for k = 2:N
 
     %% EKF: State Update
     % State 
-    x_est(:,k) = x_pred(:,k) + K * (z_meas(:,k) - z_pred(:,k));
+    % Innovation
+    ni(:,k) = (z_meas(:,k) - z_pred(:,k));
+    % State Estimated
+    x_est(:,k) = x_pred(:,k) + K * ni(:,k);
     % Covariance
     P = (eye(n_dim) - K * H) * P_pred;
 

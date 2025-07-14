@@ -19,7 +19,7 @@ function [pid, du_int, prev_err, int_err] = input_control(x, angles, old_pid, ol
     global h_ref
 
     %% Limitation Parameters
-    max_pid = ones(dim_i, 1) * 0.3;
+    max_pid = ones(dim_i, 1);
     du_int = zeros(dim_i, 1);
     term_sum = zeros(dim_i, 1);
     pid = zeros(dim_i, 1);
@@ -28,7 +28,8 @@ function [pid, du_int, prev_err, int_err] = input_control(x, angles, old_pid, ol
 
     %% Errors
     err = zeros (dim_i, 1);
-    s_speed = wRt' * wRr * [speed(SURGE); 0; speed(HEAVE)];
+    s_speed = wRt' * wRr * speed(SURGE:HEAVE);
+    % s_acc = wRt' * wRr * acc(SURGE:HEAVE);
 
     err(SURGE) = (u_star - s_speed(SURGE));
     err(SWAY) = (v_star - s_speed(SWAY));
@@ -37,7 +38,7 @@ function [pid, du_int, prev_err, int_err] = input_control(x, angles, old_pid, ol
     err(PITCH) = (x(BETA) - angles(THETA));
     % err(YAW) = ???
 
-    %% Controller SURGE QUESTO CONTROLLO NON FUNZIONA
+    %% QUESTO CONTROLLO NON FUNZIONA
     % for j = 1:SURGE % Gli altri non funzionano, come anche il surge
     %     d_i = Ki(j) * err(j);
     %     if j == SURGE % PI Controller
@@ -65,7 +66,11 @@ function [pid, du_int, prev_err, int_err] = input_control(x, angles, old_pid, ol
         int_err(j) = max(min(int_err(j), integral_max), -integral_max); % Clamp integral error
         
         % sum of the terms
-        term_sum(j) = (Kp(j) * err(j) + Ki(j) * int_err(j) + Kd(j) * der_err);
+        if j == SURGE || j == SWAY 
+            term_sum(j) = (Kp(j) * err(j) + Ki(j) * int_err(j));
+        else
+            term_sum(j) = (Kp(j) * err(j) + Ki(j) * int_err(j) + Kd(j) * der_err);
+        end
     end
 
     % Trasformation to robot frame
@@ -81,7 +86,6 @@ function [pid, du_int, prev_err, int_err] = input_control(x, angles, old_pid, ol
         % Memory update
         prev_err(j) = err(j);
     end
-
 
     %% FINAL
     printDebug('Error: %.2f | u_ref: %.3f m/s\n', err(SURGE), pid(SURGE));

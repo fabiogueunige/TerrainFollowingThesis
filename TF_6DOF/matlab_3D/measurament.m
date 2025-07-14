@@ -5,16 +5,14 @@ function [ymes, h_real, pr, Rm] = measurament(alpha, beta, pplane, n0, r_s , num
     printDebug('       Measurament:\n');
 
     %% Terrain Definition
-    wRt = (rotz(0)*roty(beta)*rotx(alpha))*rotx(pi);
-    n = wRt*n0; % in world frame
+    wRs = (rotz(0)*roty(beta)*rotx(alpha))*rotx(pi);
+    n = wRs*n0; % in world frame
     if (norm(n) ~= 1)
         n = vector_normalization(n);
         printDebug('n: [%.4f; %.4f; %.4f]\n', n(1), n(2), n(3));
     end
     
     %% Real Robot angle and position update
-    % Valid because no noise
-    
     % Trasformation update
     w_speed = wRr * input(SURGE:HEAVE);
     pr = pr_old + w_speed*Ts;
@@ -37,13 +35,13 @@ function [ymes, h_real, pr, Rm] = measurament(alpha, beta, pplane, n0, r_s , num
     y = zeros(1, num_s);
     for j = 1:num_s
         if dot(s(:,j),n) == 0
-            error('The line s and the plane n are parallel');
+            error('The line s and the plane n are parallel in measurament');
         end
         t_star(:, j) = -(dot((pr - pplane),n))/(dot(s(:,j),n));
         if t_star(:,j) < 0
             Rm(j,j) = Rm(j,j)*100;
             fprintf('Negative value for sensor %.0f\n',j);
-            pause(0.05);
+            pause(0.005);
         end
         p_int(:, j) = pr + t_star(:, j)*s(:, j);
         y(j) = norm(t_star(:, j));

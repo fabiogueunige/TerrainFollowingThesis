@@ -54,7 +54,7 @@ function [new_vel, s_dotdot] = dynamic_model(tau, tau0, speed0, old_vel, Ts, i_d
     % pitch
     s_dotdot(PITCH) = (tau(PITCH) - tau0(PITCH) - dv(Q)*delta(PITCH)) / mv(Q);
 
-    % roll ...
+    % yaw ...
   
     new_vel = old_vel + Ts * s_dotdot;
 
