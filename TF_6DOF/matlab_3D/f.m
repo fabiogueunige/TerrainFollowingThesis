@@ -25,7 +25,7 @@ function [x_next, wRt_p] = f(x, u_input, Ts, wRr)
     h_new = x(IND_H) + s_speed(HEAVE)*Ts;
 
     % Display the predicted state for debugging or monitoring purposes.
-    printDebug('Predicted h: %.2f m | a: %.2f | b: %.2f ', h_new, rad2deg(alpha_new), rad2deg(beta_new));
+    printDebug('Predicted h: %.2f m | a: %.2f | b: %.2f \n', h_new, rad2deg(alpha_new), rad2deg(beta_new));
     
     %% Send info
     % ---- x0 = [h, alpha, beta, phi, theta] ---- %

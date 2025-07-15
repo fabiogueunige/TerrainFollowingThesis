@@ -24,10 +24,11 @@ DEBUG = false;
 %% Matrix Dimensions
 n_dim = 3;          % Number of states
 m_dim = 4;          % Number of measurements
-i_dim = 5;          % Number of inputs 
+i_dim = 6;          % Number of inputs 
 d_dim = 3;          % world space total dimensions
 s_dim = 4;          % number of echosonar
 a_dim = 3;          % number of angles
+r_dim = 6;          % number of robot states
 
 %% Noise
 [Q, R_tp, R_a] = noise_setup(n_dim, m_dim, a_dim);
@@ -46,8 +47,11 @@ psi = 0; % yaw to get motion
 prob = zeros(d_dim,N);              % AUV initial position
 
 % robot velocities & acceleration
-u = zeros(i_dim, N);                % Known inputs
+% dynamics
+u = zeros(i_dim, N);                % Known inputs [u,v,w,p,q,r]
 u_dot = zeros(i_dim,N);             % AUV acceleration
+% Kinematics
+rob_state = zeros(r_dim,1,N);       % Kinematic state of the robot [x,y,z,phi,theta,psi]
 
 % robot angles
 a_true = zeros(a_dim, N);           % True angles comparation
@@ -88,8 +92,7 @@ p_err = zeros(i_dim, N);       % proportional error
 i_err = zeros(i_dim, N);       % integral error
 
 % initial controller
-speed0 = [0, 0, 0, 0, 0]';
-tau0 = tau0_values(speed0, i_dim);
+speed0 = [0, 0, 0, 0, 0, 0]';
 
 %% Software Design
 global h_ref;
@@ -123,7 +126,8 @@ for k = 2:N
         [pid(:,k), du_int_err(:,k), p_err(:,k), i_err(:,k)] = input_control(x_est(:,k-1), rob_rot(:,k-1), pid(:,k-1), du_int_err(:,k-1), ...
                                              u(:,k-2), u_dot(:,k-2), wRr(:,:,k-1), wRt(:,:,k-1), Ts, i_dim, p_err(:,k-1), i_err(:,k-1));
         % Dynamic model
-        [u(:,k-1), u_dot(:,k-1)] = dynamic_model(pid(:,k), tau0, speed0, u(:,k-2), Ts, i_dim);
+        [u(:,k-1), u_dot(:,k-1)] = dynamic_model(pid(:,k), rob_rot(:,k-1), u(:,k-2), Ts, i_dim);
+        % rob_state(:,k-1) = kinematic_model(u(:,k-1), Ts, rob_state(:,k-2), r_dim);
     end
 
     %% EKF: Real Measurement
@@ -135,7 +139,7 @@ for k = 2:N
                                                    prob(:,k-1), wRr_real, k, R(:,:,k));
     % Adding noise to real measurament
     %%%%%%%%%%%%%%% NO NOISE %%%%%%%%%%%%%%%%%%%%%%%
-    rob_rot(:,k) = clean_rot(:,k);
+    rob_rot(:,k) = rob_state(4:6); % clean_rot(:,k);
     %%%%%%%%%%%%%%% YES NOISE %%%%%%%%%%%%%%%%%%%%%%
     % rob_rot(:,k) = clean_rot(:,k) + v_a;
     % z_meas(:,k) = z_meas(:,k) + v;
@@ -247,7 +251,7 @@ for i = 1:a_dim
 end
 
 % Inputs
-ttl = {'u input', 'v input', 'w input', 'p input', 'q input'};
+ttl = {'u input', 'v input', 'w input', 'p input', 'q input', 'r input'};
 for i = 1:i_dim
     figure;
     if i <= HEAVE

@@ -1,17 +1,22 @@
-function [new_vel, s_dotdot] = dynamic_model(tau, tau0, speed0, old_vel, Ts, i_dim)
+function [new_vel, s_dotdot] = dynamic_model(tau, ang, v_old, Ts, i_dim)
     % updated to bluerov model
     printDebug('       Dynamic Model\n');
     %% Definition
     U = 1;      V = 2;      W = 3;
     P = 4;      Q = 5;      R = 6;
-    global SURGE; global SWAY; global HEAVE;
-    global ROLL; global PITCH; global YAW;
+    global PHI; global THETA; global PSI;
 
     %% Model
     m = 11.5; % massa totale [kg]
     I = diag([0.21, 0.245, 0.245]);
+    rho = 1028;
+    volume = 0.011054;
+    g = 9.81;
 
-    % [surge, heave, roll, pitch]  aggiungere valori ROLL blue rov
+    % restoring
+    z = 0.0420;
+    B = rho * volume * g;
+
     % Added mass
     tau_a = [27.08; 25.952; 29.9081; 1; 1; 1]; % kl_dot 
     
@@ -24,42 +29,38 @@ function [new_vel, s_dotdot] = dynamic_model(tau, tau0, speed0, old_vel, Ts, i_d
     % Virtual mass
     mv = [m; m; m; I(1,1); I(2,2); I(3,3)] - tau_a;
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% TO CHANGE WITH YAW ACTUATION %%%%%%%%%%%%%
-    sp0 = [speed0(SURGE), speed0(SWAY), speed0(HEAVE), speed0(ROLL), speed0(PITCH), 0];
-    dv = -tau_r - 2 * tau_d .* abs(sp0);
+    dv = -tau_r - 2 * tau_d .* abs(v_old);
 
-    delta = old_vel - speed0;
+%%%%%% EQUAZIONI SBAGLIATE PERCHE MODELLO TROPPO SEMPLIFICATO %%%%%%
 
-    if i_dim ~= size(speed0)
-        error('Wrong size between i_dim and generated values');
-    end
-
-    % Accelerations
-    % 6 DOF MODEL Linearized
+    % 6 DOF MODEL NOT Linearized
     s_dotdot = zeros(i_dim,1);
     
     % surge
-    s_dotdot(SURGE) = (tau(SURGE) - tau0(SURGE) - dv(U)*delta(SURGE)) / mv(U);
+    s_dotdot(U) = (tau(U) + mv(V)*v_old(V)*v_old(R) - mv(W)*v_old(W)*v_old(Q) - dv(U)*v_old(U)) / mv(U);
 
     % sway
-    s_dotdot(SWAY) = (tau(SWAY) - tau0(SWAY) - dv(V)*delta(SWAY)) / mv(V);
+    s_dotdot(V) = (tau(V) - mv(U)*v_old(U)*v_old(R) + mv(W)*v_old(W)*v_old(P) - dv(V)*v_old(V)) / mv(V);
  
     % heave
-    s_dotdot(HEAVE) = (tau(HEAVE) - tau0(HEAVE) - dv(W)*delta(HEAVE)) / mv(W);
+    s_dotdot(W) = (tau(W) + mv(U)*v_old(U)*v_old(Q) - mv(V)*v_old(V)*v_old(P) - dv(W)*v_old(W)) / mv(W);
 
     % roll
-    s_dotdot(ROLL) = (tau(ROLL) - tau0(ROLL) - dv(P)*delta(ROLL)) / mv(P);
+    s_dotdot(P) = (tau(P) + (mv(V)-mv(W))*v_old(V)*v_old(W) + (mv(Q)-mv(R))*v_old(Q)*v_old(R) ...
+                - dv(P)*v_old(P) - z*B*cos(ang(THETA))*sin(ang(PHI))) / mv(P);
     
     % pitch
-    s_dotdot(PITCH) = (tau(PITCH) - tau0(PITCH) - dv(Q)*delta(PITCH)) / mv(Q);
+    s_dotdot(Q) = (tau(Q) - (mv(U)-mv(W))*v_old(U)*v_old(W) - (mv(P)-mv(R))*v_old(P)*v_old(R) ...
+                - dv(Q)*v_old(Q) + z*B*sin(ang(THETA))) / mv(Q);
 
     % yaw ...
+    s_dotdot(R) = (tau(R) + (mv(U)-mv(V))*v_old(U)*v_old(V) + (mv(P)-mv(Q))*v_old(P)*v_old(Q) ...
+                - dv(R)*v_old(R)) / mv(R);
   
-    new_vel = old_vel + Ts * s_dotdot;
+    new_vel = v_old + Ts * s_dotdot;
 
-    printDebug('surge: %.2f | sway: %.2f | heave: %.2f ', new_vel(SURGE), new_vel(SWAY), new_vel(HEAVE));
-    printDebug('| p: %.3f | q: %.3f\n', new_vel(ROLL), new_vel(PITCH));
-    printDebug('a_surge: %.2f | a_sway: %.2f | a_heave: %.2f ', s_dotdot(SURGE), s_dotdot(SWAY), s_dotdot(HEAVE));
-    printDebug('| a_p: %.3f | a_q: %.3f\n', s_dotdot(ROLL), s_dotdot(PITCH));
+    fprintf('surge: %.2f | sway: %.2f | heave: %.2f ', new_vel(U), new_vel(V), new_vel(W));
+    fprintf('| p: %.3f | q: %.3f | r: %.3f\n', new_vel(P), new_vel(Q), new_vel(R));
+    printDebug('a_surge: %.2f | a_sway: %.2f | a_heave: %.2f ', s_dotdot(U), s_dotdot(V), s_dotdot(W));
+    printDebug('| a_p: %.3f | a_q: %.3f | a_r: %.3f\n', s_dotdot(P), s_dotdot(Q), s_dotdot(R));
 end
