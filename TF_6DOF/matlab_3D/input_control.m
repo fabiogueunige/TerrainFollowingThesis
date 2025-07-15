@@ -16,7 +16,7 @@ function [pid, du_int, prev_err, int_err] = input_control(x, angles, old_pid, ol
     %% Desiired Parameters
     u_star = 0.3;
     v_star = 0.0;
-    global h_ref
+    global h_ref;
 
     %% Limitation Parameters
     max_pid = ones(dim_i, 1);
@@ -27,10 +27,9 @@ function [pid, du_int, prev_err, int_err] = input_control(x, angles, old_pid, ol
     integral_max = 1.0;
 
     %% Errors
-    err = zeros (dim_i, 1);
     s_speed = wRt' * wRr * speed(SURGE:HEAVE);
-    % s_acc = wRt' * wRr * acc(SURGE:HEAVE);
 
+    err = zeros (dim_i, 1);
     err(SURGE) = (u_star - s_speed(SURGE));
     err(SWAY) = (v_star - s_speed(SWAY));
     err(HEAVE) = (h_ref - x(IND_H));
@@ -72,19 +71,15 @@ function [pid, du_int, prev_err, int_err] = input_control(x, angles, old_pid, ol
             term_sum(j) = (Kp(j) * err(j) + Ki(j) * int_err(j) + Kd(j) * der_err);
         end
     end
-
-    % Trasformation to robot frame
-    tp_speed = wRr' * wRt * term_sum(SURGE:HEAVE);
-
+    tp_speed = wRr' * wRt * [term_sum(SURGE); term_sum(SWAY); term_sum(HEAVE)];
     for j = 1:dim_i
         if j < ROLL
             term_sum(j) = tp_speed(j);
         end
-
         pid(j) = max(min(term_sum(j), max_pid(j)), -max_pid(j));
 
         % Memory update
-        prev_err(j) = err(j);
+        prev_err(j) = err(j);        
     end
 
     %% FINAL

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.6.11)  13 JUL 2025 17:24
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.6.11)  14 JUL 2025 13:02
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -799,7 +799,7 @@ Package rerunfilecheck Info: File `RobEngThesisTemplate.brf' has not changed.
 Here is how much of TeX's memory you used:
  18288 strings out of 468225
  357064 string characters out of 5432973
- 803869 words of memory out of 5000000
+ 803829 words of memory out of 5000000
  46408 multiletter control sequences out of 15000+600000
  645614 words of font info for 111 fonts, out of 8000000 for 9000
  1144 hyphenation exceptions out of 8191
@@ -814,7 +814,7 @@ pdfTeX warning (dest): name{http://www.dibris.unige.it} has been referenced but 
 pdfTeX warning (dest): name{mailto:name@unige.it} has been referenced but does not exist, replaced by a fixed one
 
 <C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi6.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmib10.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr6.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmti12.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmtt12.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/euler/eufm10.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/euler/eusm10.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on RobEngThesisTemplate.pdf (15 pages, 409162 bytes).
+Output written on RobEngThesisTemplate.pdf (15 pages, 409122 bytes).
 PDF statistics:
  266 PDF objects out of 1000 (max. 8388607)
  54 named destinations out of 1000 (max. 500000)

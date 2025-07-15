@@ -35,7 +35,7 @@ a_dim = 3;          % number of angles
 %% Terrain Parameters
 alpha = pi/10;
 beta = pi/10;
-pplane = [0, 0, 15]';
+pplane = [0, 0, 10]';
 n0 = [0, 0, 1]'; % terrain frame
 wRt = zeros(d_dim, d_dim, N);
 wRt_pre = zeros(d_dim, d_dim, N);
@@ -135,10 +135,10 @@ for k = 2:N
                                                    prob(:,k-1), wRr_real, k, R(:,:,k));
     % Adding noise to real measurament
     %%%%%%%%%%%%%%% NO NOISE %%%%%%%%%%%%%%%%%%%%%%%
-    % rob_rot(:,k) = clean_rot(:,k);
+    rob_rot(:,k) = clean_rot(:,k);
     %%%%%%%%%%%%%%% YES NOISE %%%%%%%%%%%%%%%%%%%%%%
-    rob_rot(:,k) = clean_rot(:,k) + v_a;
-    z_meas(:,k) = z_meas(:,k) + v;
+    % rob_rot(:,k) = clean_rot(:,k) + v_a;
+    % z_meas(:,k) = z_meas(:,k) + v;
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     % Robot rotation matrix computation
