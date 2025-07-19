@@ -17,7 +17,7 @@ u_dot = zeros(i_dim,N);     % AUV acceleration
 a = zeros(i_dim,N);         % Real acceleration
 
 %% Controller choice
-controller = '0';
+controller = 'A+D';
 model = 'B';
 speed0 = 0.4;
 

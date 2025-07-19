@@ -138,7 +138,7 @@ function [kp, ki, kd, kt] = gainComputation(speed0, dim_i)
     %% Computation
     for l = 1:dim_i
         if l == SURGE || l == SWAY
-            kp(l) = 2*damp*wn*mv(l) + dv_lin(l);
+            kp(l) = 2*damp*wn*mv(l) - dv_lin(l);
             ki(l) = wn^2 * mv(l);
             kd(l) = 0;
             Ti(l) = kp(l)/ki(l);
