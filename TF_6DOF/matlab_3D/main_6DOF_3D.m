@@ -82,13 +82,14 @@ ni = zeros(m_dim, N);          % Innovation
 S = zeros(m_dim, m_dim, N);    % Covariance Innovation
 
 %% Controller Parameters
-pid = zeros(i_dim, N);         % PID for Dynamics
-du_int_err = zeros(i_dim, N);  % integral error
-p_err = zeros(i_dim, N);       % proportional error
-i_err = zeros(i_dim, N);       % integral error
+pid = zeros(i_dim, N);              % PID for Dynamics
+integral_err = zeros(i_dim, N);     % integral error
+p_err = zeros(i_dim, N);            % proportional error
+i_err = zeros(i_dim, N);            % integral error
+t_sum = zeros(i_dim,N);
 
 % initial controller
-speed0 = [0, 0, 0, 0, 0]';
+speed0 = [0; 0; 0; 0; 0];
 tau0 = tau0_values(speed0, i_dim);
 
 %% Software Design
@@ -120,10 +121,10 @@ for k = 2:N
     %% EKF: Input Control Computation
     if k >= 10
         % PID Values with Saturation
-        [pid(:,k), du_int_err(:,k), p_err(:,k), i_err(:,k)] = input_control(x_est(:,k-1), rob_rot(:,k-1), pid(:,k-1), du_int_err(:,k-1), ...
-                                             u(:,k-2), u_dot(:,k-2), wRr(:,:,k-1), wRt(:,:,k-1), Ts, i_dim, p_err(:,k-1), i_err(:,k-1));
+        [pid(:,k), integral_err(:,k), p_err(:,k), i_err(:,k), u_dot(:,k-1), t_sum(:,k)] = input_control(x_est(:,k-1), rob_rot(:,k-1), pid(:,k-1), integral_err(:,k-1), ...
+                         u(:,k-2), u(:,k-3), u_dot(:,k-2), t_sum(:,k-1), speed0, wRr(:,:,k-1), wRt(:,:,k-1), Ts, i_dim, p_err(:,k-1), i_err(:,k-1));
         % Dynamic model
-        [u(:,k-1), u_dot(:,k-1)] = dynamic_model(pid(:,k), tau0, speed0, u(:,k-2), Ts, i_dim);
+        [u(:,k-1)] = dynamic_model(pid(:,k), tau0, speed0, u(:,k-2), Ts, i_dim, u_dot(:,k-2));
     end
 
     %% EKF: Real Measurement

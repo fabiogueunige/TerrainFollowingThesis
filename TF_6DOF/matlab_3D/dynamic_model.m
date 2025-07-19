@@ -1,4 +1,4 @@
-function [new_vel, s_dotdot] = dynamic_model(tau, tau0, speed0, old_vel, Ts, i_dim)
+function [new_vel] = dynamic_model(tau, tau0, speed0, old_vel, Ts, i_dim, old_acc)
     % updated to bluerov model
     printDebug('       Dynamic Model\n');
     %% Definition
@@ -13,7 +13,7 @@ function [new_vel, s_dotdot] = dynamic_model(tau, tau0, speed0, old_vel, Ts, i_d
 
     % [surge, heave, roll, pitch]  aggiungere valori ROLL blue rov
     % Added mass
-    tau_a = [27.08; 25.952; 29.9081; 1; 1; 1]; % kl_dot 
+    tau_a = -[27.08; 25.952; 29.9081; 1; 1; 1]; % kl_dot 
     
     % Linear damping
     tau_r = [-0.1213; -1.1732; -1.1130; -0.5; -0.5; -0.5]; % linear_damping (kl)
@@ -27,7 +27,8 @@ function [new_vel, s_dotdot] = dynamic_model(tau, tau0, speed0, old_vel, Ts, i_d
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%% TO CHANGE WITH YAW ACTUATION %%%%%%%%%%%%%
     sp0 = [speed0(SURGE), speed0(SWAY), speed0(HEAVE), speed0(ROLL), speed0(PITCH), 0];
-    dv = -tau_r - 2 * tau_d .* abs(sp0);
+    dv = -tau_r - tau_d .* abs(sp0);
+    dv_lin = -tau_r - 2 * tau_d .* abs(sp0);
 
     delta = old_vel - speed0;
 
@@ -40,23 +41,23 @@ function [new_vel, s_dotdot] = dynamic_model(tau, tau0, speed0, old_vel, Ts, i_d
     s_dotdot = zeros(i_dim,1);
     
     % surge
-    s_dotdot(SURGE) = (tau(SURGE) - tau0(SURGE) - dv(U)*delta(SURGE)) / mv(U);
+    s_dotdot(SURGE) = (tau(SURGE) - tau0(SURGE) - dv_lin(U)*delta(SURGE)) / mv(U);
 
     % sway
-    s_dotdot(SWAY) = (tau(SWAY) - tau0(SWAY) - dv(V)*delta(SWAY)) / mv(V);
+    s_dotdot(SWAY) = (tau(SWAY) - tau0(SWAY) - dv_lin(V)*delta(SWAY)) / mv(V);
  
     % heave
-    s_dotdot(HEAVE) = (tau(HEAVE) - tau0(HEAVE) - dv(W)*delta(HEAVE)) / mv(W);
+    s_dotdot(HEAVE) = (tau(HEAVE) - tau0(HEAVE) - dv_lin(W)*delta(HEAVE)) / mv(W);
 
     % roll
-    s_dotdot(ROLL) = (tau(ROLL) - tau0(ROLL) - dv(P)*delta(ROLL)) / mv(P);
+    s_dotdot(ROLL) = (tau(ROLL) - tau0(ROLL) - dv_lin(P)*delta(ROLL)) / mv(P);
     
     % pitch
-    s_dotdot(PITCH) = (tau(PITCH) - tau0(PITCH) - dv(Q)*delta(PITCH)) / mv(Q);
+    s_dotdot(PITCH) = (tau(PITCH) - tau0(PITCH) - dv_lin(Q)*delta(PITCH)) / mv(Q);
 
     % yaw ...
   
-    new_vel = old_vel + Ts * s_dotdot;
+    new_vel = integrator(old_vel, s_dotdot, old_acc, Ts);
 
     printDebug('surge: %.2f | sway: %.2f | heave: %.2f ', new_vel(SURGE), new_vel(SWAY), new_vel(HEAVE));
     printDebug('| p: %.3f | q: %.3f\n', new_vel(ROLL), new_vel(PITCH));

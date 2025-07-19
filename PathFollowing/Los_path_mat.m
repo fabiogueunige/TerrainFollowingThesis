@@ -9,8 +9,11 @@ p = 10; % system pole (doveva essere negativo)
 wn = 0.2;
 damp = 0.6;
 
+max_pid = 1;
+Ts = 0.001;
+
 % x initial
-speed0 = [0.1, 0, 0, 0]';
+speed0 = [0.3, 0, 0, 0]';
 depth_des = 0.5;
 eta_init = [0, 0, pi, 0]';
 current = [0.09, 0, 0, 0]';

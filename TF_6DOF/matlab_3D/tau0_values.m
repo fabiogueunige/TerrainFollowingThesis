@@ -38,7 +38,7 @@ function tau0 = tau0_values(speed0, i_dim)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%% TO CHANGE WITH YAW ACTUATION %%%%%%%%%%%%%
     sp0 = [speed0(SURGE), speed0(SWAY), speed0(HEAVE), speed0(ROLL), speed0(PITCH), 0];
-    dv = -tau_r - 2 * tau_d .* abs(sp0);
+    dv = -tau_r - tau_d .* abs(sp0);
 
     % tau0 computation
     tau0 = zeros(i_dim,1);

@@ -128,26 +128,6 @@ for k = 1:num_s
     y(k) = norm(t_star(:, k));
 end
 
-% Check of visibility
-z_r = zeros(3, num_s);
-z_r(:,1) = [1, 0, 1];
-z_r(:,2) = [1, 0, 1];
-z_r(:,3) = [0, 1, 1];
-z_r(:,4) = [0, 1, 1];
-
-for k = 1:num_s
-    z_r(:,k) = vector_normalization(z_r(:,k));
-    z_r(:,k) = (wRr)*z_r(:,k);
-    v_p = p_int(:, k) - pr; % world frame
-    visibile = dot(z_r(:,k), v_p) > 0;
-    if ~visibile % second check
-        fprintf('Error in visibility for the sensor %0.f\n', k);
-        fprintf('Error in visibility for the sensor %0.f\n', k);
-        fprintf('Error in visibility for the sensor %0.f\n', k);
-        fprintf('Error in visibility for the sensor %0.f\n', k);
-    end
-end
-
 %% Altitude Computation
 % real altitude in 
 h_real = abs((n'*(pr - pplane))/(norm(n)));
