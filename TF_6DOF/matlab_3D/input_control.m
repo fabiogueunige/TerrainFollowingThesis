@@ -11,7 +11,7 @@ function [pid, int_term, prev_err, int_err] = input_control(x, angles, old_pid, 
     
     %% PID parameters
     % --- for now random parameters -- %
-    [Kp, Ki, Kd, Ti, Td, Kt] = gainComputation(speed, dim_i);
+    [Kp, Ki, Kd, Ti, Td, Kt] = gainComputation(dim_i); %speed, dim_i
 
     %% Desiired Parameters
     u_star = 0.3;
@@ -105,7 +105,7 @@ function [pid, int_term, prev_err, int_err] = input_control(x, angles, old_pid, 
 end
 
 
-function [kp, ki, kd, Ti, Td, Kt] = gainComputation(speed0, dim_i)
+function [kp, ki, kd, Ti, Td, Kt] = gainComputation(dim_i)
     global PHI; global THETA; global PSI; 
     global SURGE; global SWAY; global HEAVE;
     global ROLL; global PITCH; global YAW;
@@ -113,6 +113,7 @@ function [kp, ki, kd, Ti, Td, Kt] = gainComputation(speed0, dim_i)
     wn = 0.3;
     damp = 0.6;
     p = 10;
+    speed0 = ones(dim_i);
 
     kp = zeros(dim_i, 1);
     ki = zeros(dim_i, 1);
@@ -126,7 +127,7 @@ function [kp, ki, kd, Ti, Td, Kt] = gainComputation(speed0, dim_i)
     I = diag([0.21, 0.245, 0.245]);
 
     % Added mass
-    tau_a = [27.08; 25.952; 29.9081; 1; 1; 1]; % kl_dot 
+    tau_a = -[27.08; 25.952; 29.9081; 1; 1; 1]; % kl_dot 
     
     % Linear damping
     tau_r = [-0.1213; -1.1732; -1.1130; -0.5; -0.5; -0.5]; % linear_damping (kl)

@@ -18,7 +18,7 @@ function [new_vel, s_dotdot] = dynamic_model(tau, ang, v_old, Ts, i_dim)
     B = rho * volume * g;
 
     % Added mass
-    tau_a = [27.08; 25.952; 29.9081; 1; 1; 1]; % kl_dot 
+    tau_a = -[27.08; 25.952; 29.9081; 1; 1; 1]; % kl_dot 
     
     % Linear damping
     tau_r = [-0.1213; -1.1732; -1.1130; -0.5; -0.5; -0.5]; % linear_damping (kl)
@@ -29,7 +29,7 @@ function [new_vel, s_dotdot] = dynamic_model(tau, ang, v_old, Ts, i_dim)
     % Virtual mass
     mv = [m; m; m; I(1,1); I(2,2); I(3,3)] - tau_a;
 
-    dv = -tau_r - 2 * tau_d .* abs(v_old);
+    dv = -tau_r - tau_d .* abs(v_old);
 
 %%%%%% EQUAZIONI SBAGLIATE PERCHE MODELLO TROPPO SEMPLIFICATO %%%%%%
 
