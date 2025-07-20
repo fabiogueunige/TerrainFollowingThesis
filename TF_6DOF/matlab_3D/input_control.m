@@ -1,5 +1,5 @@
 function [pid, int_term, pre_err, err_i, acc, term_sum] = input_control(x, angles, old_pid, int_term, speed, old_speed, ...
-                        acc, old_t_s, speed0, wRr, wRt, Ts, dim_i, pre_err, err_i)
+                        acc, old_t_s, speed0, wRr, wRt, Ts, dim_i, pre_err, err_i, step)
     %% Definitions
     % state
     IND_H = 1;      ALPHA = 2;      BETA = 3;  
@@ -33,7 +33,7 @@ function [pid, int_term, pre_err, err_i, acc, term_sum] = input_control(x, angle
     err = zeros (dim_i, 1);
     err(SURGE) = (u_star - s_speed(SURGE));
     err(SWAY) = (v_star - s_speed(SWAY));
-    err(HEAVE) = (h_ref - x(IND_H));
+    err(HEAVE) = (h_ref(step) - x(IND_H));
     err(ROLL) = (x(ALPHA) - angles(PHI));
     err(PITCH) = (x(BETA) - angles(THETA));
     % err(YAW) = ???

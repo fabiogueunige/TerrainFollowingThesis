@@ -33,9 +33,9 @@ a_dim = 3;          % number of angles
 [Q, R_tp, R_a] = noise_setup(n_dim, m_dim, a_dim);
 
 %% Terrain Parameters
-alpha = pi/10;
-beta = pi/7;
-pplane = [0, 0, 20]';
+alpha = pi/5;
+beta = pi/8;
+pplane = [0, 0, 12]';
 n0 = [0, 0, 1]'; % terrain frame
 wRt = zeros(d_dim, d_dim, N);
 wRt_pre = zeros(d_dim, d_dim, N);
@@ -89,12 +89,15 @@ i_err = zeros(i_dim, N);            % integral error
 t_sum = zeros(i_dim,N);
 
 % initial controller
-speed0 = [0; 0; 0; 0; 0];
+speed0 = [0.3; 0; 0; 0; 0];
 tau0 = tau0_values(speed0, i_dim);
 
 %% Software Design
+index_N = round(N/2);
 global h_ref;
-h_ref = 7;
+h_ref = ones(1, N);
+h_ref(1:index_N) = 7;
+h_ref(index_N:end) = 4;
 
 %% EKF Start
 % covariance 
@@ -113,7 +116,7 @@ wRt_pre(:,:,1) = wRt(:,:,1);
 
 %% EKF Simulation
 for k = 2:N
-    if k == 2 || mod(k, 100) == 0
+    if k == 2 || mod(k, 500) == 0
         disp(['Processing iteration \n', num2str(k)]);
     end
     %% R setting
@@ -122,9 +125,11 @@ for k = 2:N
     if k >= 10
         % PID Values with Saturation
         [pid(:,k), integral_err(:,k), p_err(:,k), i_err(:,k), u_dot(:,k-1), t_sum(:,k)] = input_control(x_est(:,k-1), rob_rot(:,k-1), pid(:,k-1), integral_err(:,k-1), ...
-                         u(:,k-2), u(:,k-3), u_dot(:,k-2), t_sum(:,k-1), speed0, wRr(:,:,k-1), wRt(:,:,k-1), Ts, i_dim, p_err(:,k-1), i_err(:,k-1));
+                         u(:,k-2), u(:,k-3), u_dot(:,k-2), t_sum(:,k-1), speed0, wRr(:,:,k-1), wRt(:,:,k-1), Ts, i_dim, p_err(:,k-1), i_err(:,k-1), k);
         % Dynamic model
         [u(:,k-1)] = dynamic_model(pid(:,k), tau0, speed0, u(:,k-2), Ts, i_dim, u_dot(:,k-2));
+
+        % Kinematic model
     end
 
     %% EKF: Real Measurement
@@ -147,7 +152,7 @@ for k = 2:N
 
     %% EKF: True State update
     % TRUE state estimation
-    x_true(:,k) = [h_ref, alpha, beta]';  
+    x_true(:,k) = [hmes, alpha, beta]';  
     a_true(:,k) = [alpha, beta, 0]'; % True angles
 
     %% EKF: Prediction
@@ -219,8 +224,9 @@ ttl = {'altitude', 'alpha', 'beta'};
 for i = 1:n_dim
     figure;
     if (i == 1)
-        plot(time, x_true(i,:), 'b', 'DisplayName', 'True');
+        plot(time, h_ref(:), 'r', 'DisplayName', 'Reference')
         hold on;
+        plot(time, x_true(i,:), 'b', 'DisplayName', 'True');
         plot(time, x_est(i,:), 'g', 'DisplayName', 'Estimated');
     else
         plot(time, rad2deg(x_true(i,:)), 'b', 'DisplayName', 'True');
