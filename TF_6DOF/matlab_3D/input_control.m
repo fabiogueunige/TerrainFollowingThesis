@@ -19,11 +19,9 @@ function [pid, int_term, pre_err, err_i, acc, term_sum] = input_control(x, angle
     global h_ref;
 
     %% Limitation Parameters
-    max_pid = ones(dim_i, 1) / 5;
+    max_pid = ones(dim_i, 1);
     term_sum = zeros(dim_i, 1);
     pid = zeros(dim_i, 1);
-
-    integral_max = 1.0;
 
     %% Errors
     acc = derivator(acc, speed, old_speed, Ts); 
@@ -40,18 +38,18 @@ function [pid, int_term, pre_err, err_i, acc, term_sum] = input_control(x, angle
 
     %% QUESTO CONTROLLO NON FUNZIONA
     % for j = 1:dim_i
-    %     i_pid = Ki(j) * err(j);
+    %     i_err = Ki(j) * err(j);
     %     if j == SURGE || j == SWAY
-    %         p_pid = (Kp(j) * s_acc(j));
-    %         d_pid = 0;
+    %         p_err = (Kp(j) * s_acc(j));
+    %         d_err = 0;
     %     elseif j == HEAVE
-    %         p_pid = (Kp(j) * s_speed(j));
-    %         d_pid = (Kd(j) * s_acc(j));
+    %         p_err = (Kp(j) * s_speed(j));
+    %         d_err = (Kd(j) * s_acc(j));
     %     else
-    %         p_pid = (Kp(j) * speed(j));
-    %         d_pid = (Kd(j) * acc(j));
+    %         p_err = (Kp(j) * speed(j));
+    %         d_err = (Kd(j) * acc(j));
     %     end
-    %     term_sum(j) = i_pid - p_pid - d_pid;
+    %     term_sum(j) = i_err - p_err - d_err;
     % end
     % % Computation on robot frame for 
     % tp_speed = wRr' * wRt * [term_sum(SURGE); term_sum(SWAY); term_sum(HEAVE)];
@@ -62,8 +60,8 @@ function [pid, int_term, pre_err, err_i, acc, term_sum] = input_control(x, angle
     %     end
     %     term_sum(j) = term_sum(j) - Kt(j)*old_pid(j);
     %     int_term(j) = integrator(int_term(j), term_sum(j), old_t_s(j), Ts);
-    %     u_sat = max(min(int_term(j), max_pid(j)), -max_pid(j));
-    %     pid(j) = int_term(j) - u_sat;
+    %     pid_sat = max(min(int_term(j), max_pid(j)), -max_pid(j));
+    %     pid(j) = int_term(j) - pid_sat;
     % end
 
     %% ERROR CALCULATION PID CLASSICO
