@@ -11,6 +11,20 @@ Reallocating 'name_of_file' (item size: 1) to 22 items.
 A level-1 auxiliary file: Abstract/abstract.aux
 Reallocating 'name_of_file' (item size: 1) to 22 items.
 A level-1 auxiliary file: Chapter1/chapter1.aux
+Reallocating 'name_of_file' (item size: 1) to 22 items.
+A level-1 auxiliary file: Chapter2/chapter2.aux
+Reallocating 'name_of_file' (item size: 1) to 22 items.
+A level-1 auxiliary file: Chapter3/chapter3.aux
+Reallocating 'name_of_file' (item size: 1) to 22 items.
+A level-1 auxiliary file: Chapter4/chapter4.aux
+Reallocating 'name_of_file' (item size: 1) to 22 items.
+A level-1 auxiliary file: Chapter5/chapter5.aux
+Reallocating 'name_of_file' (item size: 1) to 22 items.
+A level-1 auxiliary file: Chapter6/chapter6.aux
+Reallocating 'name_of_file' (item size: 1) to 22 items.
+A level-1 auxiliary file: Chapter7/chapter7.aux
+Reallocating 'name_of_file' (item size: 1) to 20 items.
+A level-1 auxiliary file: Results/results.aux
 Reallocating 'name_of_file' (item size: 1) to 28 items.
 A level-1 auxiliary file: Conclusions/conclusions.aux
 Reallocating 'name_of_file' (item size: 1) to 24 items.
@@ -23,7 +37,7 @@ Warning--I didn't find a database entry for "Aarzen1999"
 Reallocating 'wiz_functions' (item size: 4) to 6000 items.
 You've used 0 entries,
             3018 wiz_defined-function locations,
-            643 strings with 4662 characters,
+            650 strings with 4807 characters,
 and the built_in function-call counts, 23 in all, are:
 = -- 0
 > -- 0

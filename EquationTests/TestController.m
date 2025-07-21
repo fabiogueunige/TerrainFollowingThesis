@@ -8,7 +8,6 @@ N = length(time); % Number of iterations
 %% Dimensions
 i_dim = 1;          % Number of inputs 
 d_dim = 3;          % world space total dimensions
-a_dim = 3;          % number of angles
 
 %% Robot 
 pr = zeros(d_dim,N);        % AUV initial position
@@ -19,7 +18,7 @@ a = zeros(i_dim,N);         % Real acceleration
 %% Controller choice
 controller = 'A+D';
 model = 'B';
-speed0 = 0.4;
+speed0 = 0.5;
 
 %% Dynamic
 if model == 'B'
@@ -78,6 +77,9 @@ end
 
 %% Loop Cycle
 for k = 3:N
+    if k < 100
+        u(k-1)
+    end
     if mod(k,151) == 0
         fprintf('Vel on lap %.0f is : %.4f\n', k, u(k-1));
     end
@@ -97,11 +99,11 @@ for k = 3:N
         case '2'
             pid(k) = 1;
         case 'PID'
-            %% Simple PID  (funziona SEMPRE)
+            %% Simple PID  (funziona SEMPRE e meglio degl'altri)
             err_i = integrator(err_i, err(k), err(k-1), Ts);
             i_err(k) = Ki*err_i;
             p_err = Kp * err(k);
-            % % d_err = -(Kd * u_dot(k-1));
+            % d_err = -(Kd * u_dot(k-1));
             pid(k) = i_err(k) + p_err;% + d_err;
         case 'A+D'
             %% PID + DELTA + ANTI WINDUP (funziona <=> speed0 = 0)
@@ -130,8 +132,7 @@ for k = 3:N
     end
     %% Dynamic
     % Considering everything as a delta
-    delta = u(k-1) - speed0;
-    a(k) = (pid(k) - tau0 - dv_lin*delta) / mv;
+    a(k) = (pid(k) - dv*u(k-1)) / mv;
     u(k) = integrator(u(k-1), a(k), a(k-1), Ts);
 
     %% New point

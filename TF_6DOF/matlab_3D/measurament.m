@@ -41,7 +41,6 @@ function [ymes, h_real, pr, Rm] = measurament(alpha, beta, pplane, n0, r_s , num
         if t_star(:,j) < 0
             Rm(:,:) = Rm(:,:)*150;
             fprintf('Negative value for sensor %.0f\n',j);
-            pause(0.005);
         end
         p_int(:, j) = pr + t_star(:, j)*s(:, j);
         y(j) = norm(t_star(:, j));

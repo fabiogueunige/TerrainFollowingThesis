@@ -27,10 +27,10 @@ m_dim = 4;          % Number of measurements
 i_dim = 5;          % Number of inputs 
 d_dim = 3;          % world space total dimensions
 s_dim = 4;          % number of echosonar
-a_dim = 3;          % number of angles
+w_dim = 6;          % world dimension
 
 %% Noise
-[Q, R_tp, R_a] = noise_setup(n_dim, m_dim, a_dim);
+[Q, R_tp, R_a] = noise_setup(n_dim, m_dim, d_dim);
 
 %% Terrain Parameters
 alpha = pi/5;
@@ -44,15 +44,17 @@ n = zeros(d_dim,N);                 % Surface vector
 %% AUV Parameters 
 psi = 0; % yaw to get motion
 prob = zeros(d_dim,N);              % AUV initial position
+cart_pos = zeros(w_dim, N);         % Cartesian robot position
+cart_vel = zeros(w_dim, N);         % Cartesian robot velocities
 
 % robot velocities & acceleration
 u = zeros(i_dim, N);                % Known inputs
 u_dot = zeros(i_dim,N);             % AUV acceleration
 
 % robot angles
-a_true = zeros(a_dim, N);           % True angles comparation
-rob_rot = zeros(a_dim, N);          % Robot angles roll, pitch, yaw
-clean_rot = zeros(a_dim,N);         % NO Noise Rotation
+a_true = zeros(d_dim, N);           % True angles comparation
+rob_rot = zeros(d_dim, N);          % Robot angles roll, pitch, yaw
+clean_rot = zeros(d_dim,N);         % NO Noise Rotation
 
 % robot rotations
 wRr = zeros(d_dim, d_dim, N);       % Robot in world rotation
@@ -124,26 +126,25 @@ for k = 2:N
     %% EKF: Input Control Computation
     if k >= 10
         % PID Values with Saturation
-        [pid(:,k), integral_err(:,k), p_err(:,k), i_err(:,k), u_dot(:,k-1), t_sum(:,k)] = input_control(x_est(:,k-1), rob_rot(:,k-1), pid(:,k-1), integral_err(:,k-1), ...
-                         u(:,k-2), u(:,k-3), u_dot(:,k-2), t_sum(:,k-1), speed0, wRr(:,:,k-1), wRt(:,:,k-1), Ts, i_dim, p_err(:,k-1), i_err(:,k-1), k);
-        % Dynamic model
-        [u(:,k-1)] = dynamic_model(pid(:,k), tau0, speed0, u(:,k-2), Ts, i_dim, u_dot(:,k-2));
-
-        % Kinematic model
+        [pid(:,k), integral_err(:,k), p_err(:,k), i_err(:,k), u_dot(:,k), t_sum(:,k)] = input_control(x_est(:,k-1), rob_rot(:,k-1), pid(:,k-1), integral_err(:,k-1), ...
+                         u(:,k-1), u(:,k-2), u_dot(:,k-1), t_sum(:,k-1), speed0, wRr(:,:,k-1), wRt(:,:,k-1), Ts, i_dim, p_err(:,k-1), i_err(:,k-1), k);   
     end
+    % Dynamic model
+        [u(:,k)] = dynamic_model(pid(:,k), tau0, speed0, rob_rot(:, k-1), u(:,k-1), Ts, i_dim, u_dot(:,k-1));
+
+    % Kinematic model
+    [cart_pos(:,k), cart_vel(:,k)] = kinematic_model(u(:,k), cart_pos(:,k-1), cart_vel(:,k-1), i_dim, Ts);
 
     %% EKF: Real Measurement
     % Measurement noise
     v = mvnrnd(zeros(m_dim,1), R_tp)'; 
-    v_a = mvnrnd(zeros(a_dim,1), R_a)';
-    [clean_rot(:,k), wRr_real] = AHRS_measurement(clean_rot(:,k-1), u(:,k-1), Ts);
-    [z_meas(:,k), hmes, prob(:,k), R(:,:,k)] = measurament(alpha, beta, pplane, n0, r_s, s_dim, u(:,k-1), Ts,  ...
+    v_a = mvnrnd(zeros(d_dim,1), R_a)';
+    [clean_rot(:,k), rob_rot(:,k), wRr_real] = AHRS_measurement(cart_pos(:,k), clean_rot(:,k-1), u(:,k), Ts, v_a);
+    [z_meas(:,k), hmes, prob(:,k), R(:,:,k)] = measurament(alpha, beta, pplane, n0, r_s, s_dim, u(:,k), Ts,  ...
                                                    prob(:,k-1), wRr_real, k, R(:,:,k));
-    % Adding noise to real measurament
+
     %%%%%%%%%%%%%%% NO NOISE %%%%%%%%%%%%%%%%%%%%%%%
-    % rob_rot(:,k) = clean_rot(:,k);
     %%%%%%%%%%%%%%% YES NOISE %%%%%%%%%%%%%%%%%%%%%%
-    rob_rot(:,k) = clean_rot(:,k) + v_a;
     z_meas(:,k) = z_meas(:,k) + v;
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -158,14 +159,14 @@ for k = 2:N
     %% EKF: Prediction
     % State prediction
     w = mvnrnd(zeros(n_dim,1), Q)'; % Process noise
-    [x_pred(:,k), wRt_pre(:,:,k)] = f(x_est(:,k-1), u(:,k-1), Ts, wRr(:,:,k));
+    [x_pred(:,k), wRt_pre(:,:,k)] = f(x_est(:,k-1), u(:,k), Ts, wRr(:,:,k));
     %%%%%%%%%%%%%%% NO NOISE %%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%% YES NOISE %%%%%%%%%%%%%%%%%%%%%%
     x_pred(:,k) = x_pred(:,k) + w;
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     % Dynamics Jacobian
-    F = jacobian_f(x_est(:,k-1), u(:,k-1), Ts, n_dim, wRr(:,:,k)); 
+    F = jacobian_f(x_est(:,k-1), u(:,k), Ts, n_dim, wRr(:,:,k)); 
     % Covariance prediction
     P_pred = F * P * F' + Q;
 
@@ -224,9 +225,9 @@ ttl = {'altitude', 'alpha', 'beta'};
 for i = 1:n_dim
     figure;
     if (i == 1)
-        plot(time, h_ref(:), 'r', 'DisplayName', 'Reference')
+        plot(time, h_ref(:), 'b', 'DisplayName', 'Desired')
         hold on;
-        plot(time, x_true(i,:), 'b', 'DisplayName', 'True');
+        plot(time, x_true(i,:), 'r', 'DisplayName', 'True');
         plot(time, x_est(i,:), 'g', 'DisplayName', 'Estimated');
     else
         plot(time, rad2deg(x_true(i,:)), 'b', 'DisplayName', 'True');
@@ -242,10 +243,11 @@ end
 
 % Robot angles
 ttl = {'roll', 'pitch', 'yaw'};
-for i = 1:a_dim
+for i = 1:d_dim
     figure;
-    plot(time, rad2deg(a_true(i,:)), 'b', 'DisplayName', 'True');
+    plot(time, rad2deg(clean_rot(i,:)), 'r', 'DisplayName', 'True');
     hold on;
+    plot(time, rad2deg(a_true(i,:)), 'b', 'DisplayName', 'Desired');
     plot(time, rad2deg(rob_rot(i,:)), 'g', 'DisplayName', 'Estimated');
     xlabel('Time [s]'); ylabel(sprintf('x_%d', i));
     legend; grid on;
