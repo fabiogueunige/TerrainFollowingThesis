@@ -14,12 +14,32 @@ ROLL = 4;   PITCH = 5;  YAW = 6;
 
 %% Filter Parameters
 Ts = 0.001;         % Sampling time [s]
-Tf = 25;            % Final time [s]
+Tf = 30;            % Final time [s]
 time = 0:Ts:Tf;     % Time vector
 N = length(time);   % Number of iterations
-
 global DEBUG;
 DEBUG = false;
+
+%% State Machine Definition
+cmd.start = false;          % Start command
+cmd.setpoint = false;       % Setpoint command
+cmd.contact1 = false;       % Contact point 1
+cmd.contact2 = false;       % Contact point 2
+cmd.contact3 = false;       % Contact point 3
+cmd.contact4 = false;       % Contact point 4
+cmd.following = false;      % Following command
+cmd.end = false;            % End command
+cmd.emergency = false;      % Emergency command
+state = strings(N+10, 1);   % State vector
+state(1) = 'Idle';          % Initial state
+
+i_goal.surge = 0;
+i_goal.sway = 0;
+i_goal.altitude = 0;
+i_goal.roll = 0;
+i_goal.pitch = 0;
+% i_goal.yaw = 0; for now not used
+goal(1:N) = i_goal;
 
 %% Matrix Dimensions
 n_dim = 3;          % Number of states
@@ -33,9 +53,9 @@ w_dim = 6;          % world dimension
 [Q, R_tp, R_a] = noise_setup(n_dim, m_dim, d_dim);
 
 %% Terrain Parameters
-alpha = pi/5;
+alpha = pi/10;
 beta = pi/8;
-pplane = [0, 0, 12]';
+pplane = [0, 0, 20]';
 n0 = [0, 0, 1]'; % terrain frame
 wRt = zeros(d_dim, d_dim, N);
 wRt_pre = zeros(d_dim, d_dim, N);
@@ -82,6 +102,7 @@ x0 = [10, alpha, beta]';       % True initial state
 x0_est = zeros(n_dim, 1);      % Estimated initial state
 ni = zeros(m_dim, N);          % Innovation
 S = zeros(m_dim, m_dim, N);    % Covariance Innovation
+R = repmat(R_tp, 1, 1, N);     
 
 %% Controller Parameters
 pid = zeros(i_dim, N);              % PID for Dynamics
@@ -97,9 +118,13 @@ tau0 = tau0_values(speed0, i_dim);
 %% Software Design
 index_N = round(N/2);
 global h_ref;
-h_ref = ones(1, N);
-h_ref(1:index_N) = 7;
-h_ref(index_N:end) = 4;
+h_ref = zeros(1, N);
+%%%%%%%%% CHANGE ALTITUDE %%%%%%%%%%%
+% index_N = round(N/2);
+% h_ref(1:index_N) = 7;
+% h_ref(index_N:end) = 4;
+%%%%%%%%% NO CHANGE %%%%%%%%%%%%%%%%%
+h_ref(:) = 7;
 
 %% EKF Start
 % covariance 
@@ -116,21 +141,27 @@ wRr(:,:,1) = eye(d_dim);
 wRt(:,:,1) = eye(d_dim) * rotx(pi);
 wRt_pre(:,:,1) = wRt(:,:,1);
 
-%% EKF Simulation
+cmd.start = true;
+
+%% EKF Simulation && State Machine
 for k = 2:N
     if k == 2 || mod(k, 500) == 0
         disp(['Processing iteration \n', num2str(k)]);
     end
-    %% R setting
-    R(:,:,k) = R_tp;
+    %% State Machine %%
+    % no change in commands during the State Machine
+    state(k) = state_machine(state(k-1), cmd);
+    goal(k) = goal_def(state(k), x_est(:,k-1), k);
+    
     %% EKF: Input Control Computation
-    if k >= 10
+    if k >= 3
         % PID Values with Saturation
-        [pid(:,k), integral_err(:,k), p_err(:,k), i_err(:,k), u_dot(:,k), t_sum(:,k)] = input_control(x_est(:,k-1), rob_rot(:,k-1), pid(:,k-1), integral_err(:,k-1), ...
-                         u(:,k-1), u(:,k-2), u_dot(:,k-1), t_sum(:,k-1), speed0, wRr(:,:,k-1), wRt(:,:,k-1), Ts, i_dim, p_err(:,k-1), i_err(:,k-1), k);   
+        [pid(:,k), integral_err(:,k), p_err(:,k), i_err(:,k), u_dot(:,k), t_sum(:,k)] = input_control(goal(k), x_est(:,k-1), rob_rot(:,k-1), pid(:,k-1), integral_err(:,k-1), ...
+                         u(:,k-1), u(:,k-2), u_dot(:,k-1), t_sum(:,k-1), speed0, wRr(:,:,k-1), wRt(:,:,k-1), Ts, i_dim, p_err(:,k-1), i_err(:,k-1), state(k));   
     end
+    %% EKF: Dynamic and Kinematic Model
     % Dynamic model
-        [u(:,k)] = dynamic_model(pid(:,k), tau0, speed0, rob_rot(:, k-1), u(:,k-1), Ts, i_dim, u_dot(:,k-1));
+    [u(:,k)] = dynamic_model(pid(:,k), tau0, speed0, rob_rot(:, k-1), u(:,k-1), Ts, i_dim, u_dot(:,k-1));
 
     % Kinematic model
     [cart_pos(:,k), cart_vel(:,k)] = kinematic_model(u(:,k), cart_pos(:,k-1), cart_vel(:,k-1), i_dim, Ts);
@@ -140,8 +171,8 @@ for k = 2:N
     v = mvnrnd(zeros(m_dim,1), R_tp)'; 
     v_a = mvnrnd(zeros(d_dim,1), R_a)';
     [clean_rot(:,k), rob_rot(:,k), wRr_real] = AHRS_measurement(cart_pos(:,k), clean_rot(:,k-1), u(:,k), Ts, v_a);
-    [z_meas(:,k), hmes, prob(:,k), R(:,:,k)] = measurament(alpha, beta, pplane, n0, r_s, s_dim, u(:,k), Ts,  ...
-                                                   prob(:,k-1), wRr_real, k, R(:,:,k));
+    [z_meas(:,k), hmes, prob(:,k), R(:,:,k), cmd] = measurament(alpha, beta, pplane, n0, r_s, s_dim, u(:,k), Ts,  ...
+                                                   prob(:,k-1), wRr_real, k, R(:,:,k), cmd);
 
     %%%%%%%%%%%%%%% NO NOISE %%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%% YES NOISE %%%%%%%%%%%%%%%%%%%%%%
@@ -217,7 +248,13 @@ for k = 2:N
     %% Rotation Update 
     % terrain
     wRt(:,:,k) = rotz(0)*roty(x_est(BETA))*rotx(x_est(ALPHA))*rotx(pi);
+
+    %% State Machine Check of Results
+    cmd = goal_controller(cmd, x_est(:,k), goal(k), N, state(k), k);
 end
+
+cmd.end = true; % End command
+state(k+1) = 'EndSimulation'; % End state
 
 %% Plotting
 % States

@@ -1,5 +1,5 @@
-function [pid, int_term, pre_err, err_i, acc, term_sum] = input_control(ggg, x, angles, old_pid, int_term, speed, old_speed, ...
-                        acc, old_t_s, speed0, wRr, wRt, Ts, dim_i, pre_err, err_i, ste)
+function [pid, int_term, pre_err, err_i, acc, term_sum] = following_control(x, angles, old_pid, int_term, speed, old_speed, ...
+                        acc, old_t_s, speed0, wRr, wRt, Ts, dim_i, pre_err, err_i, step)
     %% Definitions
     % state
     IND_H = 1;      ALPHA = 2;      BETA = 3;  
@@ -7,11 +7,16 @@ function [pid, int_term, pre_err, err_i, acc, term_sum] = input_control(ggg, x, 
     global SURGE; global SWAY; global HEAVE;
     global ROLL; global PITCH; global YAW;
 
-    printDebug('       Input Control\n');
+    printDebug('       Following Control\n');
     
     %% PID parameters
     % --- for now random parameters -- %
     [Kp, Ki, Kd, Kt] = gainComputation(speed0, dim_i);
+
+    %% Desiired Parameters
+    u_star = 0.3;
+    v_star = 0.0;
+    global h_ref;
 
     %% Limitation Parameters
     max_pid = ones(dim_i, 1);
@@ -24,11 +29,11 @@ function [pid, int_term, pre_err, err_i, acc, term_sum] = input_control(ggg, x, 
     s_acc = wRt' * wRr * acc(SURGE:HEAVE);
 
     err = zeros (dim_i, 1);
-    err(SURGE) = (ggg.surge - s_speed(SURGE));
-    err(SWAY) = (ggg.sway - s_speed(SWAY));
-    err(HEAVE) = (ggg.altitude - x(IND_H));
-    err(ROLL) = (ggg.roll - angles(PHI));
-    err(PITCH) = (ggg.pitch - angles(THETA));
+    err(SURGE) = (u_star - s_speed(SURGE));
+    err(SWAY) = (v_star - s_speed(SWAY));
+    err(HEAVE) = (h_ref(step) - x(IND_H));
+    err(ROLL) = (x(ALPHA) - angles(PHI));
+    err(PITCH) = (x(BETA) - angles(THETA));
     % err(YAW) = ???
 
     %% QUESTO CONTROLLO NON FUNZIONA
@@ -66,11 +71,7 @@ function [pid, int_term, pre_err, err_i, acc, term_sum] = input_control(ggg, x, 
         p_err = Kp(j) * err(j);
         d_err = 0;
         if j == HEAVE
-            if ste == "TargetAltitude"
-                d_err = -Kd(j) * speed(j);
-            else
-                d_err = -Kd(j) * s_speed(j);
-            end
+            d_err = -Kd(j) * s_speed(j);
         end
         if j == ROLL || j == PITCH
             d_err = -Kd(j) * speed(j);   
@@ -81,12 +82,7 @@ function [pid, int_term, pre_err, err_i, acc, term_sum] = input_control(ggg, x, 
         pre_err(j) = err(j);     
     end
     tp_speed = wRr' * wRt * [pid(SURGE); pid(SWAY); pid(HEAVE)];
-    if ste == "TargetAltitude"
-        ind = SWAY;
-    else
-        ind = HEAVE;
-    end
-    for j = 1:ind
+    for j = 1:HEAVE
         pid(j) = tp_speed(j);
     end
 

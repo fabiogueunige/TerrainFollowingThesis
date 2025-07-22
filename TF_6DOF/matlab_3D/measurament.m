@@ -1,12 +1,13 @@
-function [ymes, h_real, pr, Rm] = measurament(alpha, beta, pplane, n0, r_s , num_s, ...
-                                    input, Ts, pr_old, wRr, k, Rm) 
+function [ymes, h_real, pr, Rm, command] = measurament(alpha, beta, pplane, n0, r_s , num_s, ...
+                                    input, Ts, pr_old, wRr, k, Rm, command) 
     %% Definition
     global SURGE; global SWAY; global HEAVE;
     printDebug('       Measurament:\n');
+    check = [command.contact1, command.contact2, command.contact3, command.contact4];
 
     %% Terrain Definition
     wRs = (rotz(0)*roty(beta)*rotx(alpha))*rotx(pi);
-    n = wRs*n0; % in world frame
+    n = wRs*n0; % in world frame    
     if (norm(n) ~= 1)
         n = vector_normalization(n);
         printDebug('n: [%.4f; %.4f; %.4f]\n', n(1), n(2), n(3));
@@ -41,15 +42,23 @@ function [ymes, h_real, pr, Rm] = measurament(alpha, beta, pplane, n0, r_s , num
         if t_star(:,j) < 0
             Rm(:,:) = Rm(:,:)*150;
             fprintf('Negative value for sensor %.0f\n',j);
+            check(j) = false;
+        else
+            check(j) = true;
         end
         p_int(:, j) = pr + t_star(:, j)*s(:, j);
         y(j) = norm(t_star(:, j));
     end
 
-        %% Plot visualization
+    %% Plot visualization
     if k == 2 || mod(k, 2000) == 0
         m_visualization(pr, pplane, n, num_s, p_int, wRr, k);
     end
+
+    command.contact1 = check(1);
+    command.contact2 = check(2);
+    command.contact3 = check(3);
+    command.contact4 = check(4);
 
     %% Sending Info's
     ymes = [y(1); y(2); y(3); y(4)];
