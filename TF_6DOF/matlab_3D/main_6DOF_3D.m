@@ -27,6 +27,7 @@ cmd.contact1 = false;       % Contact point 1
 cmd.contact2 = false;       % Contact point 2
 cmd.contact3 = false;       % Contact point 3
 cmd.contact4 = false;       % Contact point 4
+cmd.sensor_fail = 0;        % Number of failure
 cmd.following = false;      % Following command
 cmd.end = false;            % End command
 cmd.emergency = false;      % Emergency command
@@ -53,8 +54,8 @@ w_dim = 6;          % world dimension
 [Q, R_tp, R_a] = noise_setup(n_dim, m_dim, d_dim);
 
 %% Terrain Parameters
-alpha = pi/10;
-beta = pi/8;
+alpha = pi/3;
+beta = pi/3;
 pplane = [0, 0, 20]';
 n0 = [0, 0, 1]'; % terrain frame
 wRt = zeros(d_dim, d_dim, N);
@@ -151,7 +152,7 @@ for k = 2:N
     %% State Machine %%
     % no change in commands during the State Machine
     state(k) = state_machine(state(k-1), cmd);
-    goal(k) = goal_def(state(k), x_est(:,k-1), k);
+    goal(k) = goal_def(state(k), rob_rot(:,k-1), x_est(:,k-1), k);
     
     %% EKF: Input Control Computation
     if k >= 3

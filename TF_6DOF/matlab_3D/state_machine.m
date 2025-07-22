@@ -16,47 +16,45 @@ function [next_state] = state_machine(c_state, commands)
                 next_state = 'TargetAltitude';
             end
         case 'ContactSearch'
-            if commands.contact1 && commands.contact2 && commands.contact3 && commands.contact4
+            if commands.sensor_fail < 2
                 next_state = 'Following';
                 fprintf('State changed to Following.\n');
-            elseif ~commands.contact1 || ~commands.contact2 && commands.contact3 && commands.contact4
-                % number 1 and 2 is not detected
-                if commands.contact2
-                    % just the number 1 not detected %% TO IMPROVE
-                    next_state = 'MovePitch';
-                    fprintf('State changed to MovePitch 1.\n');
-                else
-                    % also the number 2 not dected %% TO IMPROVE
-                    next_state = 'MovePitch';
-                    fprintf('State changed to MovePitch 2.\n');
-                end
-            elseif commands.contact1 && commands.contact2 && ~commands.contact3 || ~commands.contact4
-                % number 3 or 4 is not detected
-                if commands.contact4
-                    % just the number 3 not detected %% TO IMPROVE
-                    next_state = 'MoveRoll';
-                    fprintf('State changed to MoveRoll 3.\n');
-                else
-                    % also the number 4 not detected %% TO IMPROVE
-                    next_state = 'MoveRoll';
-                    fprintf('State changed to MoveRoll 4.\n');
-                end
-            else
-                % No contact point detected or at least 3 contact point not detected
+            elseif commands.emergency % more than 3
                 next_state = 'Emergency';
                 fprintf('State changed to Emergency.\n');
+                pause(0.005);
+            elseif ~commands.contact1 && ~commands.contact2
+                % number 1 and 2 is not detected
+                    next_state = 'MovePitch';
+                    fprintf('State changed to MovePitch.\n');
+            elseif ~commands.contact3 && ~commands.contact4
+                    next_state = 'MoveRoll';
+                    fprintf('State changed to MoveRoll.\n');
+            else
+                % No idea when
+                next_state = 'ContactSearch';
+                fprintf('State remain the same because two different failed.\n');
+                pause(0.005);
             end
         case 'MovePitch' %% TO IMPROVE
-            if commands.contact1 && commands.contact2
+            if commands.contact1 || commands.contact2
                 next_state = 'ContactSearch';
                 fprintf('State changed back to ContactSearch.\n');
+            elseif commands.emergency
+                next_state = 'Emergency';
+                fprintf('State changed to Emergency.\n');
+                pause(0.005);
             else
                 next_state = 'MovePitch';
             end
         case 'MoveRoll' %% TO IMPROVE
-            if commands.contact3 && commands.contact4
+            if commands.contact3 || commands.contact4
                 next_state = 'ContactSearch';
                 fprintf('State changed back to ContactSearch.\n');
+            elseif commands.emergency
+                next_state = 'Emergency';
+                fprintf('State changed to Emergency.\n');
+                pause(0.005);
             else
                 next_state = 'MoveRoll';
             end
@@ -66,26 +64,28 @@ function [next_state] = state_machine(c_state, commands)
             elseif commands.end
                 next_state = 'EndSimulation';
                 fprintf('State changed to EndSimulation.\n');
-            elseif ~commands.contact1 || ~commands.contact2 || ~commands.contact3 || ~commands.contact4
+            elseif commands.sensor_fail >= 2
                 next_state = 'ContactSearch';
                 fprintf('State changed to ContactSearch.\n');
-            elseif ~commands.setpoint && commands.emergency
+            elseif commands.emergency
                 next_state = 'TargetAltitude';
                 fprintf('State changed to TargetAltitude to handle emergency.\n');
             else
-                next_state = 'ContactSearch';
+                next_state = 'Following';
                 fprintf('Succede qualcosa non considerato')
                 pause(1);
             end
         % case 'Acceleration' %% TO IMPROVE
         % case 'Deceleration' %% TO IMPROVE
         case 'Emergency'
-            if commands.emergency
-            % for now it will just show the problem and stop the simulation!!
-                next_state = 'Emergency';
+            if commands.sensor_fail >= 3 || ~commands.setpoint
+                next_state = 'TargetAltitude';
+                fprintf('From Emergency to Target Altitude');
             else
-                next_state = 'ContactSearch';
+                % Non capisco quando potrebbe succedere
+                next_state = 'Emergency';
             end
+        % case 'Reset'
         case 'EndSimulation'
             next_state = 'EndSimulation';
             fprintf('Simulation ended. Obrigado!!\n');

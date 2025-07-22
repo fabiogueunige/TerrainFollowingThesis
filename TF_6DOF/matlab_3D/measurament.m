@@ -34,6 +34,7 @@ function [ymes, h_real, pr, Rm, command] = measurament(alpha, beta, pplane, n0, 
     t_star = zeros(1, num_s);
     p_int = zeros(3, num_s);
     y = zeros(1, num_s);
+    command.sensor_fail = 0;
     for j = 1:num_s
         if dot(s(:,j),n) == 0
             error('The line s and the plane n are parallel in measurament');
@@ -43,6 +44,7 @@ function [ymes, h_real, pr, Rm, command] = measurament(alpha, beta, pplane, n0, 
             Rm(:,:) = Rm(:,:)*150;
             fprintf('Negative value for sensor %.0f\n',j);
             check(j) = false;
+            command.sensor_fail = command.sensor_fail + 1;
         else
             check(j) = true;
         end

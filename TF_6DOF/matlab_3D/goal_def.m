@@ -1,7 +1,11 @@
-function gg = goal_def(c_state, x_ekf, step)
+function gg = goal_def(c_state, ang, x_ekf, step)
     %% References Definition
     IND_H = 1;      ALPHA = 2;      BETA = 3;  
+    global PHI; global THETA; global PSI;   
+
+    %% Goal Values
     u_star = 0.3;  % Desired surge speed
+    u_star_slow = 0;
     v_star = 0.0;  % Desired sway speed
     global h_ref;
     phi_ref = x_ekf(ALPHA);  % Desired roll angle
@@ -9,13 +13,13 @@ function gg = goal_def(c_state, x_ekf, step)
     % yaw_ref = 0;  % Desired yaw angle (not used for now)
 
     %% Predefinition of the goal
-    ang_to_cut = -pi/10;  % Angle to cut for roll and pitch
+    ang_to_cut = pi/10;  % Angle to cut for roll and pitch
 
     g_altitude = h_ref(step);  % Desired altitude
 
     switch c_state
         case 'TargetAltitude'
-            g_surge = u_star;
+            g_surge = 0;
             g_sway = 0;
             g_roll = 0;    % Desired roll angle
             g_pitch = 0;   % Desired pitch angle
@@ -27,15 +31,24 @@ function gg = goal_def(c_state, x_ekf, step)
             g_pitch = theta_ref; % Desired pitch angle
             % g_yaw = 0;  % Desired yaw angle (not used for now)
         case 'MovePitch' %% TO IMPROVE
-            g_surge = u_star;
+            g_surge = u_star_slow;
             g_sway = v_star;
             g_roll = phi_ref;    % Desired roll angle
-            g_pitch = theta_ref + ang_to_cut; % Desired pitch angle
+            if ang(THETA) >= pi/4
+                g_pitch = theta_ref - ang_to_cut;
+            else
+                g_pitch = theta_ref + ang_to_cut;
+            end
+             % Desired pitch angle
             % g_yaw = 0;  % Desired yaw angle (not used for now)
         case 'MoveRoll' %% TO IMPROVE
-            g_surge = u_star;
+            g_surge = u_star_slow;
             g_sway = v_star;
-            g_roll = phi_ref + ang_to_cut;    % Desired roll angle
+            if ang(PHI) >= pi/4
+                g_roll = phi_ref - ang_to_cut;
+            else
+                g_roll = phi_ref + ang_to_cut;
+            end
             g_pitch = theta_ref; % Desired pitch angle
             % g_yaw = 0;  % Desired yaw angle (not used for now)
         case 'Following'

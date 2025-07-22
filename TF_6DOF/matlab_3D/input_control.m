@@ -20,8 +20,10 @@ function [pid, int_term, pre_err, err_i, acc, term_sum] = input_control(ggg, x, 
 
     %% Errors
     acc = derivator(acc, speed, old_speed, Ts); 
-    s_speed = wRt' * wRr * speed(SURGE:HEAVE);
-    s_acc = wRt' * wRr * acc(SURGE:HEAVE);
+    w_speed = wRr * speed(SURGE:HEAVE);
+    s_speed = wRt' * w_speed;
+    w_acc = wRr * acc(SURGE:HEAVE);
+    s_acc = wRt' * w_acc;
 
     err = zeros (dim_i, 1);
     err(SURGE) = (ggg.surge - s_speed(SURGE));
@@ -67,7 +69,7 @@ function [pid, int_term, pre_err, err_i, acc, term_sum] = input_control(ggg, x, 
         d_err = 0;
         if j == HEAVE
             if ste == "TargetAltitude"
-                d_err = -Kd(j) * speed(j);
+                d_err = -Kd(j) * w_speed(j);
             else
                 d_err = -Kd(j) * s_speed(j);
             end
@@ -80,14 +82,18 @@ function [pid, int_term, pre_err, err_i, acc, term_sum] = input_control(ggg, x, 
         % Memory update
         pre_err(j) = err(j);     
     end
-    tp_speed = wRr' * wRt * [pid(SURGE); pid(SWAY); pid(HEAVE)];
+    
     if ste == "TargetAltitude"
         ind = SWAY;
+        tp_s_speed = wRr' * wRt * [pid(SURGE); pid(SWAY); 0];
+        tp_w_speed = wRr' * [0; 0; pid(HEAVE)];
+        pid(HEAVE) = tp_w_speed(HEAVE);
     else
+        tp_s_speed = wRr' * wRt * [pid(SURGE); pid(SWAY); pid(HEAVE)];
         ind = HEAVE;
     end
     for j = 1:ind
-        pid(j) = tp_speed(j);
+        pid(j) = tp_s_speed(j);
     end
 
     %% FINAL
