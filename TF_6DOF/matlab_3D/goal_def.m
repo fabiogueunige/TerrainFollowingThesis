@@ -4,9 +4,10 @@ function gg = goal_def(c_state, ang, x_ekf, step)
     global PHI; global THETA; global PSI;   
 
     %% Goal Values
-    u_star = 0.3;  % Desired surge speed
-    u_star_slow = 0;
-    v_star = 0.0;  % Desired sway speed
+    u_star = 0.3;  
+    u_star_slow = 0.1;
+    v_star = 0.0;  
+    v_star_slow = 0.0;
     global h_ref;
     phi_ref = x_ekf(ALPHA);  % Desired roll angle
     theta_ref = x_ekf(BETA);  % Desired pitch angle
@@ -15,32 +16,37 @@ function gg = goal_def(c_state, ang, x_ekf, step)
     %% Predefinition of the goal
     ang_to_cut = pi/10;  % Angle to cut for roll and pitch
 
-    g_altitude = h_ref(step);  % Desired altitude
+    g_altitude = h_ref(step);  % Desired altitude for everyone
 
     switch c_state
+        case 'Reset'
+            g_surge = 0;        % Safeness better no move on
+            g_sway = 0;         % Safeness better no move on
+            g_roll = 0;         % Angle to be 0
+            g_pitch = 0;        % Angle to be 0
+            % g_yaw = 0;      % Desired yaw angle (not used for now)
         case 'TargetAltitude'
-            g_surge = 0;
-            g_sway = 0;
-            g_roll = 0;    % Desired roll angle
-            g_pitch = 0;   % Desired pitch angle
-            % g_yaw = 0;  % Desired yaw angle (not used for now)
+            g_surge = 0;            % Safeness better no move on
+            g_sway = 0;             % Safeness better no move on
+            g_roll = ang(PHI);      % Keep angle as before
+            g_pitch = ang(THETA);   % Keep angle as before 
+            % g_yaw = ang(PSI);   % Desired yaw angle (not used for now)
         case 'ContactSearch'
-            g_surge = 0;
-            g_sway = 0;
-            g_roll = phi_ref;    % Desired roll angle
-            g_pitch = theta_ref; % Desired pitch angle
-            % g_yaw = 0;  % Desired yaw angle (not used for now)
-        case 'MovePitch' %% TO IMPROVE
+            g_surge = u_star - u_star_slow;
+            g_sway = v_star - v_star_slow;
+            g_roll = phi_ref;    
+            g_pitch = theta_ref;
+            % g_yaw = ang(PSI);  
+        case 'MovePitch' 
             g_surge = u_star_slow;
-            g_sway = v_star;
-            g_roll = phi_ref;    % Desired roll angle
+            g_sway = v_star_slow;
+            g_roll = ang(PHI);      % Keep angle as before
             if ang(THETA) >= pi/4
                 g_pitch = theta_ref - ang_to_cut;
             else
                 g_pitch = theta_ref + ang_to_cut;
             end
-             % Desired pitch angle
-            % g_yaw = 0;  % Desired yaw angle (not used for now)
+            % g_yaw = ang(PSI);  
         case 'MoveRoll' %% TO IMPROVE
             g_surge = u_star_slow;
             g_sway = v_star;
@@ -49,22 +55,24 @@ function gg = goal_def(c_state, ang, x_ekf, step)
             else
                 g_roll = phi_ref + ang_to_cut;
             end
-            g_pitch = theta_ref; % Desired pitch angle
-            % g_yaw = 0;  % Desired yaw angle (not used for now)
+            g_pitch = ang(THETA);    % Keep angle as before
+            % g_yaw = ang(PSI);  
         case 'Following'
             g_surge = u_star;
             g_sway = v_star;
-            g_roll = phi_ref;    % Desired roll angle
-            g_pitch = theta_ref; % Desired pitch angle
-            % g_yaw = 0;  % Desired yaw angle (not used for now)
+            g_roll = phi_ref;    
+            g_pitch = theta_ref; 
+            % g_yaw = psi_ref;  
+
         % case 'Acceleration' %% TO IMPROVE
         % case 'Deceleration' %% TO IMPROVE
+
         case 'Emergency'
             g_surge = 0;
             g_sway = 0;
-            g_roll = phi_ref;    % Desired roll angle
-            g_pitch = theta_ref; % Desired pitch angle
-            % g_yaw = 0;  % Desired yaw angle (not used for now)
+            g_roll = ang(PHI);    
+            g_pitch = ang(THETA); 
+            % g_yaw = ang(PSI);  % Desired yaw angle (not used for now)
         case 'EndSimulation'
             g_surge = 0;
             g_sway = 0;

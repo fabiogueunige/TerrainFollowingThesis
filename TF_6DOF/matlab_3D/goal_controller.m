@@ -1,10 +1,10 @@
-function command = goal_controller(command, x_ekf, gg, N, c_state, step)
+function command = goal_controller(command, x_ekf, ang, gg, N, c_state, step, dim_a)
     %% definition 
     IND_H = 1;      ALPHA = 2;      BETA = 3; 
     
     %% Epsilon definition
-    alt_eps = 5;
-    alt_risk = 1;
+    alt_eps = 3;
+    alt_risk = 2;
     
     %% Altitude state
     if c_state == "TargetAltitude"
@@ -14,45 +14,26 @@ function command = goal_controller(command, x_ekf, gg, N, c_state, step)
         end
     end
 
-    %% Contact Search
-    if c_state == "ContactSearch" || c_state == "MoveRoll" || c_state == "MovePitch"
-        if command.sensor_fail <= 2
-            command.following = true;
-            command.emergency = false;
-        else
-            if command.sensor_fail > 3
-                command.emergency = true;
+    %% Reset
+    if c_state == "Reset"
+        command.reset = true;
+        for j = 1:dim_a
+            if abs(ang(j) - 0) > deg2rad(10) 
+                command.reset = false;
+                break;
             end
-            command.following = false;
         end
     end
 
-    %% Following state -> Contact Check
-    if c_state == "Following"
-        if command.sensor_fail > 1
-            if ((~cmd.contact1 && ~cmd.contact2) || (~cmd.contact3 && ~cmd.contact4))
-                command.following = false;
-            else
-                command.following = true;
-            end
-        else
-            command.following = true;
-        end
-        if command.sensor_fail >= 3
-            command.emergency = true;
-        end
-    end
-
-    %% Emergency
+    %% Emergency State
     if c_state == "Emergency"
-        command.following = false;
+        command.setpoint = false;
         command.emergency = false;
     end
 
     %% Safety Check Altitude ALWAYS
     if x_ekf(IND_H) < alt_risk
         command.setpoint = false;
-        command.following = false;
         command.emergency = true;
     end
  

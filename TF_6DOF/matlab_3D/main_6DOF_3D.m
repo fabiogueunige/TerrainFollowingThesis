@@ -23,6 +23,7 @@ DEBUG = false;
 %% State Machine Definition
 cmd.start = false;          % Start command
 cmd.setpoint = false;       % Setpoint command
+cmd.reset = false;          % Angles to 0
 cmd.contact1 = false;       % Contact point 1
 cmd.contact2 = false;       % Contact point 2
 cmd.contact3 = false;       % Contact point 3
@@ -54,13 +55,14 @@ w_dim = 6;          % world dimension
 [Q, R_tp, R_a] = noise_setup(n_dim, m_dim, d_dim);
 
 %% Terrain Parameters
-alpha = pi/3;
-beta = pi/3;
-pplane = [0, 0, 20]';
+alpha = pi/10;
+beta = pi/10;
+pplane = [0, 0, 15]';
 n0 = [0, 0, 1]'; % terrain frame
 wRt = zeros(d_dim, d_dim, N);
 wRt_pre = zeros(d_dim, d_dim, N);
-n = zeros(d_dim,N);                 % Surface vector
+n_pre = zeros(d_dim,N);                 % Surface vector predicted
+n_est = zeros(d_dim, N);                % surface vector estimated
 
 %% AUV Parameters 
 psi = 0; % yaw to get motion
@@ -214,15 +216,14 @@ for k = 2:N
     end
 
     %% Norm to the terrain
-    n(:,k) = wRt_pre(:,:,k)*n0;
-    if (norm(n(:,k)) ~= 1)
-        n(:,k) = vector_normalization(n(:,k));
-        printDebug('ALERT: n normalized: [%.4f; %.4f; %.4f]\n', n(1,k), n(2,k), n(3,k));
+    n_pre(:,k) = wRt_pre(:,:,k)*n0;
+    if (norm(n_pre(:,k)) ~= 1)
+        n_pre(:,k) = vector_normalization(n_pre(:,k));
     end
    
     %% EKF: Gain and Prediction Update
     % Observation Jacobian
-    H = jacobian_h(x_pred(:,k), s, m_dim, n_dim, s_dim, n(:,k), n0);
+    H = jacobian_h(x_pred(:,k), s, m_dim, n_dim, s_dim, n_pre(:,k), n0);
     if any(isnan(H(:)))
         error('Esecuzione interrotta: H contiene valori NaN. Istante %0.f', k);
     end
@@ -235,7 +236,7 @@ for k = 2:N
     end
     
     % Measurament prediction
-    z_pred(:,k) = h(x_pred(:,k), s, s_dim, m_dim, n(:,k));      
+    z_pred(:,k) = h(x_pred(:,k), s, s_dim, m_dim, n_pre(:,k));      
 
     %% EKF: State Update
     % State 
@@ -248,10 +249,17 @@ for k = 2:N
 
     %% Rotation Update 
     % terrain
-    wRt(:,:,k) = rotz(0)*roty(x_est(BETA))*rotx(x_est(ALPHA))*rotx(pi);
+    wRt(:,:,k) = rotz(0)*roty(x_est(BETA, k))*rotx(x_est(ALPHA,k))*rotx(pi);
+
+    %% Check for Z direction
+    n_est(:,k) = wRt(:,:,k)*n0;
+    if (norm(n_est(:,k)) ~= 1)
+        n_est(:,k) = vector_normalization(n_est(:,k));
+    end
+    [x_est(ALPHA,k), x_est(BETA, k)] = reference_correction(n_est(:,k),x_est(ALPHA,k), x_est(BETA,k), wRr(:,:,k));
 
     %% State Machine Check of Results
-    cmd = goal_controller(cmd, x_est(:,k), goal(k), N, state(k), k);
+    cmd = goal_controller(cmd, x_est(:,k), rob_rot(:,k), goal(k), N, state(k), k, d_dim);
 end
 
 cmd.end = true; % End command
