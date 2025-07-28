@@ -7,7 +7,7 @@ function [clean_angles, new_angles, wRr] = AHRS_measurement(x_cart, angles, inpu
     %% LINEARIZED
     phim = angles(PHI) + input(ROLL)*Ts;
     thetam = angles(THETA) + input(PITCH)*Ts;
-    psim = 0;
+    psim = angles(PSI) + input(YAW)*Ts;
 
     %% NOT LINEARIZED
     % VA TOTALMENTE CAMBIATO 
@@ -25,4 +25,5 @@ function [clean_angles, new_angles, wRr] = AHRS_measurement(x_cart, angles, inpu
 
     printDebug('phi mes new: %.2f | p_gyr: %.2f \n', rad2deg(phim), input(ROLL));
     printDebug('theta mes new: %.2f | q_gyr: %.2f \n', rad2deg(thetam), input(PITCH));
+    printDebug('yaw mes new: %.2f | q_gyr: %.2f \n', rad2deg(psim), input(YAW));
 end

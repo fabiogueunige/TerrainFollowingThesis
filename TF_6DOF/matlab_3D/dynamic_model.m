@@ -1,4 +1,4 @@
-function [new_vel] = dynamic_model(tau, tau0, speed0, ang, old_vel, Ts, i_dim, old_acc)
+function [new_vel] = dynamic_model(tau, tau0, sp0, ang, v_old, Ts, i_dim, old_acc)
     % updated to bluerov model
     printDebug('       Dynamic Model\n');
     %% Definition
@@ -30,24 +30,15 @@ function [new_vel] = dynamic_model(tau, tau0, speed0, ang, old_vel, Ts, i_dim, o
     
     % Virtual mass
     mv = [m; m; m; I(1,1); I(2,2); I(3,3)] - tau_a;
-
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%% NOT FULL ACTUATION %%%%%%%%%%%%%
-    sp0 = [speed0(SURGE), speed0(SWAY), speed0(HEAVE), speed0(ROLL), speed0(PITCH), 0];
-    %%%%%%%%%%%  %%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%%
-    v_old = zeros(6, 1);
-    v_old(1:i_dim) = old_vel;
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     dv = -tau_r - tau_d .* abs(v_old);
     
-
     % Accelerations
     s_dotdot = zeros(i_dim,1);
 
     %% LINEARIZED
     dv_lin = -tau_r - 2 * tau_d .* abs(sp0);
-    delta = old_vel - speed0;
+    delta = v_old - sp0;
     
     % surge
     s_dotdot(SURGE) = (tau(SURGE) - tau0(SURGE) - dv_lin(U)*delta(SURGE)) / mv(U);
@@ -65,6 +56,7 @@ function [new_vel] = dynamic_model(tau, tau0, speed0, ang, old_vel, Ts, i_dim, o
     s_dotdot(PITCH) = (tau(PITCH) - tau0(PITCH) - dv_lin(Q)*delta(PITCH)) / mv(Q);
 
     % yaw ...
+    s_dotdot(YAW) = (tau(YAW) - tau0(YAW) - dv_lin(R)*delta(YAW)) / mv(R);
 
     %% NEW NOT LINEARIZED
     % % surge
@@ -84,10 +76,10 @@ function [new_vel] = dynamic_model(tau, tau0, speed0, ang, old_vel, Ts, i_dim, o
     % %             - dv(R)*v_old(R)) / mv(R);
 
     %% Velocities Computation
-    new_vel = integrator(old_vel, s_dotdot, old_acc, Ts);
+    new_vel = integrator(v_old, s_dotdot, old_acc, Ts);
 
     printDebug('surge: %.2f | sway: %.2f | heave: %.2f ', new_vel(SURGE), new_vel(SWAY), new_vel(HEAVE));
-    printDebug('| p: %.3f | q: %.3f\n', new_vel(ROLL), new_vel(PITCH));
+    printDebug('| p: %.3f | q: %.3f | r: %.3f\n', new_vel(ROLL), new_vel(PITCH), new_vel(YAW));
     printDebug('a_surge: %.2f | a_sway: %.2f | a_heave: %.2f ', s_dotdot(SURGE), s_dotdot(SWAY), s_dotdot(HEAVE));
-    printDebug('| a_p: %.3f | a_q: %.3f\n', s_dotdot(ROLL), s_dotdot(PITCH));
+    printDebug('| a_p: %.3f | a_q: %.3f | a_r: %.3f\n', s_dotdot(ROLL), s_dotdot(PITCH), s_dotdot(YAW));
 end

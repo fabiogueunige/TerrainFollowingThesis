@@ -27,5 +27,5 @@ function [Q, R, R_ang] = noise_setup (q_dim, r_dim, a_dim)
     R_ang = zeros(a_dim,a_dim);
     R_ang(1,1) = (deg2rad(0.5)^2);
     R_ang(2,2) = (deg2rad(0.5)^2);
-    R_ang(3,3) = (deg2rad(0)^2);
+    R_ang(3,3) = (deg2rad(0.08)^2);
 end

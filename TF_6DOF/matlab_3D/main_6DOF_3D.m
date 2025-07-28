@@ -14,7 +14,7 @@ ROLL = 4;   PITCH = 5;  YAW = 6;
 
 %% Filter Parameters
 Ts = 0.001;         % Sampling time [s]
-Tf = 30;            % Final time [s]
+Tf = 40;            % Final time [s]
 time = 0:Ts:Tf;     % Time vector
 N = length(time);   % Number of iterations
 global DEBUG;
@@ -29,24 +29,24 @@ cmd.contact2 = false;       % Contact point 2
 cmd.contact3 = false;       % Contact point 3
 cmd.contact4 = false;       % Contact point 4
 cmd.sensor_fail = 0;        % Number of failure
-cmd.following = false;      % Following command
 cmd.end = false;            % End command
 cmd.emergency = false;      % Emergency command
-state = strings(N+10, 1);   % State vector
+state = strings(1, N);      % State vector
 state(1) = 'Idle';          % Initial state
 
+% Goal structure definition
 i_goal.surge = 0;
 i_goal.sway = 0;
 i_goal.altitude = 0;
 i_goal.roll = 0;
 i_goal.pitch = 0;
-% i_goal.yaw = 0; for now not used
+i_goal.yaw = 0; 
 goal(1:N) = i_goal;
 
 %% Matrix Dimensions
 n_dim = 3;          % Number of states
 m_dim = 4;          % Number of measurements
-i_dim = 5;          % Number of inputs 
+i_dim = 6;          % Number of inputs 
 d_dim = 3;          % world space total dimensions
 s_dim = 4;          % number of echosonar
 w_dim = 6;          % world dimension
@@ -55,9 +55,9 @@ w_dim = 6;          % world dimension
 [Q, R_tp, R_a] = noise_setup(n_dim, m_dim, d_dim);
 
 %% Terrain Parameters
-alpha = pi/10;
-beta = pi/10;
-pplane = [0, 0, 15]';
+alpha = pi/4;
+beta = pi/4;
+pplane = [0, 0, 30]';
 n0 = [0, 0, 1]'; % terrain frame
 wRt = zeros(d_dim, d_dim, N);
 wRt_pre = zeros(d_dim, d_dim, N);
@@ -65,7 +65,6 @@ n_pre = zeros(d_dim,N);                 % Surface vector predicted
 n_est = zeros(d_dim, N);                % surface vector estimated
 
 %% AUV Parameters 
-psi = 0; % yaw to get motion
 prob = zeros(d_dim,N);              % AUV initial position
 cart_pos = zeros(w_dim, N);         % Cartesian robot position
 cart_vel = zeros(w_dim, N);         % Cartesian robot velocities
@@ -75,7 +74,6 @@ u = zeros(i_dim, N);                % Known inputs
 u_dot = zeros(i_dim,N);             % AUV acceleration
 
 % robot angles
-a_true = zeros(d_dim, N);           % True angles comparation
 rob_rot = zeros(d_dim, N);          % Robot angles roll, pitch, yaw
 clean_rot = zeros(d_dim,N);         % NO Noise Rotation
 
@@ -115,8 +113,9 @@ i_err = zeros(i_dim, N);            % integral error
 t_sum = zeros(i_dim,N);
 
 % initial controller
-speed0 = [0.3; 0; 0; 0; 0];
+speed0 = [0.2; 0; 0; 0; 0; 0];
 tau0 = tau0_values(speed0, i_dim);
+[Kp, Ki, Kd, Kt] = gainComputation(speed0, i_dim);
 
 %% Software Design
 index_N = round(N/2);
@@ -148,19 +147,19 @@ cmd.start = true;
 
 %% EKF Simulation && State Machine
 for k = 2:N
-    if k == 2 || mod(k, 500) == 0
+    if k == 2 || mod(k, 1000) == 0
         disp(['Processing iteration \n', num2str(k)]);
     end
     %% State Machine %%
     % no change in commands during the State Machine
-    state(k) = state_machine(state(k-1), cmd);
+    state(k) = state_machine(state(k-1), cmd, k);
     goal(k) = goal_def(state(k), rob_rot(:,k-1), x_est(:,k-1), k);
     
     %% EKF: Input Control Computation
     if k >= 3
         % PID Values with Saturation
         [pid(:,k), integral_err(:,k), p_err(:,k), i_err(:,k), u_dot(:,k), t_sum(:,k)] = input_control(goal(k), x_est(:,k-1), rob_rot(:,k-1), pid(:,k-1), integral_err(:,k-1), ...
-                         u(:,k-1), u(:,k-2), u_dot(:,k-1), t_sum(:,k-1), speed0, wRr(:,:,k-1), wRt(:,:,k-1), Ts, i_dim, p_err(:,k-1), i_err(:,k-1), state(k));   
+                         u(:,k-1), u(:,k-2), u_dot(:,k-1), t_sum(:,k-1), wRr(:,:,k-1), wRt(:,:,k-1), Ts, i_dim, p_err(:,k-1), i_err(:,k-1),  Kp, Ki, Kd, Kt);   
     end
     %% EKF: Dynamic and Kinematic Model
     % Dynamic model
@@ -185,10 +184,9 @@ for k = 2:N
     % Robot rotation matrix computation
     wRr(:,:,k) = rotz(rob_rot(PSI,k))*roty(rob_rot(THETA,k))*rotx(rob_rot(PHI,k)); 
 
-    %% EKF: True State update
+    %% EKF: True State update (based on state)
     % TRUE state estimation
-    x_true(:,k) = [hmes, alpha, beta]';  
-    a_true(:,k) = [alpha, beta, 0]'; % True angles
+    x_true(:,k) = [hmes, alpha, beta]';
 
     %% EKF: Prediction
     % State prediction
@@ -262,9 +260,6 @@ for k = 2:N
     cmd = goal_controller(cmd, x_est(:,k), rob_rot(:,k), goal(k), N, state(k), k, d_dim);
 end
 
-cmd.end = true; % End command
-state(k+1) = 'EndSimulation'; % End state
-
 %% Plotting
 % States
 ttl = {'altitude', 'alpha', 'beta'};
@@ -276,11 +271,11 @@ for i = 1:n_dim
         plot(time, x_true(i,:), 'r', 'DisplayName', 'True');
         plot(time, x_est(i,:), 'g', 'DisplayName', 'Estimated');
     else
-        plot(time, rad2deg(x_true(i,:)), 'b', 'DisplayName', 'True');
+        plot(time, rad2deg(rob_rot(i-1,:)), 'r', 'DisplayName', 'Rob angle');
         hold on;
+        plot(time, rad2deg(x_true(i,:)), 'b', 'DisplayName', 'True Terrain');
         plot(time, rad2deg(x_est(i,:)), 'g', 'DisplayName', 'Estimated');
     end
-    
     xlabel('Time [s]'); ylabel(sprintf('x_%d', i));
     legend; grid on;
     title(ttl{i})
@@ -293,7 +288,12 @@ for i = 1:d_dim
     figure;
     plot(time, rad2deg(clean_rot(i,:)), 'r', 'DisplayName', 'True');
     hold on;
-    plot(time, rad2deg(a_true(i,:)), 'b', 'DisplayName', 'Desired');
+    if i == 1
+        plot(time, rad2deg([goal.roll]), 'b', 'DisplayName', 'Goal');
+    end
+    if i == 2
+        plot(time, rad2deg([goal.pitch]), 'b', 'DisplayName', 'Goal');
+    end
     plot(time, rad2deg(rob_rot(i,:)), 'g', 'DisplayName', 'Estimated');
     xlabel('Time [s]'); ylabel(sprintf('x_%d', i));
     legend; grid on;
@@ -302,7 +302,7 @@ for i = 1:d_dim
 end
 
 % Inputs
-ttl = {'u input', 'v input', 'w input', 'p input', 'q input'};
+ttl = {'u input', 'v input', 'w input', 'p input', 'q input', 'r input'};
 for i = 1:i_dim
     figure;
     if i <= HEAVE

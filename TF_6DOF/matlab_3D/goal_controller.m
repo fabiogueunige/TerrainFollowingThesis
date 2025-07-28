@@ -4,13 +4,13 @@ function command = goal_controller(command, x_ekf, ang, gg, N, c_state, step, di
     
     %% Epsilon definition
     alt_eps = 3;
-    alt_risk = 2;
+    alt_risk = 1.20;
     
     %% Altitude state
     if c_state == "TargetAltitude"
         if abs(gg.altitude - x_ekf(IND_H)) < alt_eps
             command.setpoint = true;
-            command.following = true;
+            command.emergency = false;
         end
     end
 

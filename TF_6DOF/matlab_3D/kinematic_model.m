@@ -12,7 +12,7 @@ function [x, x_dot] = kinematic_model(v_tmp, x_old, x_dot_old, dim_i, Ts)
     %% LINEARIZED
     x_dot(ROLL) = v(ROLL);
     x_dot(PITCH) = v(PITCH);
-    x_dot(YAW) = 0;
+    x_dot(YAW) = v(YAW);
 
     %% NEW NOT LINEARIZED
     % angular cartesian velocities

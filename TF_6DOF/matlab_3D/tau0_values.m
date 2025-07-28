@@ -1,4 +1,4 @@
-function tau0 = tau0_values(speed0, i_dim)
+function tau0 = tau0_values(sp0, i_dim)
     % updated to bluerov model
     global DEBUG
     printDebug('       Tau0 generator\n');
@@ -34,15 +34,10 @@ function tau0 = tau0_values(speed0, i_dim)
     % Virtual mass
     % mv = [m; m; m; I(1,1); I(2,2); I(3,3)] - tau_a;
 
-    % Dissipative forces (con v0 = 0.1 solo nel surge)
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% TO CHANGE WITH YAW ACTUATION %%%%%%%%%%%%%
-    sp0 = [speed0(SURGE), speed0(SWAY), speed0(HEAVE), speed0(ROLL), speed0(PITCH), 0];
     dv = -tau_r - tau_d .* abs(sp0);
 
     % tau0 computation
     tau0 = zeros(i_dim,1);
-
     % surge
     tau0(SURGE) = dv(U)*sp0(U);
     % sway
@@ -54,4 +49,5 @@ function tau0 = tau0_values(speed0, i_dim)
     % pitch
     tau0(PITCH) = dv(Q)*sp0(Q) + z*B*sin(theta0);
     % yaw ...
+    tau0(YAW) = dv(R)*sp0(R);
 end

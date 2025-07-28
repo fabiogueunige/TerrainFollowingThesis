@@ -2,7 +2,7 @@ clc; clear; close all;
 addpath('for_controller');
 %% Filter Parameters
 Ts = 0.001;       % Sampling time [s]
-Tf = 1000;          % Final time [s]
+Tf = 100;          % Final time [s]
 time = 0:Ts:Tf;   % Time vector
 N = length(time); % Number of iterations
 %% Dimensions
@@ -17,31 +17,17 @@ a = zeros(i_dim,N);         % Real acceleration
 
 %% Controller choice
 controller = 'A+D';
-model = 'B';
-speed0 = 0.5;
+speed0 = 0.3;
 
 %% Dynamic
-if model == 'B'
-    % massa totale [kg]
-    m = 11.5; 
-    % added mass = X_udot / (rho*V)
-    tau_a = -27.08;
-    % Linear damping (restoring)
-    tau_r = -0.1213;
-    % Quadratic damping (hydrodinamic)
-    tau_d = -23.9000; % -18.18;
-end
-if model == 'M'
-    % massa totale [kg]
-    m = 30;
-    % added mass
-    tau_a = -25;
-    % Linear damping
-    tau_r = -0.2;
-    % Quadratic damping
-    tau_d = -19.5;
-end
-
+% massa totale [kg]
+m = 11.5; 
+% added mass = X_udot / (rho*V)
+tau_a = -27.08;
+% Linear damping (restoring)
+tau_r = -0.1213;
+% Quadratic damping (hydrodinamic)
+tau_d = -23.9000; % -18.18;
 % Virtual mass
 mv = m - tau_a;
 % Dissipative forces (con v0 = 0.1 solo nel surge)
@@ -68,7 +54,7 @@ err_i = 0;
 tau0 = dv*speed0;
 
 %% Gain Computation
-[Kp, Ki, Kt] = gainComputation(speed0, model);
+[Kp, Ki,Kd, Kt] = gainComputation(speed0);
 
 %% Dynamic implementation
 if controller == '1'
@@ -140,6 +126,9 @@ for k = 3:N
 end
 
 figure;
+plot(time, u(:));
+
+figure;
 scatter3(pr(1,:), pr(2,:), pr(3,:), [], time);
 colorbar; 
 colormap(jet);
@@ -148,34 +137,19 @@ ylabel('On Z');
 title('Trajectory XYZ (Color = time)');
 grid on;
 
-figure;
-plot(time, u(:));
-
-function [kp, ki, Kt] = gainComputation(speed0, type)
-    wn = 0.2;
+function [kp, ki, kd, Kt] = gainComputation(speed0)
+    wn = 0.4;
     damp = 0.6;
-    % p = 10;
+    p = 10;
     %% Model
-    if type == 'B'
-        % massa totale [kg]
-        m = 11.5; 
-        % added mass
-        tau_a = -27.08;
-        % Linear damping
-        tau_r = -0.1213;
-        % Quadratic damping
-        tau_d = -23.9000; %-18.18;
-    end
-    if type == 'M'
-        % massa totale [kg]
-        m = 30;
-        % added mass
-        tau_a = -25;
-        % Linear damping
-        tau_r = -0.2;
-        % Quadratic damping
-        tau_d = -19.5;
-    end
+    % massa totale [kg]
+    m = 11.5; 
+    % added mass
+    tau_a = -27.08;
+    % Linear damping
+    tau_r = -0.1213;
+    % Quadratic damping
+    tau_d = -23.9000; %-18.18;    
     mv = m - tau_a;
     % Dissipative forces (con v0 = 0.1 solo nel surge)
     dv = -tau_r - tau_d.*abs(speed0);
@@ -184,6 +158,7 @@ function [kp, ki, Kt] = gainComputation(speed0, type)
     %% Computation (Equazione giusta, problema con controllore)
     kp = 2*damp*wn*mv - dv_lin; 
     ki = wn^2 * mv;
+    kd = 0;
     Ti = kp/ki;
     % Td = kd/kp;
     Kt = 1/Ti;
