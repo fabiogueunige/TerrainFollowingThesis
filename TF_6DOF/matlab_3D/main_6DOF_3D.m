@@ -55,8 +55,8 @@ w_dim = 6;          % world dimension
 [Q, R_tp, R_a] = noise_setup(n_dim, m_dim, d_dim);
 
 %% Terrain Parameters
-alpha = pi/4;
-beta = pi/4;
+alpha = pi/5;
+beta = pi/3;
 pplane = [0, 0, 30]';
 n0 = [0, 0, 1]'; % terrain frame
 wRt = zeros(d_dim, d_dim, N);
@@ -66,8 +66,6 @@ n_est = zeros(d_dim, N);                % surface vector estimated
 
 %% AUV Parameters 
 prob = zeros(d_dim,N);              % AUV initial position
-cart_pos = zeros(w_dim, N);         % Cartesian robot position
-cart_vel = zeros(w_dim, N);         % Cartesian robot velocities
 
 % robot velocities & acceleration
 u = zeros(i_dim, N);                % Known inputs
@@ -123,10 +121,10 @@ global h_ref;
 h_ref = zeros(1, N);
 %%%%%%%%% CHANGE ALTITUDE %%%%%%%%%%%
 % index_N = round(N/2);
-% h_ref(1:index_N) = 7;
+% h_ref(1:index_N) = ;
 % h_ref(index_N:end) = 4;
 %%%%%%%%% NO CHANGE %%%%%%%%%%%%%%%%%
-h_ref(:) = 7;
+h_ref(:) = 3;
 
 %% EKF Start
 % covariance 
@@ -165,14 +163,11 @@ for k = 2:N
     % Dynamic model
     [u(:,k)] = dynamic_model(pid(:,k), tau0, speed0, rob_rot(:, k-1), u(:,k-1), Ts, i_dim, u_dot(:,k-1));
 
-    % Kinematic model
-    [cart_pos(:,k), cart_vel(:,k)] = kinematic_model(u(:,k), cart_pos(:,k-1), cart_vel(:,k-1), i_dim, Ts);
-
     %% EKF: Real Measurement
     % Measurement noise
     v = mvnrnd(zeros(m_dim,1), R_tp)'; 
     v_a = mvnrnd(zeros(d_dim,1), R_a)';
-    [clean_rot(:,k), rob_rot(:,k), wRr_real] = AHRS_measurement(cart_pos(:,k), clean_rot(:,k-1), u(:,k), Ts, v_a);
+    [clean_rot(:,k), rob_rot(:,k), wRr_real] = AHRS_measurement(clean_rot(:,k-1), u(:,k), Ts, v_a);
     [z_meas(:,k), hmes, prob(:,k), R(:,:,k), cmd] = measurament(alpha, beta, pplane, n0, r_s, s_dim, u(:,k), Ts,  ...
                                                    prob(:,k-1), wRr_real, k, R(:,:,k), cmd);
 

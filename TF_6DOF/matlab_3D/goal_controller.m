@@ -3,8 +3,8 @@ function command = goal_controller(command, x_ekf, ang, gg, N, c_state, step, di
     IND_H = 1;      ALPHA = 2;      BETA = 3; 
     
     %% Epsilon definition
-    alt_eps = 3;
-    alt_risk = 1.20;
+    alt_eps = 5;
+    alt_risk = 0.7;
     
     %% Altitude state
     if c_state == "TargetAltitude"

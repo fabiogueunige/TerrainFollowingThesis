@@ -1,7 +1,7 @@
 clear; close all; clc;
 
 % Flag per usare angoli specifici o generati randomicamente
-use_specific_angles = false; % Imposta a 'false' per angoli randomici
+use_specific_angles = true; % Imposta a 'false' per angoli randomici
 use_specific_speed = true; % Imposta a 'false' per velocità randomiche
 tolerance = 1e-4;
 areDifferent = @(a, b, tol) abs(a - b) > tol * max(abs(a), abs(b));
@@ -13,8 +13,8 @@ psi = 0;
 %% Angle defintions
 if use_specific_angles
     % terrain
-    beta = -0.8884;
-    alpha = -0.9343;
+    beta = pi/3;
+    alpha = pi/3;
     % robot
     theta = 0;
     phi = pi/9;

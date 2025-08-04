@@ -32,7 +32,7 @@ function [pid, int_term, pre_err, err_i, acc, term_sum] = input_control(ggg, x, 
     err(HEAVE) = (ggg.altitude - x(IND_H));
     err(ROLL) = (ggg.roll - angles(PHI));
     err(PITCH) = (ggg.pitch - angles(THETA));
-    % err(YAW) = ???
+    err(YAW) = (ggg.yaw - angles(PSI));
 
     %% Controller setup
     if type == "A+D"

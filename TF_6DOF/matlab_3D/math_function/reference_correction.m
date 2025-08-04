@@ -1,9 +1,6 @@
 function [a, b] = reference_correction(n_cap, alph, bet, wRr_rob)
-    epsilon = 1e-3;
-    w_body_z = wRr_rob(:,3);
-
-
-    if n_cap > 0
+    if n_cap(3) > 0
+        fprintf('Inverto Inverto per bene\n');
         new_n_cap = -n_cap;
         new_n = vector_normalization(new_n_cap);
         bet_part = sqrt(new_n(2)^2 + new_n(3)^2);

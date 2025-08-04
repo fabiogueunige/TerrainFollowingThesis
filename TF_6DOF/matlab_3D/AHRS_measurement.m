@@ -1,4 +1,4 @@
-function [clean_angles, new_angles, wRr] = AHRS_measurement(x_cart, angles, input, Ts, v_a)
+function [clean_angles, new_angles, wRr] = AHRS_measurement(angles, input, Ts, v_a)
     % This function implement the values that are given by the AHRS sensor.
     %% Definition                
     global PHI; global THETA; global PSI;  
@@ -19,6 +19,7 @@ function [clean_angles, new_angles, wRr] = AHRS_measurement(x_cart, angles, inpu
 
     clean_angles = [phim; thetam; psim];
     %%%%%%%%%%%%%%% NO NOISE %%%%%%%%%%%%%%%%%%%%%%%
+    % new_angles = clean_angles;
     %%%%%%%%%%%%%%% YES NOISE %%%%%%%%%%%%%%%%%%%%%%
     new_angles = clean_angles + v_a;
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
