@@ -285,6 +285,7 @@ INPUT C:\Users\fabio\AppData\Local\Programs\MiKTeX\fonts\tfm\public\cm\cmbsy10.t
 INPUT C:\Users\fabio\AppData\Local\Programs\MiKTeX\fonts\tfm\public\amsfonts\cmextra\cmbsy7.tfm
 INPUT C:\Users\fabio\AppData\Local\Programs\MiKTeX\fonts\tfm\public\cm\cmti12.tfm
 INPUT C:\Users\fabio\AppData\Local\MiKTeX\fonts\map\pdftex\pdftex.map
+INPUT C:\Users\fabio\AppData\Local\Programs\MiKTeX\fonts\tfm\public\cm\cmbx12.tfm
 INPUT .\Originality\originality.tex
 INPUT .\Originality\originality.tex
 OUTPUT Originality\originality.aux
@@ -314,7 +315,6 @@ INPUT Abstract\abstract.tex
 INPUT .\RobEngThesisTemplate.toc
 INPUT .\RobEngThesisTemplate.toc
 INPUT RobEngThesisTemplate.toc
-INPUT C:\Users\fabio\AppData\Local\Programs\MiKTeX\fonts\tfm\public\cm\cmbx12.tfm
 INPUT C:\Users\fabio\AppData\Local\Programs\MiKTeX\fonts\tfm\public\cm\cmr8.tfm
 INPUT C:\Users\fabio\AppData\Local\Programs\MiKTeX\fonts\tfm\public\cm\cmr6.tfm
 INPUT C:\Users\fabio\AppData\Local\Programs\MiKTeX\fonts\tfm\public\cm\cmmi12.tfm
@@ -452,6 +452,7 @@ INPUT RobEngThesisTemplate.brf
 INPUT .\RobEngThesisTemplate.brf
 INPUT .\RobEngThesisTemplate.brf
 OUTPUT RobEngThesisTemplate.brf
+INPUT C:\Users\fabio\AppData\Local\Programs\MiKTeX\fonts\tfm\public\cm\cmcsc10.tfm
 INPUT RobEngThesisTemplate.aux
 INPUT .\Originality\originality.aux
 INPUT .\Originality\originality.aux
@@ -501,6 +502,8 @@ INPUT .\RobEngThesisTemplate.brf
 INPUT .\RobEngThesisTemplate.brf
 INPUT C:\Users\fabio\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmbx12.pfb
 INPUT C:\Users\fabio\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmbx12.pfb
+INPUT C:\Users\fabio\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmcsc10.pfb
+INPUT C:\Users\fabio\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmcsc10.pfb
 INPUT C:\Users\fabio\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmex10.pfb
 INPUT C:\Users\fabio\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmex10.pfb
 INPUT C:\Users\fabio\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmmi12.pfb

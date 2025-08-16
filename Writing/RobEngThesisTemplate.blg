@@ -33,47 +33,45 @@ Reallocating 'name_of_file' (item size: 1) to 23 items.
 The style file: Classes/RoboticsBiblio.bst
 Reallocating 'name_of_file' (item size: 1) to 11 items.
 Database file #1: references.bib
-Warning--I didn't find a database entry for "Aarzen1999"
 Reallocating 'wiz_functions' (item size: 4) to 6000 items.
-You've used 0 entries,
+You've used 1 entry,
             3018 wiz_defined-function locations,
-            650 strings with 4807 characters,
-and the built_in function-call counts, 23 in all, are:
-= -- 0
-> -- 0
+            657 strings with 5033 characters,
+and the built_in function-call counts, 666 in all, are:
+= -- 57
+> -- 28
 < -- 0
-+ -- 0
-- -- 0
-* -- 2
-:= -- 8
-add.period$ -- 0
-call.type$ -- 0
-change.case$ -- 0
-chr.to.int$ -- 0
-cite$ -- 0
-duplicate$ -- 0
-empty$ -- 1
-format.name$ -- 0
-if$ -- 1
++ -- 10
+- -- 9
+* -- 61
+:= -- 104
+add.period$ -- 3
+call.type$ -- 1
+change.case$ -- 8
+chr.to.int$ -- 1
+cite$ -- 1
+duplicate$ -- 45
+empty$ -- 47
+format.name$ -- 12
+if$ -- 127
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 0
-newline$ -- 4
-num.names$ -- 0
-pop$ -- 0
+missing$ -- 9
+newline$ -- 7
+num.names$ -- 4
+pop$ -- 17
 preamble$ -- 1
-purify$ -- 0
+purify$ -- 7
 quote$ -- 0
-skip$ -- 1
+skip$ -- 16
 stack$ -- 0
-substring$ -- 0
-swap$ -- 0
+substring$ -- 36
+swap$ -- 25
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 0
+type$ -- 9
 warning$ -- 0
-while$ -- 0
+while$ -- 5
 width$ -- 0
-write$ -- 3
-(There was 1 warning)
+write$ -- 14

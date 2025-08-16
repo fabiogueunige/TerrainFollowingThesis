@@ -1,4 +1,4 @@
-function [a, b] = reference_correction(n_cap, alph, bet, wRr_rob)
+function [a, b] = reference_correction(n_cap, alph, bet)
     if n_cap(3) > 0
         fprintf('Inverto Inverto per bene\n');
         new_n_cap = -n_cap;

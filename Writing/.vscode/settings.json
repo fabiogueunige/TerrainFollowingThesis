@@ -1,0 +1,6 @@
+{
+    "latex-workshop.latex.bibDirs": [
+        "./"
+    ],
+    "latex-workshop.intellisense.biblatex.enabled": true
+}

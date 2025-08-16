@@ -13,8 +13,8 @@ psi = 0;
 %% Angle defintions
 if use_specific_angles
     % terrain
-    beta = pi/3;
-    alpha = pi/3;
+    beta = pi/4;
+    alpha = pi/4;
     % robot
     theta = 0;
     phi = pi/9;

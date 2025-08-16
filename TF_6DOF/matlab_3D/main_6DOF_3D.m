@@ -54,10 +54,21 @@ w_dim = 6;          % world dimension
 %% Noise
 [Q, R_tp, R_a] = noise_setup(n_dim, m_dim, d_dim);
 
+%% Software Design
+index_N = round(N/2);
+global h_ref;
+h_ref = zeros(1, N);
+%%%%%%%%% CHANGE ALTITUDE %%%%%%%%%%%
+% index_N = round(N/2);
+% h_ref(1:index_N) = ;
+% h_ref(index_N:end) = 4;
+%%%%%%%%% NO CHANGE %%%%%%%%%%%%%%%%%
+h_ref(:) = 3;
+
 %% Terrain Parameters
 alpha = pi/5;
-beta = pi/3;
-pplane = [0, 0, 30]';
+beta = pi/4;
+pplane = [0, 0, 50]';
 n0 = [0, 0, 1]'; % terrain frame
 wRt = zeros(d_dim, d_dim, N);
 wRt_pre = zeros(d_dim, d_dim, N);
@@ -96,13 +107,12 @@ x_est = zeros(n_dim, N);       % Estimated state
 x_true = zeros(n_dim, N);      % True state
 z_meas = zeros(m_dim, N);      % Measurements
 z_pred = zeros(m_dim, N);      % Predicted output
-R = zeros(m_dim, m_dim, N);    % Observation matrix
+R = repmat(R_tp, 1, 1, N);     % Observation matrix
 x0 = [10, alpha, beta]';       % True initial state 
 x0_est = zeros(n_dim, 1);      % Estimated initial state
 ni = zeros(m_dim, N);          % Innovation
 S = zeros(m_dim, m_dim, N);    % Covariance Innovation
-R = repmat(R_tp, 1, 1, N);     
-
+     
 %% Controller Parameters
 pid = zeros(i_dim, N);              % PID for Dynamics
 integral_err = zeros(i_dim, N);     % integral error
@@ -114,17 +124,6 @@ t_sum = zeros(i_dim,N);
 speed0 = [0.2; 0; 0; 0; 0; 0];
 tau0 = tau0_values(speed0, i_dim);
 [Kp, Ki, Kd, Kt] = gainComputation(speed0, i_dim);
-
-%% Software Design
-index_N = round(N/2);
-global h_ref;
-h_ref = zeros(1, N);
-%%%%%%%%% CHANGE ALTITUDE %%%%%%%%%%%
-% index_N = round(N/2);
-% h_ref(1:index_N) = ;
-% h_ref(index_N:end) = 4;
-%%%%%%%%% NO CHANGE %%%%%%%%%%%%%%%%%
-h_ref(:) = 3;
 
 %% EKF Start
 % covariance 
@@ -249,7 +248,7 @@ for k = 2:N
     if (norm(n_est(:,k)) ~= 1)
         n_est(:,k) = vector_normalization(n_est(:,k));
     end
-    [x_est(ALPHA,k), x_est(BETA, k)] = reference_correction(n_est(:,k),x_est(ALPHA,k), x_est(BETA,k), wRr(:,:,k));
+    [x_est(ALPHA,k), x_est(BETA, k)] = reference_correction(n_est(:,k),x_est(ALPHA,k), x_est(BETA,k));
 
     %% State Machine Check of Results
     cmd = goal_controller(cmd, x_est(:,k), rob_rot(:,k), goal(k), N, state(k), k, d_dim);
