@@ -6,17 +6,17 @@
 \contentsline {section}{\numberline {1.4}Figure}{2}{section.1.4}%
 \contentsline {section}{\numberline {1.5}Table}{3}{section.1.5}%
 \contentsline {section}{\numberline {1.6}Algorithm}{3}{section.1.6}%
-\contentsline {section}{\numberline {1.7}Historical background}{5}{section.1.7}%
+\contentsline {section}{\numberline {1.7}Historical background}{3}{section.1.7}%
 \contentsline {subsection}{\numberline {1.7.1}Marine robotics}{5}{subsection.1.7.1}%
 \contentsline {subsection}{\numberline {1.7.2}Autonomous navigation}{5}{subsection.1.7.2}%
 \contentsline {subsection}{\numberline {1.7.3}Underwater mission in seabed inspection}{5}{subsection.1.7.3}%
-\contentsline {section}{\numberline {1.8}Problem statement}{5}{section.1.8}%
-\contentsline {section}{\numberline {1.9}Motivation}{5}{section.1.9}%
+\contentsline {section}{\numberline {1.8}Motivation}{5}{section.1.8}%
+\contentsline {section}{\numberline {1.9}Problem statement}{5}{section.1.9}%
 \contentsline {section}{\numberline {1.10}Previous work and main contribution}{5}{section.1.10}%
 \contentsline {subsection}{\numberline {1.10.1}Motion control of vehicles}{5}{subsection.1.10.1}%
 \contentsline {subsection}{\numberline {1.10.2}Terrain following types}{5}{subsection.1.10.2}%
 \contentsline {subsection}{\numberline {1.10.3}EKF and echosonar usage}{5}{subsection.1.10.3}%
-\contentsline {subsection}{\numberline {1.10.4}Caccia PAPER AND SIMILAR}{5}{subsection.1.10.4}%
+\contentsline {subsection}{\numberline {1.10.4}Sensors in AUV}{5}{subsection.1.10.4}%
 \contentsline {section}{\numberline {1.11}Thesis outline}{5}{section.1.11}%
 \contentsline {chapter}{\numberline {2}AUV Dynamic}{6}{chapter.2}%
 \contentsline {section}{\numberline {2.1}Reference frames and naming conventions}{6}{section.2.1}%

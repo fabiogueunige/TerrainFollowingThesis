@@ -1,4 +1,4 @@
-\begin{thebibliography}{1}
+\begin{thebibliography}{4}
 \expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
 
 \bibitem[{Caccia {\em et~al.\/}(1999)Caccia, Bruzzone \&
@@ -6,5 +6,16 @@
 {\sc Caccia, M., Bruzzone, G. \& Veruggio, G.} (1999). Active sonar-based
   bottom-following for unmanned underwater vehicles. {\em Control Engineering
   Practice\/}, {\bf 7}, 459--468.
+
+\bibitem[{Eliav(2015)}]{eliavGuglielmosSecretEnigma2015}
+{\sc Eliav, J.} (2015). Guglielmo's {{Secret}}: {{The Enigma}} of the {{First
+  Diving Bell Used}} in {{Underwater Archaeology}}. {\em The International
+  Journal for the History of Engineering \& Technology\/}, {\bf 85}, 60--69.
+
+\bibitem[{Erodoto(V sec. a.C.)}]{erodotoStorieVsec.a.C.}
+{\sc Erodoto} (V sec. a.C.). Storie.
+
+\bibitem[{Jacques~Piccard()}]{jacquespiccardSevenMiles}
+{\sc Jacques~Piccard, R.S.D.} (????). Seven {{Miles Down}}. {\em 1961\/}.
 
 \end{thebibliography}

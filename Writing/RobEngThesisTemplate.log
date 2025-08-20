@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.6.11)  16 AUG 2025 18:29
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.6.11)  20 AUG 2025 15:28
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -737,16 +737,21 @@ File: omscmr.fd 2024/11/19 v2.5n Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <12> not available
 (Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 130.
-)
+
+Underfull \hbox (badness 10000) in paragraph at lines 140--144
+
+ []
+
+
 
 
 pdfTeX warning (ext4): destination with the same identifier (name{page.3}) has been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.103 \include{Chapter1/chapter1}
-                                  [3]
+l.154 
+       [3]
 
-[4]
+[4])
 
 [5]
 \openout2 = `Chapter2/chapter2.aux'.
@@ -876,15 +881,15 @@ L3 programming layer <2025-05-26>
 LaTeX Warning: There were undefined references.
 
 Package rerunfilecheck Info: File `RobEngThesisTemplate.out' has not changed.
-(rerunfilecheck)             Checksum: 767B438E0A300E7FD547955AB8B40AB2;7586.
+(rerunfilecheck)             Checksum: B815587A6846A0C276AF67A9E1681B2C;7533.
 Package rerunfilecheck Info: File `RobEngThesisTemplate.brf' has not changed.
-(rerunfilecheck)             Checksum: 6BCF78581B4BB6BFCFD0825877796006;77.
+(rerunfilecheck)             Checksum: 8539A10AD0E4304E280D7FE4958CF632;262.
  ) 
 Here is how much of TeX's memory you used:
- 18594 strings out of 468225
- 365223 string characters out of 5432973
- 809676 words of memory out of 5000000
- 46600 multiletter control sequences out of 15000+600000
+ 18615 strings out of 468225
+ 365885 string characters out of 5432973
+ 810763 words of memory out of 5000000
+ 46618 multiletter control sequences out of 15000+600000
  645915 words of font info for 112 fonts, out of 8000000 for 9000
  1144 hyphenation exceptions out of 8191
  125i,15n,121p,538b,1184s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -901,9 +906,9 @@ pdfTeX warning (dest): name{http://www.dibris.unige.it} has been referenced but 
 pdfTeX warning (dest): name{mailto:name@unige.it} has been referenced but does not exist, replaced by a fixed one
 
 <C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmcsc10.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi6.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmib10.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr6.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmti12.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmtt12.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/euler/eufm10.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/euler/eusm10.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on RobEngThesisTemplate.pdf (25 pages, 460501 bytes).
+Output written on RobEngThesisTemplate.pdf (25 pages, 469042 bytes).
 PDF statistics:
- 522 PDF objects out of 1000 (max. 8388607)
- 104 named destinations out of 1000 (max. 500000)
+ 533 PDF objects out of 1000 (max. 8388607)
+ 107 named destinations out of 1000 (max. 500000)
  403 words of extra memory for PDF output out of 10000 (max. 10000000)
 
