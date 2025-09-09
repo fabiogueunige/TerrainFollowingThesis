@@ -1,5 +1,13 @@
-\begin{thebibliography}{4}
+\begin{thebibliography}{8}
 \expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
+
+\bibitem[{Abreu(2014)}]{abreuSensorbasedFormationControl2014}
+{\sc Abreu, P.C.} (2014). Sensor-based {{Formation Control}} of {{Autonomous
+  Underwater Vehicles}}.
+
+\bibitem[{Berg(2012)}]{bergDevelopmentCommissioningDP2012}
+{\sc Berg, V.} (2012). {\em Development and {{Commissioning}} of a {{DP}}
+  System for {{ROV SF}} 30k\/}. Ph.D. thesis, Norwegian University.
 
 \bibitem[{Caccia {\em et~al.\/}(1999)Caccia, Bruzzone \&
   Veruggio}]{cacciaActiveSonarbasedBottomfollowing1999}
@@ -15,7 +23,16 @@
 \bibitem[{Erodoto(V sec. a.C.)}]{erodotoStorieVsec.a.C.}
 {\sc Erodoto} (V sec. a.C.). Storie.
 
-\bibitem[{Jacques~Piccard()}]{jacquespiccardSevenMiles}
-{\sc Jacques~Piccard, R.S.D.} (????). Seven {{Miles Down}}. {\em 1961\/}.
+\bibitem[{Fossen(2011)}]{fossenHandbookMarineCraft2011}
+{\sc Fossen, T.I.} (2011). {\em Handbook of {{Marine Craft Hydrodynamics}} and
+  {{Motion Control}}\/}. Wiley, 1st edn.
+
+\bibitem[{Jacques~Piccard(1961)}]{jacquespiccardSevenMiles1961}
+{\sc Jacques~Piccard, R.S.D.} (1961). Seven {{Miles Down}}.
+
+\bibitem[{{The Society of Naval Architects and Marine Engineers
+  (SNAME)}(1950)}]{thesocietyofnavalarchitectsandmarineengineerssnameNomenclatureTreatingMotion1950}
+{\sc {The Society of Naval Architects and Marine Engineers (SNAME)}} (1950).
+  Nomenclature for treating the motion of a submerged body through a fluid.
 
 \end{thebibliography}

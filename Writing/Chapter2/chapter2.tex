@@ -6,13 +6,145 @@
     \graphicspath{{Chapter2/Figures/EPS/}{Chapter2/Figures/}}
 \fi
 % Before a fast overview
+This chapter introduces the equations that describe the dynamics of an underwater vehicle. As a first step, it is essential to present 
+the conventions used to define reference frames in marine robotics. This makes it possible to describe the general equations of dynamics 
+\cite{fossenHandbookMarineCraft2011} for any marine robot in 6-DOF, degrees of freedom, and subsequently conduct a more in-depth analysis 
+for the BlueRov2 class and the parameters used in the simulation.
+
+The study begins with the fundamental equation for underwater dynamics. The simplifications due to low-speed conditions, together with the most relevant 
+parameters, will be illustrated in detail.
+Finally, the parameters adopted in the BlueRov simulation are derived from an identification study \cite{bergDevelopmentCommissioningDP2012}.
+
+% dire che nel capitolo vengono mostrate le convenzioni per la robotica marina e la dinamica degli AUV
+% vengono descritte le equazioni della dinamica nei 6DOF e successivamente 
 \section{Reference frames and naming conventions}
+% segui tesi 
+To tackle the study of AUV dynamics, it is essential to define the main reference frames in accordance with marine robotics conventions, namely 
+the body-fixed frame, where the dynamic of the vehicle is described, and an earth-fixed frame, with respect to the position and the orientation 
+of the vehicle are described.
+
+The body-fixed frame $\{B\}$ is a right-handed coordinate system, it is rigidly attached to the vehicle, with its origin $O_B$ located at the 
+center of gravity (CG). The axes $\{x_B , y_B , z_B\}$ are defined following the ``SNAME`` notation
+ \cite{thesocietyofnavalarchitectsandmarineengineerssnameNomenclatureTreatingMotion1950}, so:
+ \begin{itemize}
+    \item the $x_B$ axis points towards the head of the vehicle (longitudinal axis);
+    \item the $y_B$ axis points to the right side of the vehicle (transverse axis);
+    \item the $z_B$ axis points downwards (normal axis).
+ \end{itemize}
+
+Having defined the robot's frame of reference, we now need to define a fixed observation reference to estimate the position and movement of the AUV. 
+We can therefore assume the rotation and curvature of the Earth as zero, given the low-speed and small variations in latitude and longitude operating conditions. 
+Based on these considerations, we define a earth-fixed-frame $\{I\}$ at a point on the sea surface within the vehicle's area of operation. Following convention, 
+the frame will be a local NED (North-East-Down) frame, then a right-handed coordinate system, with the axes pointing respectively:
+\begin{itemize}
+    \item the $x_I$ axis pointing towards the North;
+    \item the $y_I$ axis pointing towards the East;
+    \item the $z_I$ axis pointing downwards.
+\end{itemize}
+Given the assumption stated earlier, $\{I\}$ can be considered an inertial frame, so Newton's laws of motion are valid.
+
+Having defined the two reference frames, it is possible to introduce the SNAME notation for all parameters essential for determining the position, orientation 
+and velocity of the AUV, considering external forces and moments applied to it. The position of the origin of the body-fixed frame with respect to the inertial 
+frame is defined through the vector $\mathbf{\eta}_1 = [x, y, z]^T$, while the orientation of $\{B\}$ with respect to $\{I\}$ is given by the rotation matrix 
+$^{I}_{B}R$ defined by the Euler angles contained in the vector $\mathbf{\eta}_2 = [\phi, \theta, \psi]^T$.
+The velocity of $\{B\}$ with respect to $\{I\}$, on the other hand, is divided into linear $\mathbf{\nu}_1 = [u, v, w]^T$ and angular $\mathbf{\nu}_2 = [p, q, r]^T$ 
+components, while the external forces and moments are expressed in $\{B\}$ and are described by the vector $\mathbf{\tau} = [\mathbf{\tau}_1, \mathbf{\tau}_2]^T$, 
+where $\mathbf{\tau}_1 = [X, Y, Z]^T$ for forces and by the vector $\mathbf{\tau}_2 = [K, M, N]^T$ for moments.\\
+
+This notation is more easily visible in the table \ref{tab:Sname_param}, where the parameters that will be widely used in this thesis are defined in the 6 degrees of freedom.
+
+\begin{table}[H]
+    \centering
+    \resizebox{0.95\textwidth}{!}{
+        \begin{tabular}{SSSSS} \toprule
+            {DOF} & {Direction} & {Position and Euler angles} & {Velocity} & {Force and Moment}  \\ \midrule
+            {1} & {along $x_B$} & $x$  & {surge speed } $u$ & $X$  \\
+            {2} & {along $y_B$} & $y$  & {sway speed } $v$  & $Y$   \\
+            {3} & {along $z_B$} & $z$  & {heave speed } $w$  & $Z$  \\
+            {4} & {rotation about $x_B$} & {roll angle } $\phi$ & {roll rate } $p$  & $K$   \\
+            {5} & {rotation about $y_B$} & {pitch angle } $\theta$  & {pitch rate } $q$   & $M$  \\
+            {6} & {rotation about $z_B$} & {yaw angle }  $\psi$ & {yaw rate } $r$  & $N$  \\ \bottomrule
+        \end{tabular}
+    }
+    \caption{SNAME nomenclature and symbols \cite{abreuSensorbasedFormationControl2014}.}
+    \label{tab:Sname_param}
+\end{table}
 
 \section{Dynamics}
+% descrivere le equazioni della dinamica nei 6DOF
+The dynamic equations of motion describe how forces and torques affect the movement of the vehicle. These equations are commonly expressed in the body-fixed 
+reference frame, as this formulation keeps the inertia tensor constant and allows external forces (weight, buoyancy, hydrodynamic effects) to be represented more conveniently.
 
-\section{Full actuation model}
+The derivation of the rigid-body dynamics follows Newton-Euler laws for both translational and rotational motion \cite{fossenHandbookMarineCraft2011}:
+\begin{equation}
+    \begin{cases}
+        \sum F_{RB} = m[\mathbf{\nu}_2 \times \mathbf{\nu}_1 + \dot{\mathbf{\nu}}_1] \\
+        \sum N_{RB} = I_{RB}\dot{\mathbf{\nu}}_2 + \mathbf{\nu}_2 \times I_{RB}\mathbf{\nu}_2
+    \end{cases}
+    \label{eq:newton_laws}
+\end{equation}
+where $m$ is the mass of the vehicle, $I_{RB}$ is the inertia tensor, $\sum F_{RB}$ are the external forces and $\sum N_{RB}$ are the external moments acting on the vehicle.\\
+The equations \ref{eq:newton_laws} can be rewritten in a more compact matrix form as:
+\begin{equation}
+    M_{RB}\dot{\mathbf{\nu}} + C_{RB}(\mathbf{\nu})\mathbf{\nu} = \mathbf{\tau}
+    \label{eq:6dof_dyn_simple}
+\end{equation}
+$M_{RB}$ is the rigid body inertia matrix, while $C_{RB}$ contains the Coriolis, centripetal and gyroscopic terms.
+These matrices satisfy some key properties:
+\begin{itemize}
+    \item $\dot M_{RB} = 0$: the inertia matrix is constant in the body-fixed frame;
+    \item $\dot M_{RB}^T = \dot M_{RB}$: the inertia matrix is symmetric and positive-definite. Moreover, when the body-fixed frame is centered at the 
+    center of gravity and aligned with the principal axes of inertia, $M_{RB}$ is diagonal;
+    \item $C_{RB}(\mathbf{\nu}) = -C_{RB}(\mathbf{\nu})^T$: the Coriolis and centripetal matrix can be parameterized to be skew-symmetric.
+\end{itemize}
+The subscript $RB$ highlights that the formulation includes only rigid-body dynamics, with all external forces and moments grouped in the generalized vector
+$\mathbf{\tau}_{RB} = [X, Y, Z, K, M, N]^T$. In order to account for different contributions, this term can be decomposed as:
+\begin{equation}
+    \mathbf{\tau}_{RB} = \mathbf{\tau} + \mathbf{\tau}_{A} + \mathbf{\tau}_{D} + \mathbf{\tau}_{R} + \mathbf{\tau}_{dist}
+    \label{eq:6dof_tau_simple}
+\end{equation}
+where:
+\begin{itemize}
+    \item $\mathbf{\tau}$ represents control inputs given by the thrusters;
+    \item $\mathbf{\tau}_{A}$ accounts for added mass and added Coriolis effects, described by the matrices $M_A$ and $C_A(\mathbf{\nu})$ respectively. It
+     can be studied by computing the kinetic energy imparted by the vehicle to the surrounding displaced fluid (even for inviscid fluid);
+    \item $\mathbf{\tau}_{D}$ models drag forces and moments, including contributions from skin friction and pressure;
+    \item $\mathbf{\tau}_{R}$ represents restoring forces and moments arising from buoyancy and weight imbalance;
+    \item $\mathbf{\tau}_{dist}$ includes unmodeled external disturbances such as waves (not important in my application) and currents.
+\end{itemize}
+So, the equation \ref{eq:6dof_dyn_simple} can be rewritten as:
+\begin{equation}
+    \mathbf{\tau}_{RB} = \mathbf{\tau} - M_A\dot{\mathbf{\nu}}-C_A(\mathbf{\nu})\mathbf{\nu} - D(\mathbf{\nu})\mathbf{\nu} - \mathbf{g}(\mathbf{\eta}) + \mathbf{\tau}_{dist}
+    \label{eq:6dof_tau}
+\end{equation}
+The complete dynamic model, neglecting the disturbances, becomes:
+\begin{equation}
+    (M_{RB} + M_A)\dot{\mathbf{\nu}} + (C_{RB}(\mathbf{\nu}) + C_A(\mathbf{\nu}))\mathbf{\nu} + D(\mathbf{\nu})\mathbf{\nu} + \mathbf{g}(\mathbf{\eta}) = \mathbf{\tau},
+\end{equation}
+Or more compactly:
+\begin{equation}
+    M\dot{\mathbf{\nu}} + C(\mathbf{\nu})\mathbf{\nu} + D(\mathbf{\nu})\mathbf{\nu} + \mathbf{g}(\mathbf{\eta}) = \mathbf{\tau},
+    \label{eq:6dof_dyn_complete}
+\end{equation}
+By assuming that the origin of the body-fixed reference frame coincides with the vehicle's center of gravity, that the body axes are aligned with the principal axes of inertia,
+that the added mass matrix $M_A$ is symmetric and positive definite, and that hydrostatic stability conditions hold, the overall inertia matrix $M$ is symmetric and 
+positive definite. Furthermore, the damping matrix $D(\mathbf{\nu})$ is positive definite, while the Coriolis-centripetal matrix $C(\mathbf{\nu})$ 
+can be parameterized to be skew-symmetric.
 
-\section{BlueRov AUV}
+
+
+\section{BlueRov2 AUV}
+% aggiungi
+The equation \ref{eq:6dof_dyn_complete} represents the complete 6-DOF dynamic model of an underwater vehicle neglecting the disturbances, but ...
+
+% descrivere tutti i parametri del BlueRov seguendo per filo e per segno quello fatto nella tesi per il medusa
+% Alla fine precisare che il BlueRov2 non è AUV, ma viene considerato da me come tale per semplicità avendo il modello preciso
+% e dovendo utilizzare un robot con totale attuazione
+Although the BlueROV2 is originally designed as a Remotely Operated Vehicle (ROV), in this work it is modeled and employed as an Autonomous Underwater Vehicle (AUV). 
+This choice is justified by the fact that the platform is fully actuated in all six degrees of freedom, with independent thrusters for each motion, making it a 
+suitable candidate for testing the proposed control and estimation algorithms in simulation. In the following sections, the BlueROV2 will therefore be analyzed as 
+an AUV, even though it is not one in practice. The possible hardware and software modifications required to achieve such a transformation in reality are beyond the 
+scope of this work and will not be addressed.
 
 \section{Summary}
 
