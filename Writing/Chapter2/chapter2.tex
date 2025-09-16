@@ -13,7 +13,8 @@ for the BlueRov2 class and the parameters used in the simulation.
 
 The study begins with the fundamental equation for underwater dynamics. The simplifications due to low-speed conditions, together with the most relevant 
 parameters, will be illustrated in detail.
-Finally, the parameters adopted in the BlueRov simulation are derived from an identification study \cite{bergDevelopmentCommissioningDP2012}.
+Finally, the parameters adopted in the BlueRov2 simulation are derived from an identification study conducted by the Dynamical Systems and Ocean Robotics group (DSOR) 
+of Instituto de Sistemas e Robótica from Instituto Superior Técnico (ISR-IST).
 
 % dire che nel capitolo vengono mostrate le convenzioni per la robotica marina e la dinamica degli AUV
 % vengono descritte le equazioni della dinamica nei 6DOF e successivamente 
@@ -89,7 +90,7 @@ The equations \ref{eq:newton_laws} can be rewritten in a more compact matrix for
     M_{RB}\dot{\mathbf{\nu}} + C_{RB}(\mathbf{\nu})\mathbf{\nu} = \mathbf{\tau}
     \label{eq:6dof_dyn_simple}
 \end{equation}
-$M_{RB}$ is the rigid body inertia matrix, while $C_{RB}$ contains the Coriolis, centripetal and gyroscopic terms.
+$M_{RB}$ is the rigid body inertia matrix, while $C_{RB}$ contains the Coriolis and centrifugal terms.
 These matrices satisfy some key properties:
 \begin{itemize}
     \item $\dot M_{RB} = 0$: the inertia matrix is constant in the body-fixed frame;
@@ -97,6 +98,18 @@ These matrices satisfy some key properties:
     center of gravity and aligned with the principal axes of inertia, $M_{RB}$ is diagonal;
     \item $C_{RB}(\mathbf{\nu}) = -C_{RB}(\mathbf{\nu})^T$: the Coriolis and centripetal matrix can be parameterized to be skew-symmetric.
 \end{itemize}
+In this case, with the body-fixed frame centered at the center of gravity, the inertia matrix and the Coriolis matrix correspond to:
+\begin{equation}
+    \scalebox{0.95}{
+        $ M_{RB} = diag(m, m, m, I_x, I_y, I_z) \qquad
+        C_{RB}(\mathbf{\nu}) = \begin{bmatrix}
+            mS(\mathbf{\nu}_2) & 0_{3 \times 3} \\
+            0_{3 \times 3} & -S(I_{RB}\mathbf{\nu}_2)    
+        \end{bmatrix} $
+    }
+    \label{eq:RB_matrices}
+\end{equation}
+
 The subscript $RB$ highlights that the formulation includes only rigid-body dynamics, with all external forces and moments grouped in the generalized vector
 $\mathbf{\tau}_{RB} = [X, Y, Z, K, M, N]^T$. In order to account for different contributions, this term can be decomposed as:
 \begin{equation}
@@ -106,10 +119,32 @@ $\mathbf{\tau}_{RB} = [X, Y, Z, K, M, N]^T$. In order to account for different c
 where:
 \begin{itemize}
     \item $\mathbf{\tau}$ represents control inputs given by the thrusters;
-    \item $\mathbf{\tau}_{A}$ accounts for added mass and added Coriolis effects, described by the matrices $M_A$ and $C_A(\mathbf{\nu})$ respectively. It
-     can be studied by computing the kinetic energy imparted by the vehicle to the surrounding displaced fluid (even for inviscid fluid);
-    \item $\mathbf{\tau}_{D}$ models drag forces and moments, including contributions from skin friction and pressure;
-    \item $\mathbf{\tau}_{R}$ represents restoring forces and moments arising from buoyancy and weight imbalance;
+    \item $\mathbf{\tau}_{A}$ accounts for added mass and added Coriolis effects, described by the matrices $M_A$ and $C_A(\mathbf{\nu})$ respectively. 
+    \begin{equation}
+        \scalebox{0.9}{
+            $ M_A = -diag(X_{\dot{u}}, Y_{\dot{v}}, Z_{\dot{w}}, K_{\dot{p}}, M_{\dot{q}}, N_{\dot{r}}) \quad
+            C_A(\mathbf{\nu}) = \begin{bmatrix}
+            0_{3 \times 3} & -S(M_A\mathbf{\nu}_1) \\
+            -S(M_A\mathbf{\nu}_1) & -S(M_A\mathbf{\nu}_2)
+            \end{bmatrix} $
+        }
+        \label{eq:added_mass}
+    \end{equation}
+    It can be studied by computing the kinetic energy imparted by the vehicle to the surrounding displaced fluid (even for inviscid fluid);
+    \item $\mathbf{\tau}_{D}$ models drag forces and moments, can be represented by inverting the sign with 
+    $D(\mathbf{\nu}) = D_1 + D_2(\mathbf{\nu})$, where $D_1$ is a linear damping matrix, while $D_2(\mathbf{\nu})$ is a quadratic damping matrix. 
+    These terms account for hydrodynamic resistance, including contributions from skin friction and pressure-induced drag;
+    \item $\mathbf{\tau}_{R}$ represents restoring forces and moments arising from buoyancy and weight imbalance. Defining $\mathbf{r}_b = [x_b, y_b, z_b]^T$ as the 
+    position vector of the center of buoyancy (CB) relative to the origin of the body frame and having the origin of $\{B\}$ at the CG,
+    the restoring forces and moments can be expressed as:
+    \begin{equation}
+        \mathbf{g}_{\eta} = \begin{bmatrix}
+            {}^I_B R^T(\eta)\,[0,0,W-B]^T\\
+            - r_b\times {}^I_B R^T(\eta_2)\,[0,0,B]^T
+        \end{bmatrix}.
+        \label{eq:restoring_forces}
+    \end{equation}
+    Here, $W$ is the weight of the vehicle, $B = \rho_{seawater} g V$ is the buoyant force ($V$ is the volume discplacement of the AUV), and ${}^I_B R(\eta_2)$ is the rotation matrix from the body-fixed frame to the inertial frame.
     \item $\mathbf{\tau}_{dist}$ includes unmodeled external disturbances such as waves (not important in my application) and currents.
 \end{itemize}
 So, the equation \ref{eq:6dof_dyn_simple} can be rewritten as:
@@ -129,13 +164,85 @@ Or more compactly:
 By assuming that the origin of the body-fixed reference frame coincides with the vehicle's center of gravity, that the body axes are aligned with the principal axes of inertia,
 that the added mass matrix $M_A$ is symmetric and positive definite, and that hydrostatic stability conditions hold, the overall inertia matrix $M$ is symmetric and 
 positive definite. Furthermore, the damping matrix $D(\mathbf{\nu})$ is positive definite, while the Coriolis-centripetal matrix $C(\mathbf{\nu})$ 
-can be parameterized to be skew-symmetric.
-
-
+can be parameterized to be skew-symmetric.\\
+When the matrix form of the dynamic model is expanded, it yields the full set of equations corresponding to the six degrees of freedom:
+\begin{equation}
+    \begin{split}
+        m_u\dot{u} - m_vvr + m_wwq + d_uu = \tau_u \\
+        m_v\dot{v} + m_uur + m_wwp + d_vv = \tau_v \\
+        m_w\dot{w} - m_uuq + m_vvp + d_ww = \tau_w \\
+        m_p\dot{p} - m_{vw}vw - m_{qr}qr + d_pp + z_bBcos(\theta)sin(\phi) = \tau_p \\
+        m_q\dot{q} + m_{uw}uw + m_{pr}pr + d_qq - z_bBsin(\theta) = \tau_q \\
+        m_r\dot{r} - m_{uv}uv - m_{pq}pq + d_rr = \tau_r
+    \end{split}
+    \label{eq:6dof_expanded}
+\end{equation}
+Where the following parameters are defined:\\
+\begin{minipage}[t]{0.3\textwidth}
+\begin{align*}
+    m_u &= m - X_{\dot{u}} \\
+    m_v &= m - Y_{\dot{v}} \\
+    m_w &= m - Z_{\dot{w}} \\
+    m_p &= I_x - K_{\dot{p}} \\
+    m_r &= I_y - M_{\dot{q}} \\
+    m_r &= I_z - N_{\dot{r}}
+\end{align*}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.3\textwidth}
+\begin{align*}
+    m_{uv} &= m_u - m_v \\
+    m_{uw} &= m_u - m_w \\
+    m_{vw} &= m_v - m_w \\
+    m_{pq} &= m_p - m_q \\
+    m_{pr} &= m_p - m_r \\
+    m_{qr} &= m_q - m_r
+\end{align*}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.3\textwidth}
+\begin{align*}
+    d_u &= -X_u - X_{|u|u}|u| \\
+    d_v &= -Y_v - Y_{|v|v}|v| \\
+    d_w &= -Z_w - Z_{|w|w}|w| \\
+    d_p &= -K_p - K_{|p|p}|p| \\
+    d_q &= -M_q - M_{|q|q}|q| \\
+    d_r &= -N_r - N_{|r|r}|r|
+\end{align*}
+\end{minipage}
 
 \section{BlueRov2 AUV}
-% aggiungi
-The equation \ref{eq:6dof_dyn_complete} represents the complete 6-DOF dynamic model of an underwater vehicle neglecting the disturbances, but ...
+The BlueROV2 is a commercial ROV (Remotely Operated Vehicle) developed by Blue Robotics. It is an open-source, modular system that is widely used in both academic 
+and industrial settings for research, testing, and inspection applications. Its frame is built from high-strength anodized aluminum and plastic components, 
+ensuring durability while keeping the overall weight, $11.5 \text{ Kg}$, light. The open-frame structure allows easy integration of additional 
+sensors, payloads, and modifications.
+
+The vehicle is equipped with six thrusters (Blue Robotics T200) arranged in a vectored configuration. Four thrusters are mounted on the horizontal plane, 
+oriented at $45^\circ$ with respect to the vehicle axes, allowing precise control of surge, sway, and yaw. The remaining two thrusters are mounted vertically, enabling 
+heave, pitch, and roll control. This configuration provides actuation over all six degrees of freedom, making the BlueROV2 a fully actuated underwater vehicle.
+
+The vehicle's buoyancy and stability are provided by syntactic foam blocks mounted on the upper part of the frame, while ballast weights are attached at the bottom to 
+lower the center of gravity. Knowing the mass of the vehicle, the volume $V = 0.011054$, the density of water $\rho_{seawater} = 1028$ and $r_b = [0, 0, 0.0420]^T$, 
+we can easily compute the restoring component.
+
+Further technical details about the BlueROV2 and its components can be found in the official datasheets provided by the manufacturer \href{https://bluerobotics.com/wp-content/uploads/2017/03/br_bluerov2_datasheet_rev3-bleed-dragged.pdf}{BlueRov2 datasheet} 
+and \href{https://cdn.robotshop.com/media/b/blu/rb-blu-27/pdf/rb-blu-27_-_documentation.pdf}{T200 datasheet}.\\
+The coefficients of the BlueRov2 model used are derived from the identification work carried out by DSOR-ISR, they are described in the following table:
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{l c c c} \toprule
+        {Inertia} & {Added mass} & {Linear damping} & {Quadratic Damping} \\ \midrule
+        $I_x = 0.21$ & $X_{\dot{u}} = -27.08$ & $X_u = -0.1213$  & $X_{|u|u} = -23.9000$ \\
+        { } & $Y_{\dot{v}} = -25.952$ & $Y_v = -1.1732$  & $Y_{|v|v} = -46.2700$ \\
+        $I_y = 0.245$ & $Z_{\dot{w}} = -29.9081$ & $Z_w = -1.1130$  & $Z_{|w|w} = -50.2780$ \\
+        { } & $K_{\dot{p}} = -1$ & $K_p = -0.5$  & $K_{|p|p} = -1$ \\
+        $I_z = 0.245$ & $M_{\dot{q}} = -1$ & $M_q = -0.5$  & $M_{|q|q} = -1$ \\
+        { } & $N_{\dot{r}} = -1$ & $N_r = -0.5$  & $N_{|r|r} = -1$ \\ \bottomrule
+    \end{tabular}
+    \caption{Added mass, linear damping and quadratic damping coefficients of the BlueRov2 robot}
+    \label{tab:BlueRov_param}
+\end{table}
 
 % descrivere tutti i parametri del BlueRov seguendo per filo e per segno quello fatto nella tesi per il medusa
 % Alla fine precisare che il BlueRov2 non è AUV, ma viene considerato da me come tale per semplicità avendo il modello preciso
@@ -147,6 +254,9 @@ an AUV, even though it is not one in practice. The possible hardware and softwar
 scope of this work and will not be addressed.
 
 \section{Summary}
-
+In this chapter the fundamental equations governing the dynamics of an underwater vehicle have been presented highlighting the properties concerning the structure of the model. The conventions used in marine robotics to define
+the reference frames and the main parameters have been illustrated. The general equations of dynamics for a vehicle in 6 degrees of freedom have been described
+in detail, highlighting the contributions of each term. Finally, the BlueRov2 vehicle has been introduced, and the parameters used in the simulation have been 
+derived from an identification study conducted by DSOR-ISR.
 
 

@@ -6,7 +6,30 @@
     \graphicspath{{Chapter3/Figures/EPS/}{Chapter3/Figures/}}
 \fi
 
-% Before a fast overview
+% Before a fast overview di quello che affronta il capitolo
+This chapter highlights the critical role of sensors in marine robotics, with particular emphasis on their relevance to autonomous 
+navigation. It outlines the key challenges that arise in this context and examines the specific sensors employed to implement the 
+navigation algorithm.\\
+The discussion is limited to those sensors directly involved in navigation, the AHRS, the DVL, and the echosounder, 
+while excluding auxiliary sensors responsible for monitoring system status or ensuring the proper functioning of other subsystems. 
+Each of the selected sensors is analyzed in terms of its purpose, underlying physical principles, and integration within the AUV.\\ 
+The chapter concludes with a discussion on their combined use and potential future extensions through the addition of other sensing 
+technologies.
+
+\section{Sensor importance?????}
+Sensory systems are fundamental to the autonomous operation of Autonomous Underwater Vehicles (AUVs), enabling precise navigation, 
+mapping of the marine environment, and acquisition of scientific data in underwater operating conditions. The underwater 
+environment presents unique challenges for sensors, including the absence of GPS signals, attenuation of electromagnetic 
+communications, and poor visibility conditions.
+
+The sensor configuration of a modern AUV typically integrates three main categories of sensors: attitude and heading reference 
+systems (AHRS), Doppler velocity measurement systems (DVL), and echosounder arrays for bathymetry and seabed mapping.
+
+This sensory combination provides the inertial navigation, the estimation of the vehicle's velocity relative to the inertial 
+reference frame, and surrounding environment perception capabilities necessary for autonomous underwater operation. 
+The integration of these sensors requires sophisticated data fusion algorithms, such as the Kalman Filter (addressed in \ref{chap:fourth}), 
+to combine information from different sensor sources, compensating for the individual limitations of each system and improving the 
+overall accuracy of navigation and environmental perception.
 
 % Sistema i nomi
 \section{AHRS}

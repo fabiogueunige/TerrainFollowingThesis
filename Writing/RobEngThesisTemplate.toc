@@ -21,39 +21,40 @@
 \contentsline {chapter}{\numberline {2}AUV Dynamic}{6}{chapter.2}%
 \contentsline {section}{\numberline {2.1}Reference frames and naming conventions}{6}{section.2.1}%
 \contentsline {section}{\numberline {2.2}Dynamics}{8}{section.2.2}%
-\contentsline {section}{\numberline {2.3}BlueRov2 AUV}{9}{section.2.3}%
-\contentsline {section}{\numberline {2.4}Summary}{9}{section.2.4}%
-\contentsline {chapter}{\numberline {3}Sensor}{10}{chapter.3}%
-\contentsline {section}{\numberline {3.1}AHRS}{10}{section.3.1}%
-\contentsline {section}{\numberline {3.2}DVL}{10}{section.3.2}%
-\contentsline {section}{\numberline {3.3}Echosounder}{10}{section.3.3}%
-\contentsline {section}{\numberline {3.4}Possible integration}{10}{section.3.4}%
-\contentsline {section}{\numberline {3.5}Summary}{10}{section.3.5}%
-\contentsline {chapter}{\numberline {4}Estimator}{11}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Kalman Filter notation}{11}{section.4.1}%
-\contentsline {section}{\numberline {4.2}Kalman Filter}{11}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Extended Kalman Filter}{11}{section.4.3}%
-\contentsline {section}{\numberline {4.4}Summary}{11}{section.4.4}%
-\contentsline {chapter}{\numberline {5}Ros and Stonefish}{12}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Introduction to ROS}{12}{section.5.1}%
-\contentsline {section}{\numberline {5.2}BlueROV in Ros}{12}{section.5.2}%
-\contentsline {section}{\numberline {5.3}Sensors in Ros}{12}{section.5.3}%
-\contentsline {section}{\numberline {5.4}Introduction to Stonefish}{12}{section.5.4}%
-\contentsline {subsection}{\numberline {5.4.1}Stonefish in Ros}{12}{subsection.5.4.1}%
-\contentsline {subsection}{\numberline {5.4.2}Terrain generator in Stonefish}{12}{subsection.5.4.2}%
-\contentsline {section}{\numberline {5.5}Summary}{12}{section.5.5}%
-\contentsline {chapter}{\numberline {6}Terrain Tracking}{13}{chapter.6}%
-\contentsline {section}{\numberline {6.1}Importance of Terrain Tracking}{13}{section.6.1}%
-\contentsline {section}{\numberline {6.2}Problems with Terrain Tracking}{13}{section.6.2}%
-\contentsline {section}{\numberline {6.3}Solutions for Terrain Tracking}{13}{section.6.3}%
-\contentsline {section}{\numberline {6.4}Summary}{13}{section.6.4}%
-\contentsline {chapter}{\numberline {7}Controller}{14}{chapter.7}%
-\contentsline {section}{\numberline {7.1}PID}{14}{section.7.1}%
-\contentsline {section}{\numberline {7.2}Delta Implementation}{14}{section.7.2}%
-\contentsline {section}{\numberline {7.3}Anti-Windup}{14}{section.7.3}%
-\contentsline {section}{\numberline {7.4}Motivations}{14}{section.7.4}%
-\contentsline {section}{\numberline {7.5}Summary}{14}{section.7.5}%
-\contentsline {chapter}{\numberline {8}Results and Simulations}{15}{chapter.8}%
-\contentsline {chapter}{\numberline {9}Conclusions}{16}{chapter.9}%
-\contentsline {chapter}{\numberline {A}Extra}{17}{appendix.A}%
-\contentsline {chapter}{References}{19}{appendix*.3}%
+\contentsline {section}{\numberline {2.3}BlueRov2 AUV}{10}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Summary}{11}{section.2.4}%
+\contentsline {chapter}{\numberline {3}Sensor}{13}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Sensor importance?????}{13}{section.3.1}%
+\contentsline {section}{\numberline {3.2}AHRS}{14}{section.3.2}%
+\contentsline {section}{\numberline {3.3}DVL}{14}{section.3.3}%
+\contentsline {section}{\numberline {3.4}Echosounder}{14}{section.3.4}%
+\contentsline {section}{\numberline {3.5}Possible integration}{14}{section.3.5}%
+\contentsline {section}{\numberline {3.6}Summary}{14}{section.3.6}%
+\contentsline {chapter}{\numberline {4}Estimator}{15}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Kalman Filter notation}{15}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Kalman Filter}{15}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Extended Kalman Filter}{15}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Summary}{15}{section.4.4}%
+\contentsline {chapter}{\numberline {5}Ros and Stonefish}{16}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Introduction to ROS}{16}{section.5.1}%
+\contentsline {section}{\numberline {5.2}BlueROV in Ros}{16}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Sensors in Ros}{16}{section.5.3}%
+\contentsline {section}{\numberline {5.4}Introduction to Stonefish}{16}{section.5.4}%
+\contentsline {subsection}{\numberline {5.4.1}Stonefish in Ros}{16}{subsection.5.4.1}%
+\contentsline {subsection}{\numberline {5.4.2}Terrain generator in Stonefish}{16}{subsection.5.4.2}%
+\contentsline {section}{\numberline {5.5}Summary}{16}{section.5.5}%
+\contentsline {chapter}{\numberline {6}Terrain Tracking}{17}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Importance of Terrain Tracking}{17}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Problems with Terrain Tracking}{17}{section.6.2}%
+\contentsline {section}{\numberline {6.3}Solutions for Terrain Tracking}{17}{section.6.3}%
+\contentsline {section}{\numberline {6.4}Summary}{17}{section.6.4}%
+\contentsline {chapter}{\numberline {7}Controller}{18}{chapter.7}%
+\contentsline {section}{\numberline {7.1}PID}{18}{section.7.1}%
+\contentsline {section}{\numberline {7.2}Delta Implementation}{18}{section.7.2}%
+\contentsline {section}{\numberline {7.3}Anti-Windup}{18}{section.7.3}%
+\contentsline {section}{\numberline {7.4}Motivations}{18}{section.7.4}%
+\contentsline {section}{\numberline {7.5}Summary}{18}{section.7.5}%
+\contentsline {chapter}{\numberline {8}Results and Simulations}{19}{chapter.8}%
+\contentsline {chapter}{\numberline {9}Conclusions}{20}{chapter.9}%
+\contentsline {chapter}{\numberline {A}Extra}{21}{appendix.A}%
+\contentsline {chapter}{References}{23}{appendix*.3}%
