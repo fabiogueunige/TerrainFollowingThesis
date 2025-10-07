@@ -8,6 +8,21 @@
   file = {C:\Users\fabio\Zotero\storage\BY6YAJQB\Abreu - Sensor-based Formation Control of Autonomous Underwater Vehicles.pdf}
 }
 
+@inproceedings{annapurnaEnhancingAccuracyDoppler2024,
+  title = {Enhancing {{Accuracy}} in {{Doppler Frequency Shift Estimation}} and {{Velocity Measurement}} for {{Doppler Velocity Log Applications}}: {{A Comparative Study}}},
+  shorttitle = {Enhancing {{Accuracy}} in {{Doppler Frequency Shift Estimation}} and {{Velocity Measurement}} for {{Doppler Velocity Log Applications}}},
+  booktitle = {2024 11th {{International Conference}} on {{Signal Processing}} and {{Integrated Networks}} ({{SPIN}})},
+  author = {Annapurna, S M and Sarath Chandran, R and Haneesh Sankar, T P and Rajesh, K R},
+  year = {2024},
+  month = mar,
+  pages = {322--327},
+  issn = {2688-769X},
+  doi = {10.1109/SPIN60856.2024.10511987},
+  urldate = {2025-10-06},
+  abstract = {This research examines the prominent role of sonar technology, especially the Doppler Velocity Log (DVL), in the determination of ship velocity. The DVL employs a four-beam Janus configuration to measure a ship's velocity relative to the waterbed by transmitting acoustic pulses along different azimuth-oriented beams. The study focuses on a scenario where a ship moving through a waterbed produces a Doppler frequency shift, a critical parameter for determining the ship velocity. This paper presents a thorough comparison between the correlation-based broad-band pulse-pair method and the narrow-band least squares method for the determination of Doppler frequency shift. The selection of these methods dynamically adapts to varying water depths. The algorithms are developed and simulated in MATLAB, followed by implementation in Digital Signal Processor (DSP), and further validated through trials in diverse water bodies. Results indicate the broad-band pulse-pair method excelling in low-depth scenarios, while the narrow-band least squares algorithm performs optimally in higher depths. Dynamic algorithm switching based on the water depth exhibits an adaptive approach, enhancing the accuracy of Doppler shift estimations. This study contributes valuable insights for optimizing DVL frequency estimation, providing a practical solution for underwater navigation across varying depth conditions.},
+  keywords = {Acoustic signal processing,Doppler shift,Doppler Velocity Log,Estimation,Frequency determination,Frequency estimation,Heuristic algorithms,Narrow-band and Broad-band analysis,Signal processing algorithms,Switches,Underwater navigation}
+}
+
 @phdthesis{bergDevelopmentCommissioningDP2012,
   title = {Development and {{Commissioning}} of a {{DP}} System for {{ROV SF}} 30k},
   author = {Berg, Viktor},
@@ -114,10 +129,136 @@
   year = {1961}
 }
 
+@article{justaFastAHRSFilter2020,
+  title = {Fast {{AHRS Filter}} for {{Accelerometer}}, {{Magnetometer}}, and {{Gyroscope Combination}} with {{Separated Sensor Corrections}}},
+  author = {Justa, Josef and {\v S}m{\'i}dl, V{\'a}clav and Ham{\'a}{\v c}ek, Ale{\v s}},
+  year = {2020},
+  month = jul,
+  journal = {Sensors},
+  volume = {20},
+  number = {14},
+  pages = {3824},
+  issn = {1424-8220},
+  doi = {10.3390/s20143824},
+  urldate = {2025-09-30},
+  abstract = {A new predictor--corrector filter for attitude and heading reference systems (AHRS) using data from an orthogonal sensor combination of three accelerometers, three magnetometers and three gyroscopes is proposed. The filter uses the predictor---corrector structure, with prediction based on gyroscopes and independent correction steps for acceleration and magnetic field sensors. We propose two variants of the filter: (i) one using mathematical operations of special orthogonal group SO(3), that are accurate for nonlinear operations, for highest possible accuracy, and (ii) one using linearization of nonlinear operations for fast evaluation. Both approaches are quaternion-based filter realizations without redundant steps. The filters are compared to state of the art methods in this field on data recorded using low-cost microelectromechanical systems (MEMS) sensors with ground truth measured by the VICON optical system. Both filters achieved better accuracy than conventional methods at lower computational cost. The recorded data with ground truth reference and the source codes of both filters are publicly available.},
+  copyright = {https://creativecommons.org/licenses/by/4.0/},
+  langid = {english},
+  file = {C:\Users\fabio\Zotero\storage\ZG76SWJV\Justa et al. - 2020 - Fast AHRS Filter for Accelerometer, Magnetometer, and Gyroscope Combination with Separated Sensor Co.pdf}
+}
+
+@inproceedings{klugaMotionSensorsData2024,
+  title = {Motion {{Sensors Data Fusion}} for {{Accurate Measurement}} in {{AHRS Systems}}},
+  booktitle = {2024 {{Photonics}} \& {{Electromagnetics Research Symposium}} ({{PIERS}})},
+  author = {Kl{\=u}ga, J{\=a}nis and Grabs, Elans and Chen, Tianhua and Anc{\=a}ns, Arnis and Stetjuha, Mihails and Rjazanovs, Dmitrijs and Ipatovs, Aleksandrs},
+  year = {2024},
+  month = apr,
+  pages = {1--4},
+  publisher = {IEEE},
+  address = {Chengdu, China},
+  doi = {10.1109/PIERS62282.2024.10618677},
+  urldate = {2025-10-01},
+  abstract = {This article describes principles of motion sensors data fusion. We analyze various methods of inertial sensors fusion to ensure more accurate and reliable measurements by using the benefits of multiple sensors to eliminate their individual weaknesses. An Attitude Heading Reference System (AHRS) provides 3D orientation (roll, pitch, and yaw) of a moving object (car, aircraft, drone, etc.) with position and heading information. For implementation of a low cost AHRS system Micro-Electrical-Mechanical System (MEMS) based sensors were used (accelerometer, gyroscope and magnetometer). Accelerometers suffer from errors caused by external accelerations that add up to gravity and, such errors make accelerometers-based rotation inaccurate. Gyroscopes can compensate for such errors, but they also create drifting problems. The direction of the measured Earth magnetic field (magnetometer) is used as a (3D) compass to determine the direction of the North (heading or yaw). A locally disturbed (warped) magnetic field causes an error in orientation that can be quite substantial. So, for the precise data additionally three very common and well-known filters were introduced to the system: moving average filter, complementary and Kalman filters. In this paper a comparison of system performance is shown separately, so that the filter with the best performance can be chosen for a specific system. In the practical part we use Xsens Mti-20 inertial measurement unit. Three sensors' data processing and filtering methods are presented: Kalman filter, moving average filter and complimentary filter. The moving average filter provides simple data filtering by averaging within a window of specified length, while the complimentary filter performs fusion of accelerometer and gyroscope data by calculating pitch and roll angles. In order to evaluate the performance of each filter, measurements were made in real time for a moving vehicle.},
+  copyright = {https://doi.org/10.15223/policy-029},
+  isbn = {979-8-3503-7590-9},
+  langid = {english},
+  file = {C:\Users\fabio\Zotero\storage\SRNECM34\Klūga et al. - 2024 - Motion Sensors Data Fusion for Accurate Measurement in AHRS Systems.pdf}
+}
+
+@article{koComparisonAttitudeEstimation2016,
+  title = {Comparison of {{Attitude Estimation Methods}} for {{Underwater Navigation}}},
+  author = {Ko, Nak Yong and Jeong, Seokki and Choi, Hyun-Taek and Moon, Yong Seon},
+  year = {2016},
+  journal = {International Journal of Mechanical Engineering and Robotics Research},
+  volume = {7},
+  number = {2},
+  pages = {285--291},
+  issn = {22780149},
+  doi = {10.18178/ijmerr.7.3.285-291},
+  urldate = {2025-10-03},
+  langid = {english},
+  file = {C:\Users\fabio\Zotero\storage\EMKKM2BJ\Ko et al. - 2016 - Comparison of Attitude Estimation Methods for Underwater Navigation.pdf}
+}
+
+@article{koSineRotationVector2016,
+  title = {Sine {{Rotation Vector Method}} for {{Attitude Estimation}} of an {{Underwater Robot}}},
+  author = {Ko, Nak and Jeong, Seokki and Bae, Youngchul},
+  year = {2016},
+  month = aug,
+  journal = {Sensors},
+  volume = {16},
+  number = {8},
+  pages = {1213},
+  issn = {1424-8220},
+  doi = {10.3390/s16081213},
+  urldate = {2025-10-06},
+  abstract = {This paper describes a method for estimating the attitude of an underwater robot. The method employs a new concept of sine rotation vector and uses both an attitude heading and reference system (AHRS) and a Doppler velocity log (DVL) for the purpose of measurement. First, the acceleration and magnetic-field measurements are transformed into sine rotation vectors and combined. The combined sine rotation vector is then transformed into the differences between the Euler angles of the measured attitude and the predicted attitude; the differences are used to correct the predicted attitude. The method was evaluated according to field-test data and simulation data and compared to existing methods that calculate angular differences directly without a preceding sine rotation vector transformation. The comparison verifies that the proposed method improves the attitude estimation performance.},
+  copyright = {https://creativecommons.org/licenses/by/4.0/},
+  langid = {english},
+  file = {C:\Users\fabio\Zotero\storage\HYXKIYQ8\Ko et al. - 2016 - Sine Rotation Vector Method for Attitude Estimation of an Underwater Robot.pdf}
+}
+
+@article{liuSINSDVLIntegrated2022,
+  title = {{{SINS}}/{{DVL Integrated Navigation Method With Current Compensation Using RBF Neural Network}}},
+  author = {Liu, Peijia and Wang, Bo and Li, Guanghua and Hou, Dongdong and Zhu, Zhengyu and Wang, Zhongyong},
+  year = {2022},
+  month = jul,
+  journal = {IEEE Sensors Journal},
+  volume = {22},
+  number = {14},
+  pages = {14366--14377},
+  issn = {1558-1748},
+  doi = {10.1109/JSEN.2022.3182374},
+  urldate = {2025-10-07},
+  abstract = {In strapdown inertial navigation system (SINS)/Doppler velocity log (DVL) integrated navigation, the DVL is utilized to restrain the error accumulation of SINS. When operating in mid-water zone, the DVL may lose bottom track due to the limited sensor range. In this case, its measurements will be affected by sea currents. To overcome this problem, this paper proposes a novel current compensation method for SINS/DVL integrated navigation. Based on a new technical route, the proposed method removes the constraints of the existing methods. It is developed as follows. By applying the DVL measurements in the acoustic Doppler current profiler mode, a current measurement module is established to operate in parallel with the SINS/DVL integrated navigation system. On this basis, a radial basis function (RBF) neural network is designed for current compensation. Specifically, when the DVL operates normally, it can simultaneously output the earth-relative and water-relative velocities. The earth-relative velocity is applied for integrated navigation. Meanwhile, it is applied to train the RBF neural network along with the water-relative velocity. Therefore, the RBF neural network approximates the function between the earth-relative and water-relative velocities. When the DVL loses bottom track, the well-trained RBF neural network can be utilized as a velocity predictor. By inputting the water-relative velocity from DVL, it can predict the earth-relative velocity for integrated navigation. In this way, the current compensation is achieved. The effectiveness of the proposed method is verified by realistic semi-physical experiments.},
+  keywords = {current compensation,Current measurement,Estimation,Navigation,Neural networks,RBF neural network,Sea measurements,Sensors,SINS/DVL integrated navigation,Structural beams,tightly coupled approach},
+  file = {C:\Users\fabio\Zotero\storage\6WWWJI48\9799796.html}
+}
+
+@inproceedings{sarangapaniMultifrequencyPhasedArray2022,
+  title = {Multi-Frequency {{Phased Array Transducer}} for {{ADCP Applications}}},
+  booktitle = {{{OCEANS}} 2022 - {{Chennai}}},
+  author = {Sarangapani, Sairajan},
+  year = {2022},
+  month = feb,
+  pages = {1--10},
+  doi = {10.1109/OCEANSChennai45887.2022.9775469},
+  urldate = {2025-10-07},
+  abstract = {Acoustic Doppler Current Profilers (ADCP) and Doppler Velocity Logs (DVL) have been used over the past 40 years on moving vessels in river and ocean environments to remotely measure, along the path of the vessel, the vessel relative velocity to 1) the water versus depth (current profiles) and 2) the bottom (bottom tracking) to produce earth referenced velocity profiles by subtracting the two measurements to remove the vessel speed from the current profiles. These ADCPs typically employ four narrow, downward slanting single-frequency acoustic beams pointing in orthogonal directions (referred to as Janus configuration beams). These beam sets are produced by either 4 separate inclined circular piston transducers, or a single flat two-dimensional phased array transducer which utilizes the full aperture for all 4 beams, and thus has a factor of two smaller diameter. Typical operation is at a single frequency within the range of 38 to 1200 kHz. Lower frequency ADCP transducers achieve longer profiling, but with lower depth, velocity and time resolution. Higher frequency ADCP transducers achieve shorter range profiling, but with higher depth, velocity and time resolution. Thus, a performance compromise decision must be made for each vessel installation. In this paper, a new ADCP with a multi-frequency phased array transducer using two frequencies of 38 and 300 kHz is presented, which enables simultaneous measurement high resolution current profiles in the more dynamic upper ocean or shallow water ({$<$}300 m), and, by correlating 38 and 300 kHz measurements, improved velocity resolution measurements in the deep ocean of up to 1500 m. Results are presented as a function of range and velocity measurements for the multi-frequency phased array transducers operated at two different frequencies.},
+  keywords = {Current measurement,Doppler Velocity logs,Dual frequency.,Electroacoustic transducers,Instruments,Oceans,Phase measurement,Phased arrays,Phased Arrays,Sea measurements,Transducers,Vessel mount Acoustic Doppler Current Profiler}
+}
+
 @article{thesocietyofnavalarchitectsandmarineengineerssnameNomenclatureTreatingMotion1950,
   title = {Nomenclature for Treating the Motion of a Submerged Body through a Fluid},
   author = {{The Society of Naval Architects and Marine Engineers (SNAME)}},
   year = {1950}
+}
+
+@misc{timmermannComparisonNoiseLevels2025,
+  title = {Comparison of Noise Levels of Different Magnetometer Types and Space Environments},
+  author = {Timmermann, Gerlinde and P{\"o}ppelwerth, Adrian and Richter, Ingo and Auster, Hans-Ulrich and Plaschke, Ferdinand},
+  year = {2025},
+  month = jan,
+  doi = {10.5194/egusphere-egu24-16222},
+  urldate = {2025-10-01},
+  abstract = {The plasma environment around Earth has markedly different characteristics of the magnetic field across distinct spatial regions. In the solar wind, beyond Earth's magnetic influence, the magnetic field is relatively low and less fluctuating. In contrast, the magnetosheath --- the region between the bow shock and the magnetopause --- is characterized by significantly more turbulent magnetic fields. Within the magnetosphere, the magnetic field can go up to tens of thousands of nanotesla 5 (nT). Traditionally, fluxgate magnetometers have been the standard instrument for space-based magnetic field measurements. However, in recent years, alternative technologies such as anisotropic magnetoresistive (AMR) sensors and optically pumped magnetometers have been proposed and, in some cases, deployed. This study compares the noise performances of two magnetometers, a fluxgate and an AMR, by evaluating their amplitude spectral density measurements across various near--Earth regions of space. The potential of each sensor type for investigating specific phenomena is also evaluated.},
+  langid = {english},
+  file = {C:\Users\fabio\Zotero\storage\4CDWAW6Y\Timmermann et al. - 2025 - Comparison of noise levels of different magnetometer types and space environments.pdf}
+}
+
+@inproceedings{troniMagnetometerBiasCalibration2014,
+  title = {Magnetometer Bias Calibration Based on Relative Angular Position: {{Theory}} and Experimental Comparative Evaluation},
+  shorttitle = {Magnetometer Bias Calibration Based on Relative Angular Position},
+  booktitle = {2014 {{IEEE}}/{{RSJ International Conference}} on {{Intelligent Robots}} and {{Systems}}},
+  author = {Troni, Giancarlo and Eustice, Ryan M.},
+  year = {2014},
+  month = sep,
+  pages = {444--450},
+  issn = {2153-0866},
+  doi = {10.1109/IROS.2014.6942597},
+  urldate = {2025-10-06},
+  abstract = {This paper reports on a novel method for estimating the sensor bias of three-axis magnetometers (or any other field sensor). Our approach employs relative angular position measurements to estimate the three-axis magnetometer measurement bias, significantly improving magnetometer-based attitude estimation. Relative angular position measurements can be calculated from a variety of sources, including multiview image registration or laser-based scan matching. We report two methods implementing this approach based on batch linear least squares and a real-time discrete Kalman filter. Compared with previously reported methods our approach is time independent and less restrictive with data sampling. In addition, our two methods (i) are empirically shown to impose less restrictive conditions for the movements of the instrument required for calibration, (ii) do not require knowledge of the direction of the field (e.g., the local magnetic field) or the attitude of the instrument, and (iii) also ensure convergence for the estimated parameters. The proposed methods are evaluated and compared with previously reported methods in both numerical simulation and in comparative experimental evaluation using cameras and magnetometer sensors under different conditions.},
+  keywords = {Calibration,Cameras,Estimation,Instruments,Magnetic resonance imaging,Magnetometers,Real-time systems}
 }
 
 @article{vonbenzonOpenSourceBenchmarkSimulator2022,
@@ -137,6 +278,43 @@
   copyright = {https://creativecommons.org/licenses/by/4.0/},
   langid = {english},
   file = {C:\Users\fabio\Zotero\storage\PFMX6P2S\Von Benzon et al. - 2022 - An Open-Source Benchmark Simulator Control of a BlueROV2 Underwater Robot.pdf}
+}
+
+@article{vonbenzonOpenSourceBenchmarkSimulator2022a,
+  title = {An {{Open-Source Benchmark Simulator}}: {{Control}} of a {{BlueROV2 Underwater Robot}}},
+  shorttitle = {An {{Open-Source Benchmark Simulator}}},
+  author = {Von Benzon, Malte and S{\o}rensen, Fredrik Fogh and Uth, Esben and Jouffroy, Jerome and Liniger, Jesper and Pedersen, Simon},
+  year = {2022},
+  month = dec,
+  journal = {Journal of Marine Science and Engineering},
+  volume = {10},
+  number = {12},
+  pages = {1898},
+  issn = {2077-1312},
+  doi = {10.3390/jmse10121898},
+  urldate = {2025-10-02},
+  abstract = {This paper presents a simulation model environment for the popular and low-cost remotely operated vehicle (ROV) BlueROV2 implemented in Simulink™ which has been designed and experimentally validated for benchmark control algorithms for underwater vehicles. The BlueROV2 model is based on Fossen's equations and includes a kinematic model of the vehicle, the hydrodynamics of vehicle and water interaction, a dynamic model of the thrusters, and, lastly, the gravitational/buoyant forces. The hydrodynamic parameters and thruster model have been validated in a test facility. The benchmark model also includes the ocean current, modeled as constant velocity. The tether connecting the ROV to the top-site facility has been modeled using the lumped mass method and is implemented as a force input to the ROV model. At last, to show the usefulness of the benchmark model, a case study is presented where a BlueROV2 is deployed to inspect an offshore monopile structure. The case study uses a sliding mode controller designed for the BlueROV2. The controller fulfills the design criteria defined for the case study by following the provided trajectory with a low error. It is concluded that the simulator establishes a benchmark for future control schemes for position control and trajectory tracking under the influence of environmental disturbances.},
+  copyright = {https://creativecommons.org/licenses/by/4.0/},
+  langid = {english},
+  file = {C:\Users\fabio\Zotero\storage\N4HXL3RG\Von Benzon et al. - 2022 - An Open-Source Benchmark Simulator Control of a BlueROV2 Underwater Robot.pdf}
+}
+
+@misc{willnersMarketreadyROVsLowcost2021,
+  title = {From Market-Ready {{ROVs}} to Low-Cost {{AUVs}}},
+  author = {Willners, Jonatan Scharff and Carlucho, Ignacio and {\L}uczy{\'n}ski, Tomasz and Katagiri, Sean and Lemoine, Chandler and Roe, Joshua and Stephens, Dylan and Xu, Shida and Carreno, Yaniel and Pairet, {\`E}ric and Barbalata, Corina and Petillot, Yvan and Wang, Sen},
+  year = {2021},
+  month = aug,
+  number = {arXiv:2108.05792},
+  eprint = {2108.05792},
+  primaryclass = {cs},
+  publisher = {arXiv},
+  doi = {10.48550/arXiv.2108.05792},
+  urldate = {2025-10-02},
+  abstract = {Autonomous Underwater Vehicles (AUVs) are becoming increasingly important for different types of industrial applications. The generally high cost of AUVs restricts the access to them and therefore advances in research and technological development. However, recent advances have led to lower cost commercially available Remotely Operated Vehicles (ROVs), which present a platform that can be enhanced to enable a high degree of autonomy, similar to that of a high-end AUV. In this article, we present how a low-cost commercial-off-the-shelf ROV can be used as a foundation for developing versatile and affordable AUVs. We introduce the required hardware modifications to obtain a system capable of autonomous operations as well as the necessary software modules. Additionally, we present a set of use cases exhibiting the versatility of the developed platform for intervention and mapping tasks.},
+  archiveprefix = {arXiv},
+  langid = {english},
+  keywords = {Computer Science - Robotics,Computer Science - Systems and Control,Electrical Engineering and Systems Science - Systems and Control},
+  file = {C:\Users\fabio\Zotero\storage\7QU3C5DX\Willners et al. - 2021 - From market-ready ROVs to low-cost AUVs.pdf}
 }
 
 @misc{zotero-1,

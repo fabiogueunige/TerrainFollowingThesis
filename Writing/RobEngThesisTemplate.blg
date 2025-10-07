@@ -39,45 +39,45 @@ Reallocating 'wiz_functions' (item size: 4) to 6000 items.
 Warning--empty journal in abreuSensorbasedFormationControl2014
 Warning--empty journal in jacquespiccardSevenMiles1961
 Warning--empty journal in thesocietyofnavalarchitectsandmarineengineerssnameNomenclatureTreatingMotion1950
-You've used 7 entries,
+You've used 16 entries,
             3018 wiz_defined-function locations,
-            692 strings with 6109 characters,
-and the built_in function-call counts, 3046 in all, are:
-= -- 266
-> -- 89
-< -- 7
-+ -- 34
-- -- 27
-* -- 206
-:= -- 515
-add.period$ -- 17
-call.type$ -- 7
-change.case$ -- 45
-chr.to.int$ -- 10
-cite$ -- 10
-duplicate$ -- 235
-empty$ -- 242
-format.name$ -- 36
-if$ -- 596
-int.to.chr$ -- 1
+            755 strings with 8870 characters,
+and the built_in function-call counts, 9895 in all, are:
+= -- 827
+> -- 503
+< -- 9
++ -- 179
+- -- 162
+* -- 788
+:= -- 1533
+add.period$ -- 42
+call.type$ -- 16
+change.case$ -- 143
+chr.to.int$ -- 18
+cite$ -- 19
+duplicate$ -- 687
+empty$ -- 681
+format.name$ -- 198
+if$ -- 1969
+int.to.chr$ -- 2
 int.to.str$ -- 1
-missing$ -- 42
-newline$ -- 25
-num.names$ -- 28
-pop$ -- 97
+missing$ -- 137
+newline$ -- 52
+num.names$ -- 64
+pop$ -- 330
 preamble$ -- 1
-purify$ -- 37
+purify$ -- 118
 quote$ -- 0
-skip$ -- 94
+skip$ -- 288
 stack$ -- 0
-substring$ -- 123
-swap$ -- 94
+substring$ -- 395
+swap$ -- 351
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 60
+type$ -- 141
 warning$ -- 3
-while$ -- 26
+while$ -- 70
 width$ -- 0
-write$ -- 72
+write$ -- 168
 (There were 3 warnings)

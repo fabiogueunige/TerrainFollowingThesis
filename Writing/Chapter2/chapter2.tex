@@ -13,7 +13,7 @@ for the BlueRov2 class and the parameters used in the simulation.
 
 The study begins with the fundamental equation for underwater dynamics. The simplifications due to low-speed conditions, together with the most relevant 
 parameters, will be illustrated in detail.
-Finally, the parameters adopted in the BlueRov2 simulation are derived from an identification study conducted by the Dynamical Systems and Ocean Robotics group (DSOR) 
+Finally, the parameters adopted in the BlueRov2 in the heavy configuration simulation are derived from an identification study conducted by the Dynamical Systems and Ocean Robotics group (DSOR) 
 of Instituto de Sistemas e Robótica from Instituto Superior Técnico (ISR-IST).
 
 % dire che nel capitolo vengono mostrate le convenzioni per la robotica marina e la dinamica degli AUV
@@ -217,8 +217,8 @@ and industrial settings for research, testing, and inspection applications. Its 
 ensuring durability while keeping the overall weight, $11.5 \text{ Kg}$, light. The open-frame structure allows easy integration of additional 
 sensors, payloads, and modifications.
 
-The vehicle is equipped with six thrusters (Blue Robotics T200) arranged in a vectored configuration. Four thrusters are mounted on the horizontal plane, 
-oriented at $45^\circ$ with respect to the vehicle axes, allowing precise control of surge, sway, and yaw. The remaining two thrusters are mounted vertically, enabling 
+Having the ``heavy configuration`` kit for the BlueRov2, the vehicle is equipped with eight thrusters (Blue Robotics T200) arranged in a vectored configuration. Four thrusters are mounted on the horizontal plane, 
+oriented at $45^\circ$ with respect to the vehicle axes, allowing precise control of surge, sway, and yaw. The other four thrusters are mounted vertically, enabling 
 heave, pitch, and roll control. This configuration provides actuation over all six degrees of freedom, making the BlueROV2 a fully actuated underwater vehicle.
 
 The vehicle's buoyancy and stability are provided by syntactic foam blocks mounted on the upper part of the frame, while ballast weights are attached at the bottom to 
@@ -226,8 +226,8 @@ lower the center of gravity. Knowing the mass of the vehicle, the volume $V = 0.
 we can easily compute the restoring component.
 
 Further technical details about the BlueROV2 and its components can be found in the official datasheets provided by the manufacturer \href{https://bluerobotics.com/wp-content/uploads/2017/03/br_bluerov2_datasheet_rev3-bleed-dragged.pdf}{BlueRov2 datasheet} 
-and \href{https://cdn.robotshop.com/media/b/blu/rb-blu-27/pdf/rb-blu-27_-_documentation.pdf}{T200 datasheet}.\\
-The coefficients of the BlueRov2 model used are derived from the identification work carried out by DSOR-ISR, they are described in the following table:
+and \href{https://cdn.robotshop.com/media/b/blu/rb-blu-27/pdf/rb-blu-27_-_documentation.pdf}{thrusters T200 datasheet}.\\
+The coefficients of the BlueRov2 model used are derived from the identification work carried out by DSOR-ISR, they are described in the following \ref{tab:BlueRov_param}:
 
 \begin{table}[H]
     \centering
@@ -244,19 +244,18 @@ The coefficients of the BlueRov2 model used are derived from the identification 
     \label{tab:BlueRov_param}
 \end{table}
 
-% descrivere tutti i parametri del BlueRov seguendo per filo e per segno quello fatto nella tesi per il medusa
-% Alla fine precisare che il BlueRov2 non è AUV, ma viene considerato da me come tale per semplicità avendo il modello preciso
-% e dovendo utilizzare un robot con totale attuazione
+It is valuable to be aware that these parameters are coefficients that best represent the dynamic model of BleuRov2, but they involve an error in the estimation of the state that can be compensated for by using specific sensors in the underwater robot.
+
 Although the BlueROV2 is originally designed as a Remotely Operated Vehicle (ROV), in this work it is modeled and employed as an Autonomous Underwater Vehicle (AUV). 
 This choice is justified by the fact that the platform is fully actuated in all six degrees of freedom, with independent thrusters for each motion, making it a 
 suitable candidate for testing the proposed control and estimation algorithms in simulation. In the following sections, the BlueROV2 will therefore be analyzed as 
 an AUV, even though it is not one in practice. The possible hardware and software modifications required to achieve such a transformation in reality are beyond the 
-scope of this work and will not be addressed.
+scope of this work and will not be addressed, but one possible discussion in detail can be found in \cite{willnersMarketreadyROVsLowcost2021}.
 
 \section{Summary}
 In this chapter the fundamental equations governing the dynamics of an underwater vehicle have been presented highlighting the properties concerning the structure of the model. The conventions used in marine robotics to define
 the reference frames and the main parameters have been illustrated. The general equations of dynamics for a vehicle in 6 degrees of freedom have been described
 in detail, highlighting the contributions of each term. Finally, the BlueRov2 vehicle has been introduced, and the parameters used in the simulation have been 
-derived from an identification study conducted by DSOR-ISR.
+derived from an identification study conducted by DSOR-ISR of IST, Lisbon.
 
 

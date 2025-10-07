@@ -1,9 +1,18 @@
-\begin{thebibliography}{7}
+\begin{thebibliography}{16}
 \expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
 
 \bibitem[{Abreu(2014)}]{abreuSensorbasedFormationControl2014}
 {\sc Abreu, P.C.} (2014). Sensor-based {{Formation Control}} of {{Autonomous
   Underwater Vehicles}}.
+
+\bibitem[{Annapurna {\em et~al.\/}(2024)Annapurna, Sarath~Chandran,
+  Haneesh~Sankar \& Rajesh}]{annapurnaEnhancingAccuracyDoppler2024}
+{\sc Annapurna, S.M., Sarath~Chandran, R., Haneesh~Sankar, T.P. \& Rajesh,
+  K.R.} (2024). Enhancing {{Accuracy}} in {{Doppler Frequency Shift
+  Estimation}} and {{Velocity Measurement}} for {{Doppler Velocity Log
+  Applications}}: {{A Comparative Study}}. In {\em 2024 11th {{International
+  Conference}} on {{Signal Processing}} and {{Integrated Networks}}
+  ({{SPIN}})\/}, 322--327.
 
 \bibitem[{Caccia {\em et~al.\/}(1999)Caccia, Bruzzone \&
   Veruggio}]{cacciaActiveSonarbasedBottomfollowing1999}
@@ -26,9 +35,60 @@
 \bibitem[{Jacques~Piccard(1961)}]{jacquespiccardSevenMiles1961}
 {\sc Jacques~Piccard, R.S.D.} (1961). Seven {{Miles Down}}.
 
+\bibitem[{Kl{\=u}ga {\em et~al.\/}(2024)Kl{\=u}ga, Grabs, Chen, Anc{\=a}ns,
+  Stetjuha, Rjazanovs \& Ipatovs}]{klugaMotionSensorsData2024}
+{\sc Kl{\=u}ga, J., Grabs, E., Chen, T., Anc{\=a}ns, A., Stetjuha, M.,
+  Rjazanovs, D. \& Ipatovs, A.} (2024). Motion {{Sensors Data Fusion}} for
+  {{Accurate Measurement}} in {{AHRS Systems}}. In {\em 2024 {{Photonics}} \&
+  {{Electromagnetics Research Symposium}} ({{PIERS}})\/}, 1--4, IEEE, Chengdu,
+  China.
+
+\bibitem[{Ko {\em et~al.\/}(2016{\natexlab{a}})Ko, Jeong \&
+  Bae}]{koSineRotationVector2016}
+{\sc Ko, N., Jeong, S. \& Bae, Y.} (2016{\natexlab{a}}). Sine {{Rotation Vector
+  Method}} for {{Attitude Estimation}} of an {{Underwater Robot}}. {\em
+  Sensors\/}, {\bf 16}, 1213.
+
+\bibitem[{Ko {\em et~al.\/}(2016{\natexlab{b}})Ko, Jeong, Choi \&
+  Moon}]{koComparisonAttitudeEstimation2016}
+{\sc Ko, N.Y., Jeong, S., Choi, H.T. \& Moon, Y.S.} (2016{\natexlab{b}}).
+  Comparison of {{Attitude Estimation Methods}} for {{Underwater Navigation}}.
+  {\em International Journal of Mechanical Engineering and Robotics
+  Research\/}, {\bf 7}, 285--291.
+
+\bibitem[{Liu {\em et~al.\/}(2022)Liu, Wang, Li, Hou, Zhu \&
+  Wang}]{liuSINSDVLIntegrated2022}
+{\sc Liu, P., Wang, B., Li, G., Hou, D., Zhu, Z. \& Wang, Z.} (2022).
+  {{SINS}}/{{DVL Integrated Navigation Method With Current Compensation Using
+  RBF Neural Network}}. {\em IEEE Sensors Journal\/}, {\bf 22}, 14366--14377.
+
+\bibitem[{Sarangapani(2022)}]{sarangapaniMultifrequencyPhasedArray2022}
+{\sc Sarangapani, S.} (2022). Multi-frequency {{Phased Array Transducer}} for
+  {{ADCP Applications}}. In {\em {{OCEANS}} 2022 - {{Chennai}}\/}, 1--10.
+
 \bibitem[{{The Society of Naval Architects and Marine Engineers
   (SNAME)}(1950)}]{thesocietyofnavalarchitectsandmarineengineerssnameNomenclatureTreatingMotion1950}
 {\sc {The Society of Naval Architects and Marine Engineers (SNAME)}} (1950).
   Nomenclature for treating the motion of a submerged body through a fluid.
+
+\bibitem[{Timmermann {\em et~al.\/}(2025)Timmermann, P{\"o}ppelwerth, Richter,
+  Auster \& Plaschke}]{timmermannComparisonNoiseLevels2025}
+{\sc Timmermann, G., P{\"o}ppelwerth, A., Richter, I., Auster, H.U. \&
+  Plaschke, F.} (2025). Comparison of noise levels of different magnetometer
+  types and space environments.
+
+\bibitem[{Troni \& Eustice(2014)}]{troniMagnetometerBiasCalibration2014}
+{\sc Troni, G. \& Eustice, R.M.} (2014). Magnetometer bias calibration based on
+  relative angular position: {{Theory}} and experimental comparative
+  evaluation. In {\em 2014 {{IEEE}}/{{RSJ International Conference}} on
+  {{Intelligent Robots}} and {{Systems}}\/}, 444--450.
+
+\bibitem[{Willners {\em et~al.\/}(2021)Willners, Carlucho, {\L}uczy{\'n}ski,
+  Katagiri, Lemoine, Roe, Stephens, Xu, Carreno, Pairet, Barbalata, Petillot \&
+  Wang}]{willnersMarketreadyROVsLowcost2021}
+{\sc Willners, J.S., Carlucho, I., {\L}uczy{\'n}ski, T., Katagiri, S., Lemoine,
+  C., Roe, J., Stephens, D., Xu, S., Carreno, Y., Pairet, {\`E}., Barbalata,
+  C., Petillot, Y. \& Wang, S.} (2021). From market-ready {{ROVs}} to low-cost
+  {{AUVs}}.
 
 \end{thebibliography}
