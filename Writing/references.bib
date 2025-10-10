@@ -70,6 +70,23 @@
   file = {C:\Users\fabio\Zotero\storage\4NDGT28K\Caccia et al. - 1999 - Active sonar-based bottom-following for unmanned underwater vehicles.pdf}
 }
 
+@misc{cohenSetTransformerBeamsNetAUV2022,
+  title = {Set-{{Transformer BeamsNet}} for {{AUV Velocity Forecasting}} in {{Complete DVL Outage Scenarios}}},
+  author = {Cohen, Nadav and Yampolsky, Zeev and Klein, Itzik},
+  year = {2022},
+  month = dec,
+  number = {arXiv:2212.11671},
+  eprint = {2212.11671},
+  primaryclass = {cs},
+  publisher = {arXiv},
+  doi = {10.48550/arXiv.2212.11671},
+  urldate = {2025-10-10},
+  abstract = {Autonomous underwater vehicles (AUVs) are regularly used for deep ocean applications. Commonly, the autonomous navigation task is carried out by a fusion between two sensors: the inertial navigation system and the Doppler velocity log (DVL). The DVL operates by transmitting four acoustic beams to the sea floor, and once reflected back, the AUV velocity vector can be estimated. However, in real-life scenarios, such as an uneven seabed, sea creatures blocking the DVL's view and, roll/pitch maneuvers, the acoustic beams' reflection is resulting in a scenario known as DVL outage. Consequently, a velocity update is not available to bind the inertial solution drift. To cope with such situations, in this paper, we leverage our BeamsNet framework and propose a Set-Transformer-based BeamsNet (ST-BeamsNet) that utilizes inertial data readings and previous DVL velocity measurements to regress the current AUV velocity in case of a complete DVL outage. The proposed approach was evaluated using data from experiments held in the Mediterranean Sea with the Snapir AUV and was compared to a moving average (MA) estimator. Our ST-BeamsNet estimated the AUV velocity vector with an 8.547\% speed error, which is 26\% better than the MA approach.},
+  archiveprefix = {arXiv},
+  keywords = {Computer Science - Machine Learning,Computer Science - Robotics,Electrical Engineering and Systems Science - Signal Processing},
+  file = {C:\Users\fabio\Zotero\storage\RACM5PLE\2212.html}
+}
+
 @article{eliavGuglielmosSecretEnigma2015,
   title = {Guglielmo's {{Secret}}: {{The Enigma}} of the {{First Diving Bell Used}} in {{Underwater Archaeology}}},
   shorttitle = {Guglielmo's {{Secret}}},
@@ -315,6 +332,24 @@
   langid = {english},
   keywords = {Computer Science - Robotics,Computer Science - Systems and Control,Electrical Engineering and Systems Science - Systems and Control},
   file = {C:\Users\fabio\Zotero\storage\7QU3C5DX\Willners et al. - 2021 - From market-ready ROVs to low-cost AUVs.pdf}
+}
+
+@misc{yampolskyTransformerBasedRobustUnderwater2025,
+  title = {Transformer-{{Based Robust Underwater Inertial Navigation}} in {{Prolonged Doppler Velocity Log Outages}}},
+  author = {Yampolsky, Zeev and Cohen, Nadav and Klein, Itzik},
+  year = {2025},
+  month = apr,
+  number = {arXiv:2504.07697},
+  eprint = {2504.07697},
+  primaryclass = {cs},
+  publisher = {arXiv},
+  doi = {10.48550/arXiv.2504.07697},
+  urldate = {2025-10-10},
+  abstract = {Autonomous underwater vehicles (AUV) have a wide variety of applications in the marine domain, including exploration, surveying, and mapping. Their navigation systems rely heavily on fusing data from inertial sensors and a Doppler velocity log (DVL), typically via nonlinear filtering. The DVL estimates the AUV's velocity vector by transmitting acoustic beams to the seabed and analyzing the Doppler shift from the reflected signals. However, due to environmental challenges, DVL beams can deflect or fail in real-world settings, causing signal outages. In such cases, the AUV relies solely on inertial data, leading to accumulated navigation errors and mission terminations. To cope with these outages, we adopted ST-BeamsNet, a deep learning approach that uses inertial readings and prior DVL data to estimate AUV velocity during isolated outages. In this work, we extend ST-BeamsNet to address prolonged DVL outages and evaluate its impact within an extended Kalman filter framework. Experiments demonstrate that the proposed framework improves velocity RMSE by up to 63\% and reduces final position error by up to 95\% compared to pure inertial navigation. This is in scenarios involving up to 50 seconds of complete DVL outage.},
+  archiveprefix = {arXiv},
+  langid = {english},
+  keywords = {Computer Science - Robotics},
+  file = {C:\Users\fabio\Zotero\storage\PKXR97HL\Yampolsky et al. - 2025 - Transformer-Based Robust Underwater Inertial Navigation in Prolonged Doppler Velocity Log Outages.pdf}
 }
 
 @misc{zotero-1,

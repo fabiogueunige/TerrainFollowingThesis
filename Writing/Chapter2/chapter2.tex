@@ -1,4 +1,4 @@
-\chapter{AUV Dynamic}
+\chapter{Background}
 \label{chap:second}
 \ifpdf
     \graphicspath{{Chapter2/Figures/PNG/}{Chapter2/Figures/PDF/}{Chapter2/Figures/}{Chapter2/Figures/EPS/}}
@@ -6,19 +6,27 @@
     \graphicspath{{Chapter2/Figures/EPS/}{Chapter2/Figures/}}
 \fi
 % Before a fast overview
-This chapter introduces the equations that describe the dynamics of an underwater vehicle. As a first step, it is essential to present 
-the conventions used to define reference frames in marine robotics. This makes it possible to describe the general equations of dynamics 
-\cite{fossenHandbookMarineCraft2011} for any marine robot in 6-DOF, degrees of freedom, and subsequently conduct a more in-depth analysis 
-for the BlueRov2 class and the parameters used in the simulation.
+This chapter provides the theoretical background required to understand the subsequent developments of this work. It begins by introducing the 
+conventions used to define reference frames in marine robotics, which form the basis for describing the general kinematic and dynamic equations 
+of marine vehicles in six degrees of freedom (6-DOF) \cite{fossenHandbookMarineCraft2011}.
 
+The discussion then focuses on the critical role of sensors in marine robotics, with particular emphasis on their importance for autonomous 
+navigation. The main challenges related to navigation sensing are outlined, and the key sensors used to implement the guidance and navigation 
+systems are examined.\\
+The analysis is limited to navigation-related sensors, specifically the AHRS, the DVL, and the echosounder, while auxiliary sensors for system 
+monitoring and diagnostics are not considered. For each of the selected sensors, the chapter examines their role, the physical principles 
+underlying their operation, and the potential issues that may arise during use.
+
+Finally, the chapter provides a detailed description of the BlueRov2 in its heavy configuration. The dynamic model and its parameters are presented, 
+based on an identification study conducted by the Dynamical Systems and Ocean Robotics group (DSOR) at the Instituto de Sistemas e Robótica, 
+Instituto Superior Técnico (ISR-IST). The chapter concludes with an overview of the commercially available sensors integrated into the BlueRov2, 
+highlighting key considerations and requirements for their correct installation and operation on the vehicle.
+
+\section{Dynamics of underwater vehicles}
 The study begins with the fundamental equation for underwater dynamics. The simplifications due to low-speed conditions, together with the most relevant 
 parameters, will be illustrated in detail.
-Finally, the parameters adopted in the BlueRov2 in the heavy configuration simulation are derived from an identification study conducted by the Dynamical Systems and Ocean Robotics group (DSOR) 
-of Instituto de Sistemas e Robótica from Instituto Superior Técnico (ISR-IST).
 
-% dire che nel capitolo vengono mostrate le convenzioni per la robotica marina e la dinamica degli AUV
-% vengono descritte le equazioni della dinamica nei 6DOF e successivamente 
-\section{Reference frames and naming conventions}
+\subsection{Reference frames and naming conventions}
 % segui tesi 
 To tackle the study of AUV dynamics, it is essential to define the main reference frames in accordance with marine robotics conventions, namely 
 the body-fixed frame, where the dynamic of the vehicle is described, and an earth-fixed frame, with respect to the position and the orientation 
@@ -47,7 +55,8 @@ Given the assumption stated earlier, $\{I\}$ can be considered an inertial frame
 Having defined the two reference frames, it is possible to introduce the SNAME notation for all parameters essential for determining the position, orientation 
 and velocity of the AUV, considering external forces and moments applied to it. The position of the origin of the body-fixed frame with respect to the inertial 
 frame is defined through the vector $\mathbf{\eta}_1 = [x, y, z]^T$, while the orientation of $\{B\}$ with respect to $\{I\}$ is given by the rotation matrix 
-$^{I}_{B}R$ defined by the Euler angles contained in the vector $\mathbf{\eta}_2 = [\phi, \theta, \psi]^T$.
+$^{I}_{B}R$ defined by the Euler angles contained in the vector $\mathbf{\eta}_2 = [\phi, \theta, \psi]^T$. The orientation of the vehicle is described by a sequence 
+of intrinsic rotations following the Tait-Bryan convention (Z-Y'-X").
 The velocity of $\{B\}$ with respect to $\{I\}$, on the other hand, is divided into linear $\mathbf{\nu}_1 = [u, v, w]^T$ and angular $\mathbf{\nu}_2 = [p, q, r]^T$ 
 components, while the external forces and moments are expressed in $\{B\}$ and are described by the vector $\mathbf{\tau} = [\mathbf{\tau}_1, \mathbf{\tau}_2]^T$, 
 where $\mathbf{\tau}_1 = [X, Y, Z]^T$ for forces and by the vector $\mathbf{\tau}_2 = [K, M, N]^T$ for moments.\\
@@ -71,8 +80,52 @@ This notation is more easily visible in the table \ref{tab:Sname_param}, where t
     \label{tab:Sname_param}
 \end{table}
 
-\section{Dynamics}
-% descrivere le equazioni della dinamica nei 6DOF
+\subsection{Kinematics}
+Kinematics equation describe the motion of the vehicle without considering the forces and moments that cause it. The kinematic equations relate 
+the time derivatives of the position and orientation of the vehicle in the inertial frame to the linear and angular velocities in the body-fixed frame. 
+To transform the velocities from the body-fixed frame to the inertial frame, we use the rotation matrix $^{I}_{B}R(\mathbf{\eta}_2)$.
+
+Using the rotation matrix, the kinematic equations can be expressed as:
+\begin{equation}
+    \dot{\mathbf{\eta_1}} = {}^{I}_{B}R(\mathbf{\eta}_2)\mathbf{\nu_1}
+    \label{eq:kinematics_linear}
+\end{equation}
+the cartesian velocity in the inertial frame is obtained by multiplying the linear velocity in the body-fixed frame by the rotation matrix.
+
+For the kinematic equations related to the angular velocity, the relationship is given by:
+\begin{equation}
+    \dot{\mathbf{\eta_2}} = \begin{bmatrix}
+        1 & sin(\phi)tan(\theta) & cos(\phi)tan(\theta) \\
+        0 & cos(\phi) & -sin(\phi) \\
+        0 & sin(\phi)/cos(\theta) & cos(\phi)/cos(\theta)
+    \end{bmatrix}\mathbf{\nu_2} \iff \dot{\mathbf{\eta_2}} = T(\mathbf{\eta}_2)\mathbf{\nu_2}
+    \label{eq:kinematics_angular}
+\end{equation}
+where the matrix $T$ relates the time derivatives of the Euler angles to the angular velocities in the body-fixed frame. Possible issues with singularities 
+when $\theta = \pm 90^{\circ}$ are not considered here, as they are not relevant for the application discussed in this thesis. When the terrain has a 
+pitch inclination bigger than $80^{\circ}$, the AUV is no longer able to follow it and the AUV computer start the obstacle avoidance behavior.\\
+All the details about derivation of this matrix and singularity issues can be found in \cite{fossenHandbookMarineCraft2011}.
+
+Finally combining equations \ref{eq:kinematics_linear} and \ref{eq:kinematics_angular}, the complete kinematic equations can be expressed wih Jacobian terms, as:
+\begin{equation}
+    \begin{bmatrix}
+        \dot{\mathbf{\eta_1}} \\
+        \dot{\mathbf{\eta_2}}
+    \end{bmatrix} = \begin{bmatrix}
+        {}^{I}_{B}R(\mathbf{\eta}_2) & 0_{3 \times 3} \\
+        0_{3 \times 3} & T(\mathbf{\eta}_2)
+    \end{bmatrix} \begin{bmatrix}
+        \mathbf{\nu_1} \\
+        \mathbf{\nu_2}
+    \end{bmatrix} \iff \dot{\mathbf{\eta}} = J(\mathbf{\eta})\mathbf{\nu}
+    \label{eq:kinematics_complete}
+\end{equation}
+
+The kinematic equations will be used to obtain position and velocity information, integrating it with information from the sensors 
+and filtering it to obtain a less noisy estimate of the state, as we will see in the chapter \ref{chap:third}. % la tolgo questa riga????
+
+\subsection{Dynamics}
+% Forse devo tagliare un pochettino
 The dynamic equations of motion describe how forces and torques affect the movement of the vehicle. These equations are commonly expressed in the body-fixed 
 reference frame, as this formulation keeps the inertia tensor constant and allows external forces (weight, buoyancy, hydrodynamic effects) to be represented more conveniently.
 
@@ -90,6 +143,7 @@ The equations \ref{eq:newton_laws} can be rewritten in a more compact matrix for
     M_{RB}\dot{\mathbf{\nu}} + C_{RB}(\mathbf{\nu})\mathbf{\nu} = \mathbf{\tau}
     \label{eq:6dof_dyn_simple}
 \end{equation}
+
 $M_{RB}$ is the rigid body inertia matrix, while $C_{RB}$ contains the Coriolis and centrifugal terms.
 These matrices satisfy some key properties:
 \begin{itemize}
@@ -109,7 +163,7 @@ In this case, with the body-fixed frame centered at the center of gravity, the i
     }
     \label{eq:RB_matrices}
 \end{equation}
-
+where $I_x, I_y, I_z$ are the moments of inertia about the principal axes, and $S(\cdot)$ is the skew-symmetric operator.\\
 The subscript $RB$ highlights that the formulation includes only rigid-body dynamics, with all external forces and moments grouped in the generalized vector
 $\mathbf{\tau}_{RB} = [X, Y, Z, K, M, N]^T$. In order to account for different contributions, this term can be decomposed as:
 \begin{equation}
@@ -162,7 +216,7 @@ Or more compactly:
     \label{eq:6dof_dyn_complete}
 \end{equation}
 By assuming that the origin of the body-fixed reference frame coincides with the vehicle's center of gravity, that the body axes are aligned with the principal axes of inertia,
-that the added mass matrix $M_A$ is symmetric and positive definite, and that hydrostatic stability conditions hold, the overall inertia matrix $M$ is symmetric and 
+that the added mass matrix $M_A$ is symmetric and positive definite, and that hydrostatic stability conditions hold, then the overall inertia matrix $M$ is symmetric and 
 positive definite. Furthermore, the damping matrix $D(\mathbf{\nu})$ is positive definite, while the Coriolis-centripetal matrix $C(\mathbf{\nu})$ 
 can be parameterized to be skew-symmetric.\\
 When the matrix form of the dynamic model is expanded, it yields the full set of equations corresponding to the six degrees of freedom:
@@ -211,7 +265,127 @@ Where the following parameters are defined:\\
 \end{align*}
 \end{minipage}
 
+
+\section{Sensors}
+Sensory systems are fundamental to the autonomous operation of Autonomous Underwater Vehicles (AUVs), enabling precise navigation, 
+mapping of the marine environment, and acquisition of scientific data in underwater operating conditions. The underwater 
+environment presents unique challenges for sensors, including the absence of beacons and GPS signals, attenuation of electromagnetic 
+communications, and poor visibility conditions. Moreover, the unknown environment doesn't allow for the use of pre-existing maps, 
+making real-time perception and navigation essential.
+
+\subsection{Sensors for dead reckoning} % sposta nel discorso epr BLUEROV2
+The sensor configuration for autonomous navigation of a modern AUV typically integrates four main sensors: pressure sensor, attitude and heading reference 
+systems (AHRS), Doppler velocity measurement systems (DVL), and echosounder arrays for seabed scanning (or a camera). This sensory combination provides the depth of the AUV estimation, 
+the capabilities for inertial navigation, the estimation of the vehicle's velocity relative to the inertial reference frame, and surrounding environment perception 
+capabilities necessary for autonomous underwater operation. 
+Each sensor requires sophisticated data fusion algorithms, such as the Kalman Filter (addressed in \ref{chap:third}), to reduce the inherent noise and
+errors in their measurements. Moreover, in many cases, it is necessary to combine information from different sensor sources, compensating for the individual 
+limitations of each system and improving the overall accuracy of navigation and environmental perception. Indeed, when for a long time the AUV does not receive 
+his absolute position, the error in the position estimate tends to grow unbounded, a phenomenon known as drift. One simple solution, but not the most accurate, 
+is to fuse the AHRS and DVL data to estimate the AUV's position through dead reckoning.
+
+
+\subsection{Attitude and heading reference system}
+The Attitude and Heading Reference System (AHRS) is a key sensor for determining the orientation of the AUV in three-dimensional space.
+It typically fuses data from three types of Micro-Electro-Mechanical Systems (MEMS) to provide accurate estimates of roll, pitch, and yaw angles.\\
+Other AHRS technologies exist, such as Fiber Optic Gyroscopes (FOG) or Ring Laser Gyroscopes (RLG), which offer higher precision but are more expensive and primarily used in 
+specialized applications. MEMS technology, being standard for the BlueRov2, will be the focus here.\\
+These MEMS-based AHRS typically include \cite{klugaMotionSensorsData2024}:
+\begin{itemize}
+    \item Triaxial gyroscope: Measures angular velocities around the three axes, capturing rapid changes in orientation.
+    \item Triaxial accelerometer: Measures linear accelerations along the three axes, which can be used to estimate roll and pitch angles.
+    \item Triaxial magnetometer: Measures the magnetic field strength along the three axes, providing heading information relative to the Earth's magnetic field.
+\end{itemize}
+The physical principles of these sensors differ. The gyroscope uses the Coriolis effect to measure the motion of internal proof masses proportional to the angular 
+velocity; however, it is prone to drift over time due to temperature variations and aging, and it cannot provide absolute orientation or heading information. 
+The accelerometer relies on Newton's second law of motion to measure linear acceleration by sensing the direction of gravity, but its readings can be affected by dynamic accelerations. 
+The magnetometer used in the BlueRov2 is an Anisotropic Magneto-Resistance (AMR) sensor, which exploits the tendency of certain materials (typically ferromagnetic) to change 
+their electrical resistance in response to the Earth's magnetic field. However, it is more susceptible to noise induced by the AUV's structure. The magnetic field measurement's bias is hard to 
+estimate \cite{troniMagnetometerBiasCalibration2014} because the bias interface depend on the environmental aspect, which are varying both with time and space in all directions, 
+therefore it requires careful calibration and filtering \cite{koSineRotationVector2016}.\\
+The AHRS combines the data from these three sensors using sensor fusion algorithms, such as the Extended Kalman Filter (EKF) or complementary filters, to provide a robust and
+accurate estimate of the AUV's orientation. The gyroscope data is used for short-term orientation changes, while the accelerometer and magnetometer data are used to correct 
+for drift and provide absolute orientation references. The roll and pitch angles are primarily derived from the accelerometer readings, which are generally more 
+reliable than the magnetometer data.\\
+The acquisition of the yaw angle depends primarily on the magnetometer readings. Consequently, due to noise, the yaw estimate is generally less accurate than 
+the roll and pitch angles \cite{koComparisonAttitudeEstimation2016}. In this work, this is not a major issue because the yaw angle is mainly relevant for the 
+path-following node and not for the terrain-following node. However, it is still actuated to generate a simple trajectory to test the algorithm performance.\\ 
+To improve the reliability of the heading, it is often necessary to fuse the AHRS data with the DVL measurements to obtain a more accurate yaw angle estimation.  
+For completeness, it is worth noting that more precise magnetometers, such as Fluxgate sensors, exist but are also significantly more expensive and may not always 
+fit within the AUV's design constraints \cite{timmermannComparisonNoiseLevels2025}.
+
+% magari potrei togliere discorso frequenze di funzionamento
+AHRS measurements are typically provided at frequencies ranging from 50 to 200 Hz, delivering real-time orientation data to the AUV's control system. The optimal sampling 
+frequency is generally between 200$Hz$ and 400$Hz$, with a bandwidth of 10$Hz$ to 50$Hz$, to ensure reliable acquisition at the AUV's operating rate.
+
+The AHRS is essential for stabilizing vehicle motion and achieving precise navigation, but its integration in an AUV requires specific considerations.  
+It should be mounted near the AUV's center of gravity to minimize the influence of dynamic linear accelerations and isolated from vibrations and shocks that 
+could degrade sensor readings.
+
+\subsection{Doppler Velocity Log (DVL)}
+The Doppler Velocity Log (DVL) is a crucial sensor for measuring the relative velocity of an AUV. 
+It relies on the Doppler effect, which occurs when the frequency of a wave appears altered due to the relative movement between the source emitting the wave and the 
+observer receiving it. In fact, the DVL transmits acoustic pulses along multiple beams, directed in different directions, and measures the frequency shift of the 
+echoes reflected by the receivers. By analyzing these frequency shifts, the DVL can calculate the velocity of the AUV, relative to the receiver, following this formula:
+\begin{equation}
+    \Delta f = \frac{2 f_0 v cos(\theta)}{c}
+    \label{eq:doppler}
+\end{equation}
+where $\Delta f$ is the frequency shift, $f_0$ is the emitted frequency, $v$ is the three dimensional relative velocity of the AUV, $\theta$ is the angle between the acoustic beam and 
+the direction of motion, and $c$ is the speed of sound in water \cite{annapurnaEnhancingAccuracyDoppler2024}.
+
+This device, mounted in the underside of the AUV, usually employs four acoustic beams in a Janus configuration, which allows for the measurement of velocity in three dimensions. Each beam is 
+oriented at a specific angle to the vertical axes, typically around 20 to 30 degrees, to measure:
+\begin{itemize}
+    \item Forward and backward velocity components (surge)
+    \item Lateral velocity components (sway)
+    \item Vertical velocity components (heave)
+\end{itemize}
+Considering the formula \ref{eq:doppler} we can focus on three main factors that influence the DVL performance. The speed of the sound in water $c$ 
+is affected by environmental conditions such as temperature, salinity, and pressure. This variability can introduce errors in velocity measurements if not properly compensated.
+The angle $\theta$ of the acoustic beams is critical for accurate velocity estimation. Misalignment or calibration errors can lead to significant inaccuracies, especially in the 
+lateral and vertical velocity components.
+In the end the emitted frequency $f_0$ also plays a role, as higher frequencies provide better resolution but are more susceptible to attenuation in water, limiting the effective range of the DVL.
+instead, lower frequencies can travel further but may offer less precise measurements. There are different frequency choices for DVLs, like 600$kHz$ for short-range and high accuracy applications, or
+38 $kHz$ for long-range applications with lower accuracy \cite{sarangapaniMultifrequencyPhasedArray2022}.
+
+There are two operating modes of DVL: the bottom-tracking mode (DVL-bt) and the water-tracking mode (DVL-wt). The bottom-tracking mode measures the velocity of the AUV relative to the seabed. 
+The accuracy of the data depends also on the seabed material composition and geometry, as soft sediments can absorb acoustic signals, or some acoustic beams may be lost, leading to weaker 
+echoes and less reliable velocity measurements. However, When operating in mid-water zone, the DVL may lose bottom track due to the limited sensor range. In this case, its measurements will be affected by sea currents \cite{liuSINSDVLIntegrated2022}.
+This is the water-tracking mode, which measures the velocity relative to the water mass, knowing that $v_{water} = v_{AUV} - v_{current}$.\\
+It is possible thanks to the presence of small particles or plankton in the water that reflect the acoustic signals, but only using high frequencies. However, this mode is generally less accurate 
+than bottom-tracking, as the water mass can have its own movement due to currents, which estimation is not always available.
+
+The main issue with DVLs is the partial or complete outage of the sensor, where some or all four beams are missing and the DVL is not able to provide the velocity update \cite{cohenSetTransformerBeamsNetAUV2022}.
+To solve this issue different techniques exist, like the integration with AHRS data and the Kalman filter or deep learning algorithms, as \cite{yampolskyTransformerBasedRobustUnderwater2025}.
+
+\subsection{Echosounder}
+% Aggiungere citazioni che mancano
+The echosounder is a fundamental sensor for underwater terrain detection and mapping.
+It operates by emitting acoustic pulses into the water and measuring the time-of-flight of the echoes reflected from the seabed or other underwater objects, so the time taken 
+for the sound wave to travel to the target and back. This time measurement is then used to calculate the distance to the target using the speed of sound in water, considering the simplified equation:
+\begin{equation}
+    d = \frac{c \cdot t}{2}
+    \label{eq:echosounder_simple}
+\end{equation}
+where $d$ is the distance to the target, $c$ is the speed of sound in water, and $t$ is the measured time-of-flight. The division by 2 accounts for the round trip of the acoustic signal.
+To generate the sound waves, the echosounder uses a piezoelectric transducer that converts electrical energy into acoustic energy and vice versa when the wave is reflected back. Obviously there are 
+different materials and designs for the transducer, which can affect the performance of the echosounder in terms of range, resolution, and beamwidth.
+The echosounder can operate in different modes, such as single-beam or multi-beam configurations. Single-beam echosounders (SBES) emit a single acoustic pulse and measure the distance directly 
+below the AUV, while multi-beam echosounders (MBES) emit multiple beams in a fan-shaped pattern, allowing for a wider area coverage and more detailed mapping of the seabed.
+For my AUV application i will use $4$ SBES, mounted in a cross configuration to estimate the inclination angle of the seabed in roll and pitch. This solution is a compromise between
+cost, complexity, and performance, as MBES are generally more expensive and require more processing power to handle the larger amount of data generated, that in this case is not needed.
+The choice of frequency for the echosounder is also crucial, as higher frequencies provide better resolution but are more susceptible to attenuation in water, limiting the effective range 
+of distance of the sensor. The frequency in industrial SBES run from 12 $KHz$ to 400$KHz$, with lower frequencies being used for deep-water applications and higher frequencies for applications 
+close to the seabed.
+
+To estimate the seabed inclination other technologies exist, such as the laser scanner or the stereo camera, but they requires specific conditions to operate, like good visibility and low 
+turbidity, which are not always guaranteed in unknown underwater environments. They are also more expensive than the single beam echosounder.
+The laser scanner requires the AUV close to the seabed (less than 2m of distance for laser standard technology) to obtain accurate measurements, while the stereo camera relies on sufficient 
+lighting and texture in the environment to function properly.
+
 \section{BlueRov2 AUV}
+% Discorso generale sul BlueRov2 partendo dalla descrizione -> dinamica -> sensori a bordo
 The BlueROV2 is a commercial ROV (Remotely Operated Vehicle) developed by Blue Robotics. It is an open-source, modular system that is widely used in both academic 
 and industrial settings for research, testing, and inspection applications. Its frame is built from high-strength anodized aluminum and plastic components, 
 ensuring durability while keeping the overall weight, $11.5 \text{ Kg}$, light. The open-frame structure allows easy integration of additional 
@@ -227,6 +401,9 @@ we can easily compute the restoring component.
 
 Further technical details about the BlueROV2 and its components can be found in the official datasheets provided by the manufacturer \href{https://bluerobotics.com/wp-content/uploads/2017/03/br_bluerov2_datasheet_rev3-bleed-dragged.pdf}{BlueRov2 datasheet} 
 and \href{https://cdn.robotshop.com/media/b/blu/rb-blu-27/pdf/rb-blu-27_-_documentation.pdf}{thrusters T200 datasheet}.\\
+% Qui speigare il motivo della scelta del BlueRov2
+motivo....
+
 The coefficients of the BlueRov2 model used are derived from the identification work carried out by DSOR-ISR, they are described in the following \ref{tab:BlueRov_param}:
 
 \begin{table}[H]
@@ -244,18 +421,18 @@ The coefficients of the BlueRov2 model used are derived from the identification 
     \label{tab:BlueRov_param}
 \end{table}
 
-It is valuable to be aware that these parameters are coefficients that best represent the dynamic model of BleuRov2, but they involve an error in the estimation of the state that can be compensated for by using specific sensors in the underwater robot.
+It is valuable to be aware that these parameters are coefficients that best represent the dynamic model of BleuRov2, but they involve an error in the estimation of the 
+state that can be compensated for by using specific sensors in the underwater robot.
+% da qui iniziare discorso sensori e dead reckoning utilizzati nel BlueRov2
 
 Although the BlueROV2 is originally designed as a Remotely Operated Vehicle (ROV), in this work it is modeled and employed as an Autonomous Underwater Vehicle (AUV). 
 This choice is justified by the fact that the platform is fully actuated in all six degrees of freedom, with independent thrusters for each motion, making it a 
-suitable candidate for testing the proposed control and estimation algorithms in simulation. In the following sections, the BlueROV2 will therefore be analyzed as 
-an AUV, even though it is not one in practice. The possible hardware and software modifications required to achieve such a transformation in reality are beyond the 
-scope of this work and will not be addressed, but one possible discussion in detail can be found in \cite{willnersMarketreadyROVsLowcost2021}.
+suitable candidate for testing the proposed control and estimation algorithms in simulation. The BlueROV2's open-source nature and modular design allow 
+for easy integration of additional sensors and payloads. Futhermore, even if the wire is not used, it can be used to easily retrieve the robot from the seabed, 
+either manually or remotely during initial sea trials.
+In the following sections, the BlueROV2 will therefore be analyzed as an AUV, even though it is not one in practice. The possible hardware and software modifications 
+required to achieve such a transformation in reality are beyond the scope of this work and will not be addressed, but one possible discussion in 
+detail can be found in \cite{willnersMarketreadyROVsLowcost2021}.
 
-\section{Summary}
-In this chapter the fundamental equations governing the dynamics of an underwater vehicle have been presented highlighting the properties concerning the structure of the model. The conventions used in marine robotics to define
-the reference frames and the main parameters have been illustrated. The general equations of dynamics for a vehicle in 6 degrees of freedom have been described
-in detail, highlighting the contributions of each term. Finally, the BlueRov2 vehicle has been introduced, and the parameters used in the simulation have been 
-derived from an identification study conducted by DSOR-ISR of IST, Lisbon.
 
 

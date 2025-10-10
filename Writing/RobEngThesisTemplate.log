@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.6.11)  8 OCT 2025 01:44
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.6.11)  10 OCT 2025 17:06
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -468,7 +468,7 @@ Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
  (C:\Users\fabio\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.cfg)) (C:\Users\fabio\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-pdftex.def
 File: l3backend-pdftex.def 2025-04-14 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count341
-) (RobEngThesisTemplate.aux (Originality/originality.aux) (Acknowledgement/acknowledgement.aux) (Dedication/dedication.aux) (Abstract/abstract.aux) (Chapter1/chapter1.aux) (Chapter2/chapter2.aux) (Chapter3/chapter3.aux) (Chapter4/chapter4.aux) (Chapter5/chapter5.aux) (Chapter6/chapter6.aux) (Chapter7/chapter7.aux) (Results/results.aux) (Conclusions/conclusions.aux) (Appendix1/appendix1.aux) (Appendix2/appendix2.aux))
+) (RobEngThesisTemplate.aux (Originality/originality.aux) (Acknowledgement/acknowledgement.aux) (Dedication/dedication.aux) (Abstract/abstract.aux) (Chapter1/chapter1.aux) (Chapter2/chapter2.aux) (Chapter3/chapter3.aux) (Chapter4/chapter4.aux) (Results/results.aux) (Conclusions/conclusions.aux) (Appendix1/appendix1.aux) (Appendix2/appendix2.aux))
 \openout1 = `RobEngThesisTemplate.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 73.
@@ -564,7 +564,7 @@ Package epstopdf Info: Output file is already uptodate.
 
 
 pdfTeX warning: pdflatex (file ./Figures/logo_unige-eps-converted-to.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
-<Figures/logo_unige-eps-converted-to.pdf, id=215, 191.71625pt x 163.61125pt>
+<Figures/logo_unige-eps-converted-to.pdf, id=143, 191.71625pt x 163.61125pt>
 File: Figures/logo_unige-eps-converted-to.pdf Graphic file (type pdf)
 <use Figures/logo_unige-eps-converted-to.pdf>
 Package pdftex.def Info: Figures/logo_unige-eps-converted-to.pdf  used on input line 82.
@@ -701,7 +701,7 @@ Package epstopdf Info: Output file is already uptodate.
 
 
 pdfTeX warning: pdflatex (file ./Chapter1/Figures/EPS/Views-eps-converted-to.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
-<Chapter1/Figures/EPS/Views-eps-converted-to.pdf, id=346, 274.02374pt x 104.39pt>
+<Chapter1/Figures/EPS/Views-eps-converted-to.pdf, id=256, 274.02374pt x 104.39pt>
 File: Chapter1/Figures/EPS/Views-eps-converted-to.pdf Graphic file (type pdf)
 <use Chapter1/Figures/EPS/Views-eps-converted-to.pdf>
 Package pdftex.def Info: Chapter1/Figures/EPS/Views-eps-converted-to.pdf  used on input line 83.
@@ -743,7 +743,17 @@ pdfTeX warning (ext4): destination with the same identifier (name{page.3}) has b
 l.141 
        [3]
 
-[4])
+[4]
+
+LaTeX Warning: Reference `chap:fifth' on page 5 undefined on input line 197.
+
+
+LaTeX Warning: Reference `chap:sixth' on page 5 undefined on input line 199.
+
+
+LaTeX Warning: Reference `chap:seventh' on page 5 undefined on input line 201.
+
+)
 
 [5]
 \openout2 = `Chapter2/chapter2.aux'.
@@ -758,69 +768,49 @@ Chapter 2.
 
 
 ]
-Underfull \hbox (badness 10000) in paragraph at lines 47--54
+Underfull \hbox (badness 10000) in paragraph at lines 55--63
 
  []
 
 
 
-[7
+[7]
+
+[8
 pdfTeX warning (ext4): destination with the same identifier (name{table.2.1}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.78 
-     ]
-
-[8]
+l.110 \begin{equation}
+                      ]
 
 [9]
 
 [10]
 
-[11
-pdfTeX warning (ext4): destination with the same identifier (name{table.2.2}) has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.260 
-      ])
+[11]
 
 [12]
-\openout2 = `Chapter3/chapter3.aux'.
 
- (Chapter3/chapter3.tex
-Chapter 3.
-
-
-[13
-
-
-
-
-]
+[13]
 
 [14]
 
 [15]
 
-[16])
+[16]
 
-[17]
-\openout2 = `Chapter4/chapter4.aux'.
+[17
+pdfTeX warning (ext4): destination with the same identifier (name{table.2.2}) has been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.436 
+      ])
 
- (Chapter4/chapter4.tex
-Chapter 4.
-)
+[18]
+\openout2 = `Chapter3/chapter3.aux'.
 
-[18
-
-
-
-
-]
-\openout2 = `Chapter5/chapter5.aux'.
-
- (Chapter5/chapter5.tex
-Chapter 5.
+ (Chapter3/chapter3.tex
+Chapter 3.
 )
 
 [19
@@ -829,8 +819,112 @@ Chapter 5.
 
 
 ]
-\openout2 = `Chapter6/chapter6.aux'.
+\openout2 = `Chapter4/chapter4.aux'.
 
- (Chapter6/chapter6.tex
+ (Chapter4/chapter4.tex
+Chapter 4.
+)
+
+[20
+
+
+
+
+]
+\openout2 = `Results/results.aux'.
+
+ (Results/results.tex
+Chapter 5.
+)
+
+[21
+
+
+
+
+]
+\openout2 = `Conclusions/conclusions.aux'.
+
+ (Conclusions/conclusions.tex
 Chapter 6.
 )
+
+[22
+
+
+
+
+]
+\openout2 = `Appendix1/appendix1.aux'.
+
+ (Appendix1/appendix1.tex
+Appendix A.
+)
+
+[23
+
+
+
+
+]
+\openout2 = `Appendix2/appendix2.aux'.
+
+ (Appendix2/appendix2.tex)
+
+[24
+
+
+
+] (RobEngThesisTemplate.bbl (RobEngThesisTemplate.brf)
+\tf@brf=\write7
+\openout7 = `RobEngThesisTemplate.brf'.
+
+
+
+[25
+
+
+
+])
+
+[26] (RobEngThesisTemplate.aux (Originality/originality.aux) (Acknowledgement/acknowledgement.aux) (Dedication/dedication.aux) (Abstract/abstract.aux) (Chapter1/chapter1.aux) (Chapter2/chapter2.aux) (Chapter3/chapter3.aux) (Chapter4/chapter4.aux) (Results/results.aux) (Conclusions/conclusions.aux) (Appendix1/appendix1.aux) (Appendix2/appendix2.aux))
+ ***********
+LaTeX2e <2025-06-01>
+L3 programming layer <2025-05-26>
+ ***********
+
+
+LaTeX Warning: There were undefined references.
+
+Package rerunfilecheck Info: File `RobEngThesisTemplate.out' has not changed.
+(rerunfilecheck)             Checksum: 9FC38D2E654A35ADCEC5CBFA1706EA9B;5844.
+Package rerunfilecheck Info: File `RobEngThesisTemplate.brf' has not changed.
+(rerunfilecheck)             Checksum: 571373E03146413620A5B5A9D1E2FD9B;1489.
+ ) 
+Here is how much of TeX's memory you used:
+ 18696 strings out of 468225
+ 368978 string characters out of 5432973
+ 808395 words of memory out of 5000000
+ 46688 multiletter control sequences out of 15000+600000
+ 646252 words of font info for 113 fonts, out of 8000000 for 9000
+ 1144 hyphenation exceptions out of 8191
+ 125i,16n,121p,508b,1206s stack positions out of 10000i,1000n,20000p,200000b,200000s
+
+pdfTeX warning (dest): name{mailto:name@tecnico.ulisboa.pt} has been referenced but does not exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{http://www.unige.it} has been referenced but does not exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{http://www.dibris.unige.it} has been referenced but does not exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{mailto:name@unige.it} has been referenced but does not exist, replaced by a fixed one
+
+ <C:\Users\fabio\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1200.pk><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx8.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmcsc10.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi6.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmib10.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr6.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmti12.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmtt12.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/euler/eufm10.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/euler/eusm10.pfb><C:/Users/fabio/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
+Output written on RobEngThesisTemplate.pdf (36 pages, 553796 bytes).
+PDF statistics:
+ 621 PDF objects out of 1000 (max. 8388607)
+ 135 named destinations out of 1000 (max. 500000)
+ 291 words of extra memory for PDF output out of 10000 (max. 10000000)
+
