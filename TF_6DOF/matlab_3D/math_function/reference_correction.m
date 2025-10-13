@@ -15,6 +15,7 @@ function [a, b] = reference_correction(n_cap, alph, bet)
         a = alph;
         b = bet;
     end
+end
 
     % %% Computation
     % d = dot(n_cap, w_body_z);
@@ -37,7 +38,6 @@ function [a, b] = reference_correction(n_cap, alph, bet)
     %     a = alph;
     %     b = bet;
     % end
-end
 
 % Help for pi/2
 % if bet_part < 1e-6
