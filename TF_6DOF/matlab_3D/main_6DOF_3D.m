@@ -1,7 +1,16 @@
 clc; clear; close all;
-addpath('rotation');
-addpath('visualization');
+addpath('controller');
+addpath('ekf_filter');
+addpath('kf_filter');
 addpath('math_function');
+addpath('model');
+addpath('noise');
+addpath('rotation');
+addpath('sensors');
+addpath('state_machine');
+addpath('visualization');
+addpath('world_generator');
+
 
 %% Definition
 IND_H = 1;      ALPHA = 2;      BETA = 3;  
@@ -66,14 +75,15 @@ h_ref = zeros(1, N);
 h_ref(:) = 3;
 
 %% Terrain Parameters
-alpha = pi/5;
-beta = pi/4;
-pplane = [0, 0, 50]';
-n0 = [0, 0, 1]'; % terrain frame
+ext_m_p = 10;
+step_length = 4; % Distance between consecutive planes
+plane = terrain_init(ext_m_p, N, step_length);
+n0 = [0, 0, 1]';
 wRt = zeros(d_dim, d_dim, N);
 wRt_pre = zeros(d_dim, d_dim, N);
 n_pre = zeros(d_dim,N);                 % Surface vector predicted
 n_est = zeros(d_dim, N);                % surface vector estimated
+n_mes = zeros(d_dim, N);                % surface vector measured
 
 %% AUV Parameters 
 prob = zeros(d_dim,N);              % AUV initial position
@@ -92,14 +102,6 @@ wRr_real = zeros(d_dim, d_dim);     % Real robot rotation
 
 % echosonar part
 s = zeros(d_dim,s_dim);                     % Robot echosonar
-Gamma = -pi/8;                              % y1 angle (rear)
-Lambda = pi/8;                              % y2 angle (front)
-Eta = pi/8;                                 % y3 angle (left)
-Zeta = -pi/8;                               % y4 angle (right)
-r_s(:, 1) = [sin(Gamma), 0, cos(Gamma)]';   % y1 versor (rear)
-r_s(:, 2) = [sin(Lambda), 0, cos(Lambda)]'; % y2 versor (front)
-r_s(:, 3) = [0, -sin(Eta), cos(Eta)]';      % y3 versor (left)
-r_s(:, 4) = [0, -sin(Zeta), cos(Zeta)]';    % y4 versor (right)
 
 %% EKF Parameters
 x_pred = zeros(n_dim, N);      % State predicted
@@ -108,10 +110,10 @@ x_true = zeros(n_dim, N);      % True state
 z_meas = zeros(m_dim, N);      % Measurements
 z_pred = zeros(m_dim, N);      % Predicted output
 R = repmat(R_tp, 1, 1, N);     % Observation matrix
-x0 = [10, alpha, beta]';       % True initial state 
-x0_est = zeros(n_dim, 1);      % Estimated initial state
-ni = zeros(m_dim, N);          % Innovation
-S = zeros(m_dim, m_dim, N);    % Covariance Innovation
+x0 = [10, plane(1).alpha, plane(1).beta]';      % True initial state 
+x0_est = zeros(n_dim, 1);                       % Estimated initial state
+ni = zeros(m_dim, N);                           % Innovation
+S = zeros(m_dim, m_dim, N);                     % Covariance Innovation
      
 %% Controller Parameters
 pid = zeros(i_dim, N);              % PID for Dynamics
@@ -161,15 +163,24 @@ for k = 2:N
     %% EKF: Dynamic and Kinematic Model
     % Dynamic model
     [u(:,k)] = dynamic_model(pid(:,k), tau0, speed0, rob_rot(:, k-1), u(:,k-1), Ts, i_dim, u_dot(:,k-1));
+    % [] = kinematic_model();
 
-    %% EKF: Real Measurement
-    % Measurement noise
-    v = mvnrnd(zeros(m_dim,1), R_tp)'; 
+    
+    %% KF -> robot pos and rot update
+    % v_v = ...
     v_a = mvnrnd(zeros(d_dim,1), R_a)';
     [clean_rot(:,k), rob_rot(:,k), wRr_real] = AHRS_measurement(clean_rot(:,k-1), u(:,k), Ts, v_a);
-    [z_meas(:,k), hmes, prob(:,k), R(:,:,k), cmd] = measurament(alpha, beta, pplane, n0, r_s, s_dim, u(:,k), Ts,  ...
-                                                   prob(:,k-1), wRr_real, k, R(:,:,k), cmd);
+    [dvl_speed, prob(:,k)] = DVL_measurament(prob(:,k-1), u(:,k), wRr_real, Ts);
+    % [] = kf_estimation();
 
+    %% Terrain Update
+    t_it = k + ext_m_p;
+    [plane(t_it)] = terrain_generator(plane(t_it - 1), dvl_speed, k, step_length);
+    
+    %% EKF: Real Measurement
+    [z_meas(:,k), hmes, n_mes(:,k), R(:,:,k), cmd] = SBES_measurament(plane, s_dim, prob(:,k), wRr_real, ...
+                                            k, R(:,:,k), cmd, ext_m_p);
+    v = mvnrnd(zeros(m_dim,1), R_tp)'; 
     %%%%%%%%%%%%%%% NO NOISE %%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%% YES NOISE %%%%%%%%%%%%%%%%%%%%%%
     z_meas(:,k) = z_meas(:,k) + v;
@@ -179,8 +190,8 @@ for k = 2:N
     wRr(:,:,k) = rotz(rob_rot(PSI,k))*roty(rob_rot(THETA,k))*rotx(rob_rot(PHI,k)); 
 
     %% EKF: True State update (based on state)
-    % TRUE state estimation
-    x_true(:,k) = [hmes, alpha, beta]';
+    % TRUE state estimation   !!! Va costruito il piano in base a inidici che si salva per i diversi sensori
+    % x_true(:,k) = [hmes, plane.alpha, plane.beta]';
 
     %% EKF: Prediction
     % State prediction
@@ -197,15 +208,7 @@ for k = 2:N
     P_pred = F * P * F' + Q;
 
     %% Sensors Computation
-    % Expected sensor values for the expected output
-    for j = 1:s_dim
-        % Update sensor value
-        s(:,j) = wRr(:,:,k) * r_s(:,j);
-        if (norm(s(:,j)) ~= 1)
-            printDebug('ALERT: Norm Predicted SENSOR %.0f has been normalized\n', j)
-            s(:,j) = vector_normalization(s(:,j));
-        end
-    end
+    s = SBES_definition(wRr(:,:,k));
 
     %% Norm to the terrain
     n_pre(:,k) = wRt_pre(:,:,k)*n0;
@@ -254,8 +257,9 @@ for k = 2:N
     cmd = goal_controller(cmd, x_est(:,k), rob_rot(:,k), goal(k), N, state(k), k, d_dim);
 end
 
-%% Plotting
-% States
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%% Plotting %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% States
 ttl = {'altitude', 'alpha', 'beta'};
 for i = 1:n_dim
     figure;
@@ -276,7 +280,7 @@ for i = 1:n_dim
     hold off;
 end
 
-% Robot angles
+%% Robot angles
 ttl = {'roll', 'pitch', 'yaw'};
 for i = 1:d_dim
     figure;
@@ -295,7 +299,7 @@ for i = 1:d_dim
     hold off;
 end
 
-% Inputs
+%% Inputs
 ttl = {'u input', 'v input', 'w input', 'p input', 'q input', 'r input'};
 for i = 1:i_dim
     figure;
@@ -311,7 +315,26 @@ for i = 1:i_dim
     hold off;
 end
 
-% Points
+%% Z axis if parallel
+% tutto riferito a world frame
+aa12 = acosd(abs(dot(n_est', n_mes')))'; % tra n estimato e n da misure
+aa13 = acosd(abs(dot(n_est', n')))'; % tra n estimato e n rob
+aa23 = acosd(abs(dot(n_mes', n3')))'; % tra n da misure e n rob
+
+figure; hold on; grid on;
+plot(time, aa12, 'r', 'LineWidth', 1.5);
+plot(time, aa13, 'g', 'LineWidth', 1.5);
+plot(time, aa23, 'b', 'LineWidth', 1.5);
+
+xlabel('Tempo [s]');
+ylabel('Angolo tra normali [°]');
+title('Parallelismo tra le normali dei piani nel tempo');
+legend('\theta_{12}','\theta_{13}','\theta_{23}');
+ylim([0 10]); % adatta in base ai tuoi dati
+hold off;
+grid off;
+
+%% Points
 figure;
 scatter3(prob(1,:), prob(2,:), prob(3,:), [], time);
 colorbar; 
