@@ -11,8 +11,7 @@ addpath('state_machine');
 addpath('visualization');
 addpath('world_generator');
 
-
-%% Definition
+%% Global Variables Definition
 IND_H = 1;      ALPHA = 2;      BETA = 3;  
 global PHI; global THETA; global PSI;          
 PHI = 1;        THETA = 2;      PSI = 3;  
@@ -21,7 +20,7 @@ SURGE = 1;  SWAY = 2;   HEAVE = 3;
 global ROLL; global PITCH; global YAW;
 ROLL = 4;   PITCH = 5;  YAW = 6;
 
-%% Filter Parameters
+%% Simulation Parameters
 Ts = 0.001;         % Sampling time [s]
 Tf = 40;            % Final time [s]
 time = 0:Ts:Tf;     % Time vector
@@ -67,18 +66,23 @@ w_dim = 6;          % world dimension
 index_N = round(N/2);
 global h_ref;
 h_ref = zeros(1, N);
-%%%%%%%%% CHANGE ALTITUDE %%%%%%%%%%%
+%%%%%%%%% CHANGE ALTITUDE GOAL %%%%%%%%%%%
 % index_N = round(N/2);
 % h_ref(1:index_N) = ;
 % h_ref(index_N:end) = 4;
-%%%%%%%%% NO CHANGE %%%%%%%%%%%%%%%%%
-h_ref(:) = 3;
+%%%%%%%%% NO CHANGE %%%%%%%%%%%%%%%%%%%%%%
+h_ref(:) = 3; % real goal 1:3
 
 %% Terrain Parameters
-ext_m_p = 10;
-step_length = 4; % Distance between consecutive planes
-plane = terrain_init(ext_m_p, N, step_length);
+ext_m_p = 12; % Initial dynamic allocation
+step_length = 0.8; % Distance between consecutive planes
 n0 = [0, 0, 1]';
+pp_init = [-4; 4; -5];
+
+% terrain generation
+plane = terrain_init(pp_init, ext_m_p, N, step_length);
+
+% terrain variable estimation
 wRt = zeros(d_dim, d_dim, N);
 wRt_pre = zeros(d_dim, d_dim, N);
 n_pre = zeros(d_dim,N);                 % Surface vector predicted
@@ -94,22 +98,22 @@ u_dot = zeros(i_dim,N);             % AUV acceleration
 
 % robot angles
 rob_rot = zeros(d_dim, N);          % Robot angles roll, pitch, yaw
-clean_rot = zeros(d_dim,N);         % NO Noise Rotation
+clean_rot = zeros(d_dim,N);         % NO Noise Rotation for real state
 
 % robot rotations
 wRr = zeros(d_dim, d_dim, N);       % Robot in world rotation
 wRr_real = zeros(d_dim, d_dim);     % Real robot rotation
 
 % echosonar part
-s = zeros(d_dim,s_dim);                     % Robot echosonar
+s = zeros(d_dim,s_dim);             % Robot echosonar
 
 %% EKF Parameters
-x_pred = zeros(n_dim, N);      % State predicted
-x_est = zeros(n_dim, N);       % Estimated state
-x_true = zeros(n_dim, N);      % True state
-z_meas = zeros(m_dim, N);      % Measurements
-z_pred = zeros(m_dim, N);      % Predicted output
-R = repmat(R_tp, 1, 1, N);     % Observation matrix
+x_pred = zeros(n_dim, N);                       % State predicted
+x_est = zeros(n_dim, N);                        % Estimated state
+x_true = zeros(n_dim, N);                       % True state
+z_meas = zeros(m_dim, N);                       % Measurements
+z_pred = zeros(m_dim, N);                       % Predicted output
+R = repmat(R_tp, 1, 1, N);                      % Observation matrix
 x0 = [10, plane(1).alpha, plane(1).beta]';      % True initial state 
 x0_est = zeros(n_dim, 1);                       % Estimated initial state
 ni = zeros(m_dim, N);                           % Innovation
@@ -164,30 +168,45 @@ for k = 2:N
     % Dynamic model
     [u(:,k)] = dynamic_model(pid(:,k), tau0, speed0, rob_rot(:, k-1), u(:,k-1), Ts, i_dim, u_dot(:,k-1));
     % [] = kinematic_model();
-
     
     %% KF -> robot pos and rot update
-    % v_v = ...
-    v_a = mvnrnd(zeros(d_dim,1), R_a)';
-    [clean_rot(:,k), rob_rot(:,k), wRr_real] = AHRS_measurement(clean_rot(:,k-1), u(:,k), Ts, v_a);
+    % noise of sensors
+    
+    
+
+    % sensors measurament
+    [clean_rot(:,k), wRr_real] = AHRS_measurement(clean_rot(:,k-1), u(:,k), Ts);
+    %%%%%%%%%%%%%%% NO NOISE FOR AHRS %%%%%%%%%%%%%%%%%%%%%%%
+    % rob_rot(:,k) = clean_rot(:,k);                        %
+    %%%%%%%%%%%%%%% YES NOISE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    v_ahrs = mvnrnd(zeros(d_dim,1), R_a)';
+    rob_rot(:,k) = clean_rot(:,k) + v_ahrs;
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     [dvl_speed, prob(:,k)] = DVL_measurament(prob(:,k-1), u(:,k), wRr_real, Ts);
+    %%%%%%%%%%%%%%% NO NOISE FOR DVL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % I do not have a localization problem -> needed only for the sensors %
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    % Kalman Filter for best estimation
     % [] = kf_estimation();
 
-    %% Terrain Update
+    % Robot rotation matrix computation
+    wRr(:,:,k) = rotz(rob_rot(PSI,k))*roty(rob_rot(THETA,k))*rotx(rob_rot(PHI,k));
+
+    %% Terrain Dynamic Update
     t_it = k + ext_m_p;
     [plane(t_it)] = terrain_generator(plane(t_it - 1), dvl_speed, k, step_length);
     
     %% EKF: Real Measurement
     [z_meas(:,k), hmes, n_mes(:,k), R(:,:,k), cmd] = SBES_measurament(plane, s_dim, prob(:,k), wRr_real, ...
                                             k, R(:,:,k), cmd, ext_m_p);
-    v = mvnrnd(zeros(m_dim,1), R_tp)'; 
-    %%%%%%%%%%%%%%% NO NOISE %%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%% YES NOISE %%%%%%%%%%%%%%%%%%%%%%
-    z_meas(:,k) = z_meas(:,k) + v;
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    % Robot rotation matrix computation
-    wRr(:,:,k) = rotz(rob_rot(PSI,k))*roty(rob_rot(THETA,k))*rotx(rob_rot(PHI,k)); 
+    
+    %%%%%%%%%%%%%%% NO NOISE FOR SBES %%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%% YES NOISE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    v_sbes = mvnrnd(zeros(m_dim,1), R_tp)'; 
+    z_meas(:,k) = z_meas(:,k) + v_sbes;
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
     %% EKF: True State update (based on state)
     % TRUE state estimation   !!! Va costruito il piano in base a inidici che si salva per i diversi sensori
@@ -234,8 +253,7 @@ for k = 2:N
     z_pred(:,k) = h(x_pred(:,k), s, s_dim, m_dim, n_pre(:,k));      
 
     %% EKF: State Update
-    % State 
-    % Innovation
+    % State Innovation
     ni(:,k) = (z_meas(:,k) - z_pred(:,k));
     % State Estimated
     x_est(:,k) = x_pred(:,k) + K * ni(:,k);
@@ -243,7 +261,7 @@ for k = 2:N
     P = (eye(n_dim) - K * H) * P_pred;
 
     %% Rotation Update 
-    % terrain
+    % terrain rotation
     wRt(:,:,k) = rotz(0)*roty(x_est(BETA, k))*rotx(x_est(ALPHA,k))*rotx(pi);
 
     %% Check for Z direction
@@ -315,24 +333,24 @@ for i = 1:i_dim
     hold off;
 end
 
-%% Z axis if parallel
+%% Z axis i f parallel
 % tutto riferito a world frame
-aa12 = acosd(abs(dot(n_est', n_mes')))'; % tra n estimato e n da misure
-aa13 = acosd(abs(dot(n_est', n')))'; % tra n estimato e n rob
-aa23 = acosd(abs(dot(n_mes', n3')))'; % tra n da misure e n rob
-
-figure; hold on; grid on;
-plot(time, aa12, 'r', 'LineWidth', 1.5);
-plot(time, aa13, 'g', 'LineWidth', 1.5);
-plot(time, aa23, 'b', 'LineWidth', 1.5);
-
-xlabel('Tempo [s]');
-ylabel('Angolo tra normali [°]');
-title('Parallelismo tra le normali dei piani nel tempo');
-legend('\theta_{12}','\theta_{13}','\theta_{23}');
-ylim([0 10]); % adatta in base ai tuoi dati
-hold off;
-grid off;
+% aa12 = acosd(abs(dot(n_est', n_mes')))'; % tra n estimato e n da misure
+% aa13 = acosd(abs(dot(n_est', n')))'; % tra n estimato e n rob
+% aa23 = acosd(abs(dot(n_mes', n3')))'; % tra n da misure e n rob
+% 
+% figure; hold on; grid on;
+% plot(time, aa12, 'r', 'LineWidth', 1.5);
+% plot(time, aa13, 'g', 'LineWidth', 1.5);
+% plot(time, aa23, 'b', 'LineWidth', 1.5);
+% 
+% xlabel('Tempo [s]');
+% ylabel('Angolo tra normali [°]');
+% title('Parallelismo tra le normali dei piani nel tempo');
+% legend('\theta_{12}','\theta_{13}','\theta_{23}');
+% ylim([0 10]); % adatta in base ai tuoi dati
+% hold off;
+% grid off;
 
 %% Points
 figure;

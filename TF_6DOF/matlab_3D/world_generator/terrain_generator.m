@@ -1,10 +1,11 @@
 function [pl] = terrain_generator(old_pl, vel_w, ii, step_length)
     %% Initialization of terrain planes
     delta_limit = pi/3;
-    angle_range = [-pi/3, pi/3];
+    angle_range = [-pi/4, pi/4]; % limitation in changes
     n0 = [0; 0; 1]; 
     pl = old_pl;
-    rate_of_change = 35;
+    % Se cambi rate of change -> cambia condizione SBES !!!
+    rate_of_change = 10;
 
     %% Computation of terrain planes
     valid = false;
@@ -17,6 +18,7 @@ function [pl] = terrain_generator(old_pl, vel_w, ii, step_length)
             end
         end   
     else
+        % Se reintroddotte -> togliere controllo piano ogni tot.
         % small angle changes !!! NON ADESSO !!!
         % pl.alpha = old_pl.alpha + 0.1 * sin(0.1 * ii) + 0.1 * randn;
         % pl.beta = old_pl.beta + 0.1 * sin(0.1 * ii) + 0.1 * randn;

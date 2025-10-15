@@ -1,3 +1,6 @@
 [submodule "ttf_ros"]
 	path = ttf_ros
 	url = https://github.com/fabiogueunige/ttf_ros.git
+[submodule "ttf_writing"]
+	path = ttf_writing
+	url = https://github.com/fabiogueunige/ttf_writing.git

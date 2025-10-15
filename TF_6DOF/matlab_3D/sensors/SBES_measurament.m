@@ -6,6 +6,9 @@ function [ymes, h_real, n_new, Rm, command] = SBES_measurament(planes, num_s, pr
 
     s = SBES_definition(wRr);
 
+    %%%% Cambai se cambia nel genrator
+    rate_of_change = 1;
+
     %% Init
     plane_contact_idx = zeros(1, num_s);
     h_real = 0;
@@ -16,7 +19,7 @@ function [ymes, h_real, n_new, Rm, command] = SBES_measurament(planes, num_s, pr
 
     %% Computation 
     for j = 1:num_s
-        for ii = 1 : (k + e_mem - 1)
+        for ii = 1 : rate_of_change : (k + e_mem - 1)
             % fare condizione if con punti pre e successicìvi
             if dot(s(:,j),planes(ii).n_w) ~= 0
                 t_temp = -(dot((pr - planes(ii).point_w),planes(ii).n_w))/(dot(s(:,j),planes(ii).n_w));

@@ -1,11 +1,11 @@
-function [planes] = terrain_init(ext_mem, nIte, st_length)
+function [planes] = terrain_init(p_init, ext_mem, nIte, st_length)
     % Initialization of terrain planes
     n0 = [0; 0; 1]; 
 
     %% Struct initial definition
     pl.alpha = 0; 
     pl.beta = 0; 
-    pl.point = [-15; 15; -15];
+    pl.point = p_init;
     pl.dir_w = [1, 1, 0]';
 
     %% n in inertial frame
