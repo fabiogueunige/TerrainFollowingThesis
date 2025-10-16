@@ -1,12 +1,14 @@
-function [planes] = terrain_init(p_init, ext_mem, nIte, st_length)
-    % Initialization of terrain planes
+function [planes, current_idx] = terrain_init(p_init, p_robot, max_planes, step_length)
+    % Initialization of terrain planes with circular buffer
+    % Creates first plane and delegates generation to terrain_generator
     n0 = [0; 0; 1]; 
 
-    %% Struct initial definition
+    %% Struct initial definition - First plane
     pl.alpha = 0; 
     pl.beta = 0; 
     pl.point = p_init;
-    pl.dir_w = [1, 1, 0]';
+    pl.dir_w = [1; -1; 0];
+    pl.dir_w = vector_normalization(pl.dir_w);
 
     %% n in inertial frame
     wRs = (rotz(0)*roty(pl.beta)*rotx(pl.alpha))*rotx(pi);
@@ -17,12 +19,18 @@ function [planes] = terrain_init(p_init, ext_mem, nIte, st_length)
     end
     pl.point_w = wRs*pl.point; % in world frame
 
+    %% Pre-allocate array with first plane
+    planes(1:max_planes) = pl;
+    current_idx = 1;
 
-    dim = nIte + ext_mem * 2; % Extra space for prev and future planes
-    planes(1:dim) = pl;
-
-    %% Generate the first ext_mem planes before the start point
-    for ii = 2:ext_mem
-        planes(ii) = terrain_generator(planes(ii-1), [1;1;0], ii, st_length);
-    end
+    %% Generate initial planes using terrain_generator
+    % Initial velocity direction for generation
+    initial_vel = [1; 1; 0];
+    initial_vel = vector_normalization(initial_vel);
+    
+    % Single call to terrain_generator - it will generate all needed planes
+    % with the while loop until 20m coverage is reached
+    [planes, current_idx] = terrain_generator(planes, p_robot, initial_vel, current_idx, step_length, max_planes);
+    
+    printDebug('Terrain initialized with %d planes\n', current_idx);
 end

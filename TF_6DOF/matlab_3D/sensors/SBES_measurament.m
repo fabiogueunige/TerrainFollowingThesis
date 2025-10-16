@@ -1,70 +1,99 @@
 function [ymes, h_real, n_new, Rm, command] = SBES_measurament(planes, num_s, pr, wRr, ...
-                    k, Rm, command,e_mem) 
+                    t_idx, Rm, command, ite) 
     %% Definition
     printDebug('       SBES Measurament:\n');
     check = [command.contact1, command.contact2, command.contact3, command.contact4];
 
     s = SBES_definition(wRr);
 
-    %%%% Cambai se cambia nel genrator
-    rate_of_change = 1;
-
     %% Init
     plane_contact_idx = zeros(1, num_s);
-    h_real = 0;
+    h_real = inf;  % Use inf for minimum search
     t_star = zeros(1, num_s);
     p_int = zeros(3, num_s);
     y = zeros(1, num_s);
     command.sensor_fail = 0;
-
-    %% Computation 
+    
+    %% Search range - only check recently generated planes
+    % Search backwards from current index for efficiency
+    search_range = 200;  % Number of planes to check
+    max_planes = length(planes);
+    
+    %% Computation - for each sensor
     for j = 1:num_s
-        for ii = 1 : rate_of_change : (k + e_mem - 1)
-            % fare condizione if con punti pre e successicìvi
-            if dot(s(:,j),planes(ii).n_w) ~= 0
-                t_temp = -(dot((pr - planes(ii).point_w),planes(ii).n_w))/(dot(s(:,j),planes(ii).n_w));
-                int_p = pr + t_temp*s(:, j);
-                if intersection_check(planes(ii + 1).point_w, planes(ii).point_w, int_p, planes(ii).dir_w)
-                    if t_temp > 0 && (t_temp < t_star(:,j) || t_star(:,j) <= 0)
-                        t_star(:, j) = t_temp;
-                        plane_contact_idx(j) = ii;
+        t_star(j) = inf;  % Initialize with inf for minimum search
+        
+        % Search through planes in circular buffer
+        for ii = 1:max_planes
+            
+            % Check if sensor ray intersects with plane
+            ray_plane_dot = dot(s(:,j), planes(ii).n_w);
+            
+            if abs(ray_plane_dot) > 1e-10  % Not parallel (with tolerance)
+                % Calculate intersection parameter t
+                t_temp = -dot((pr - planes(ii).point_w), planes(ii).n_w) / ray_plane_dot;
+
+                % Calculate altitude for this plane
+                h_tmp = abs(planes(ii).n_w' * (pr - planes(ii).point_w)) / norm(planes(ii).n_w);
+                if h_tmp < h_real
+                    h_real = h_tmp;
+                end
+                
+                % Only consider positive t
+                if t_temp > 0
+                    % Calculate intersection point
+                    int_p = pr + t_temp * s(:, j);
+                    
+                    % Get next plane index for boundary check
+                    next_ii = ii + 1;
+                    if next_ii > max_planes
+                        next_ii = 1;
                     end
-                    h_tmp = (planes(ii).n_w'*(pr - planes(ii).point_w))/(norm(planes(ii).n_w));
-                    if h_tmp > 0 && (h_tmp < h_real || h_real == 0)
-                        h_real = h_tmp;
-                    end
-                else 
-                    if t_star(:,j) <= 0
-                        t_star(:,j) = -3; % identification code
+                    
+                    % Check if intersection is within plane segment
+                    if intersection_check(planes(next_ii).point_w, planes(ii).point_w, int_p, planes(ii).dir_w)
+                        % Keep the closest intersection
+                        if t_temp < t_star(j)
+                            t_star(j) = t_temp;
+                            plane_contact_idx(j) = ii;
+                        end
                     end
                 end
-            end   
+            end
         end
 
-        % Value check
-        if t_star(:,j) <= 0
-            Rm(:,:) = Rm(:,:)*150;
-            fprintf('Error with t value = %.3f ', t_star(:,j));
-            error('Error for sensor %.0f\n',j);
+        %% Value check
+        if isinf(t_star(j)) || t_star(j) <= 0
+            Rm(:,:) = Rm(:,:) * 150;
+            fprintf('Error: No valid intersection for sensor %d at iteration %d\n', j, ite);
+            % error('Error for sensor %.0f\n', j);
+            % graphical check
+            [n_new, gen_point] = plane_computation(t_star, p_int);
+            m_visualization(pr, gen_point, n_new, num_s, p_int, wRr, ite);
             check(j) = false;
             command.sensor_fail = command.sensor_fail + 1;
         else
             check(j) = true;
+            % Calculate final intersection point and measurement
+            p_int(:, j) = pr + t_star(j) * s(:, j);
+            y(j) = t_star(j);  % Distance is already t
         end
-
-        % Intersection point and measure
-        p_int(:, j) = pr + t_star(:, j)*s(:, j);
-        y(j) = norm(t_star(:, j));
+    end
+    
+    % Handle case where no valid altitude was found
+    if isinf(h_real)
+        h_real = 100;
     end
 
-    %% Plane of the 4 mes generation
-    [n_new, gen_point] = plane_computation(t_star(:,:), p_int(:,:));
+    %% Plane of the 4 measurements generation
+    [n_new, gen_point] = plane_computation(t_star, p_int);
 
     %% Plot visualization
-    if k == 2 || mod(k, 2000) == 0
-        m_visualization(pr, gen_point, n_new, num_s, p_int, wRr, k);
+    if mod(ite, 2000) == 0 || ite == 30
+        m_visualization(pr, gen_point, n_new, num_s, p_int, wRr, ite);
     end
 
+    %% Update command structure
     command.contact1 = check(1);
     command.contact2 = check(2);
     command.contact3 = check(3);
@@ -72,8 +101,65 @@ function [ymes, h_real, n_new, Rm, command] = SBES_measurament(planes, num_s, pr
 
     %% Sending Info's
     ymes = [y(1); y(2); y(3); y(4)];
-    printDebug('h reale: %.3f | y1m: %.3f | y2m: %.3f | y3m: %.3f | y4m: %.3f\n', h_real, y(1), y(2), y(3), y(4));
+    printDebug('h real: %.3f | y1: %.3f | y2: %.3f | y3: %.3f | y4: %.3f\n', ...
+               h_real, y(1), y(2), y(3), y(4));
 
 end
 
 
+% search_range = 200;  % Number of planes to check
+%     max_planes = length(planes);
+% 
+%     %% Computation - for each sensor
+%     for j = 1:num_s
+%         t_star(j) = inf;  % Initialize with inf for minimum search
+% 
+%         % Search through planes in circular buffer
+%         for offset = 0:search_range-1
+%             ii = t_idx - offset;
+% 
+%             % Handle circular buffer wrap-around
+%             if ii < 1
+%                 ii = ii + max_planes;
+%             end
+% 
+%             % Skip if we've wrapped around to uninitialized planes
+%             if ii > t_idx && offset > 0
+%                 break;
+%             end
+% 
+%             % Check if sensor ray intersects with plane
+%             ray_plane_dot = dot(s(:,j), planes(ii).n_w);
+% 
+%             if abs(ray_plane_dot) > 1e-10  % Not parallel (with tolerance)
+%                 % Calculate intersection parameter t
+%                 t_temp = -dot((pr - planes(ii).point_w), planes(ii).n_w) / ray_plane_dot;
+% 
+%                 % Only consider positive t (forward direction)
+%                 if t_temp > 0
+%                     % Calculate intersection point
+%                     int_p = pr + t_temp * s(:, j);
+% 
+%                     % Get next plane index for boundary check
+%                     next_ii = ii + 1;
+%                     if next_ii > max_planes
+%                         next_ii = 1;
+%                     end
+% 
+%                     % Check if intersection is within plane segment
+%                     if intersection_check(planes(next_ii).point_w, planes(ii).point_w, int_p, planes(ii).dir_w)
+%                         % Keep the closest intersection
+%                         if t_temp < t_star(j)
+%                             t_star(j) = t_temp;
+%                             plane_contact_idx(j) = ii;
+% 
+%                             % Calculate altitude for this plane
+%                             h_tmp = abs(planes(ii).n_w' * (pr - planes(ii).point_w)) / norm(planes(ii).n_w);
+%                             if h_tmp < h_real
+%                                 h_real = h_tmp;
+%                             end
+%                         end
+%                     end
+%                 end
+%             end
+%         end

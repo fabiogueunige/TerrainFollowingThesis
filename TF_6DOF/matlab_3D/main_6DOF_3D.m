@@ -58,6 +58,7 @@ i_dim = 6;          % Number of inputs
 d_dim = 3;          % world space total dimensions
 s_dim = 4;          % number of echosonar
 w_dim = 6;          % world dimension
+t_dim = 1000;       % terrain sampling
 
 %% Noise
 [Q, R_tp, R_a] = noise_setup(n_dim, m_dim, d_dim);
@@ -72,22 +73,6 @@ h_ref = zeros(1, N);
 % h_ref(index_N:end) = 4;
 %%%%%%%%% NO CHANGE %%%%%%%%%%%%%%%%%%%%%%
 h_ref(:) = 3; % real goal 1:3
-
-%% Terrain Parameters
-ext_m_p = 12; % Initial dynamic allocation
-step_length = 0.8; % Distance between consecutive planes
-n0 = [0, 0, 1]';
-pp_init = [-4; 4; -5];
-
-% terrain generation
-plane = terrain_init(pp_init, ext_m_p, N, step_length);
-
-% terrain variable estimation
-wRt = zeros(d_dim, d_dim, N);
-wRt_pre = zeros(d_dim, d_dim, N);
-n_pre = zeros(d_dim,N);                 % Surface vector predicted
-n_est = zeros(d_dim, N);                % surface vector estimated
-n_mes = zeros(d_dim, N);                % surface vector measured
 
 %% AUV Parameters 
 prob = zeros(d_dim,N);              % AUV initial position
@@ -106,6 +91,22 @@ wRr_real = zeros(d_dim, d_dim);     % Real robot rotation
 
 % echosonar part
 s = zeros(d_dim,s_dim);             % Robot echosonar
+
+%% Terrain Parameters
+max_planes = 500; % Circular buffer size
+step_length = 2; % Distance between consecutive planes
+n0 = [0, 0, 1]';
+pp_init = [-8; 8; -15];
+
+% terrain generation
+[plane, t_idx] = terrain_init(pp_init, prob(:,1), max_planes, step_length);
+
+% terrain variable estimation
+wRt = zeros(d_dim, d_dim, N);
+wRt_pre = zeros(d_dim, d_dim, N);
+n_pre = zeros(d_dim,N);                 % Surface vector predicted
+n_est = zeros(d_dim, N);                % surface vector estimated
+n_mes = zeros(d_dim, N);                % surface vector measured
 
 %% EKF Parameters
 x_pred = zeros(n_dim, N);                       % State predicted
@@ -170,10 +171,6 @@ for k = 2:N
     % [] = kinematic_model();
     
     %% KF -> robot pos and rot update
-    % noise of sensors
-    
-    
-
     % sensors measurament
     [clean_rot(:,k), wRr_real] = AHRS_measurement(clean_rot(:,k-1), u(:,k), Ts);
     %%%%%%%%%%%%%%% NO NOISE FOR AHRS %%%%%%%%%%%%%%%%%%%%%%%
@@ -195,12 +192,11 @@ for k = 2:N
     wRr(:,:,k) = rotz(rob_rot(PSI,k))*roty(rob_rot(THETA,k))*rotx(rob_rot(PHI,k));
 
     %% Terrain Dynamic Update
-    t_it = k + ext_m_p;
-    [plane(t_it)] = terrain_generator(plane(t_it - 1), dvl_speed, k, step_length);
+    [plane, t_idx] = terrain_generator(plane, prob(:,k), dvl_speed, t_idx, step_length, max_planes);
     
     %% EKF: Real Measurement
     [z_meas(:,k), hmes, n_mes(:,k), R(:,:,k), cmd] = SBES_measurament(plane, s_dim, prob(:,k), wRr_real, ...
-                                            k, R(:,:,k), cmd, ext_m_p);
+                                            t_idx, R(:,:,k), cmd, k);
     
     %%%%%%%%%%%%%%% NO NOISE FOR SBES %%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%% YES NOISE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -270,6 +266,9 @@ for k = 2:N
         n_est(:,k) = vector_normalization(n_est(:,k));
     end
     [x_est(ALPHA,k), x_est(BETA, k)] = reference_correction(n_est(:,k),x_est(ALPHA,k), x_est(BETA,k));
+    % if n_est(3,k) > 0
+    %     warning('Normal still pointing upward at iteration %d!', k);
+    % end
 
     %% State Machine Check of Results
     cmd = goal_controller(cmd, x_est(:,k), rob_rot(:,k), goal(k), N, state(k), k, d_dim);
@@ -334,23 +333,24 @@ for i = 1:i_dim
 end
 
 %% Z axis i f parallel
-% tutto riferito a world frame
-% aa12 = acosd(abs(dot(n_est', n_mes')))'; % tra n estimato e n da misure
-% aa13 = acosd(abs(dot(n_est', n')))'; % tra n estimato e n rob
-% aa23 = acosd(abs(dot(n_mes', n3')))'; % tra n da misure e n rob
-% 
-% figure; hold on; grid on;
-% plot(time, aa12, 'r', 'LineWidth', 1.5);
-% plot(time, aa13, 'g', 'LineWidth', 1.5);
-% plot(time, aa23, 'b', 'LineWidth', 1.5);
-% 
-% xlabel('Tempo [s]');
-% ylabel('Angolo tra normali [°]');
-% title('Parallelismo tra le normali dei piani nel tempo');
-% legend('\theta_{12}','\theta_{13}','\theta_{23}');
-% ylim([0 10]); % adatta in base ai tuoi dati
-% hold off;
-% grid off;
+% tutto riferito a world frame -> Se rimangono vicine sono paralleli
+aa12 = zeros(1,N);
+aa13 = aa12; aa23 = aa12;
+for i = 1:N
+    aa12(i) = acosd(abs(dot(n_est(:,i)', n_mes(:,i)')))'; % tra n estimato e n da misure
+    aa13(i) = acosd(abs(dot(n_est(:,i)', wRr(:,3,i)')))'; % tra n estimato e n rob
+    aa23(i) = acosd(abs(dot(n_mes(:,i)', wRr(:,3,i)')))'; % tra n da misure e n rob
+end
+
+figure; hold on; grid on;
+plot(time, aa12, 'r', 'LineWidth', 1.5, 'DisplayName', 'estimato Vs misure');
+plot(time, aa13, 'g', 'LineWidth', 1.5, 'DisplayName', 'estimato Vs robot');
+plot(time, aa23, 'b', 'LineWidth', 1.5, 'DisplayName', 'misure Vs robot');
+xlabel('Tempo [s]');
+ylabel('Angolo tra normali [°]');
+title('Parallelismo tra le normali dei piani nel tempo');
+hold off;
+grid off;
 
 %% Points
 figure;

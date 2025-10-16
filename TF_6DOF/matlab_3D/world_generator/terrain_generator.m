@@ -1,42 +1,74 @@
-function [pl] = terrain_generator(old_pl, vel_w, ii, step_length)
-    %% Initialization of terrain planes
-    delta_limit = pi/3;
-    angle_range = [-pi/4, pi/4]; % limitation in changes
+function [planes, current_idx] = terrain_generator(planes, p_robot, vel_w, current_idx, step_length, max_planes)
+    %% Dynamic terrain generation with circular buffer
+    % Generates new plane when robot moves forward
+    % Uses circular buffer of size max_planes
+    
+    delta_limit = pi/5;
+    angle_range = [-pi/3, pi/3];
     n0 = [0; 0; 1]; 
-    pl = old_pl;
-    % Se cambi rate of change -> cambia condizione SBES !!!
-    rate_of_change = 10;
-
-    %% Computation of terrain planes
-    valid = false;
-    if mod(ii, rate_of_change) == 0
-        while ~valid
-            pl.alpha = (angle_range(2)-angle_range(1))*rand + angle_range(1);
-            pl.beta = (angle_range(2)-angle_range(1))*rand + angle_range(1);
-            if abs(pl.alpha - old_pl.alpha) <= delta_limit && abs(pl.beta - old_pl.beta) <= delta_limit
-                valid = true;
+    rate_of_change = 4;
+    min_distance = 10;
+    
+    %% Check if we need to generate a new plane
+    % Calculate distance from robot to furthest plane
+    furthest_distance = planes(current_idx).point_w - p_robot;
+    
+    % Generate new planes until we have at least 20m ahead
+    while furthest_distance(1) < min_distance &&  furthest_distance(2) < min_distance   % Keep at least 10m ahead
+        % Increment index (circular)
+        current_idx = current_idx + 1;
+        if current_idx > max_planes
+            current_idx = 1;  % Wrap around to beginning
+        end
+        
+        % Get previous plane index
+        prev_idx = current_idx - 1;
+        if prev_idx < 1
+            prev_idx = max_planes;
+        end
+        
+        %% Generate new plane angles
+        if mod(current_idx, rate_of_change) == 0
+            valid = false;
+            while ~valid
+                new_alpha = (angle_range(2)-angle_range(1))*rand + angle_range(1);
+                new_beta = (angle_range(2)-angle_range(1))*rand + angle_range(1);
+                if abs(new_alpha - planes(prev_idx).alpha) <= delta_limit && ...
+                   abs(new_beta - planes(prev_idx).beta) <= delta_limit
+                    planes(current_idx).alpha = new_alpha;
+                    planes(current_idx).beta = new_beta;
+                    valid = true;
+                end
             end
-        end   
-    else
-        % Se reintroddotte -> togliere controllo piano ogni tot.
-        % small angle changes !!! NON ADESSO !!!
-        % pl.alpha = old_pl.alpha + 0.1 * sin(0.1 * ii) + 0.1 * randn;
-        % pl.beta = old_pl.beta + 0.1 * sin(0.1 * ii) + 0.1 * randn;
+        else
+            planes(current_idx).alpha = planes(prev_idx).alpha;
+            planes(current_idx).beta = planes(prev_idx).beta;
+        end
+        
+        %% Definition in inertial frame
+        wRs = (rotz(0)*roty(planes(current_idx).beta)*rotx(planes(current_idx).alpha))*rotx(pi);
+        planes(current_idx).n_w = wRs * n0;
+        if (norm(planes(current_idx).n_w) ~= 1)
+            planes(current_idx).n_w = vector_normalization(planes(current_idx).n_w);
+            printDebug('n: [%.4f; %.4f; %.4f]\n', planes(current_idx).n_w(1), ...
+                       planes(current_idx).n_w(2), planes(current_idx).n_w(3));
+        end
+        
+        %% Plane point definition
+        % Direction based on velocity projected on plane
+        dir_w = vel_w - (vel_w' * planes(current_idx).n_w) * planes(current_idx).n_w;
+        if norm(dir_w) > 0
+            dir_w = vector_normalization(dir_w);
+        else
+            dir_w = planes(prev_idx).dir_w;  % Keep previous direction
+        end
+        planes(current_idx).dir_w = dir_w;
+        
+        % New point at step_length distance from previous
+        planes(current_idx).point_w = planes(prev_idx).point_w + step_length * dir_w;
+        planes(current_idx).point = wRs' * planes(current_idx).point_w;
+        
+        % Update distance for next iteration
+        furthest_distance = planes(current_idx).point_w - p_robot;
     end
-
-    % Definition in inertial frame
-    wRs = (rotz(0)*roty(pl.beta)*rotx(pl.alpha))*rotx(pi);
-    pl.n_w = wRs * n0; % in world frame    
-    if (norm(pl.n_w) ~= 1)
-        pl.n_w = vector_normalization(pl.n_w);
-        printDebug('n: [%.4f; %.4f; %.4f]\n', pl.n_w(1), pl.n_w(2), pl.n_w(3));
-    end
-
-    %% Plane point definition
-    % direzione avanzamento !!! vel_dir deve essere del robot nel frame del terreno !!!
-    dir_w = vel_w - (vel_w' * pl.n_w) * pl.n_w; % componente della velocità sul piano
-    dir_w = vector_normalization(dir_w);
-    pl.point_w = old_pl.point_w + step_length * dir_w; % punto sul piano nel frame del mondo
-    % point in terrain frame
-    pl.point = wRs' * pl.point_w;
 end 
