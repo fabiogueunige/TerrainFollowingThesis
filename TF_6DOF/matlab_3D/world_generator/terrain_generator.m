@@ -1,10 +1,14 @@
-function [planes, current_idx] = terrain_generator(planes, p_robot, vel_w, current_idx, step_length, max_planes)
+function [planes, current_idx] = terrain_generator(planes, p_robot, vel_w, current_idx, step_length, max_planes, l_ite)
     %% Dynamic terrain generation with circular buffer
     % Generates new plane when robot moves forward
     % Uses circular buffer of size max_planes
     
-    delta_limit = pi/5;
-    angle_range = [-pi/3, pi/3];
+    delta_limit = pi/4;
+    if l_ite < 30
+        angle_range = [-pi/6, pi/6];
+    else
+        angle_range = [-pi/4, pi/4];% [-pi/3, pi/3];
+    end
     n0 = [0; 0; 1]; 
     rate_of_change = 4;
     min_distance = 10;
@@ -66,7 +70,6 @@ function [planes, current_idx] = terrain_generator(planes, p_robot, vel_w, curre
         
         % New point at step_length distance from previous
         planes(current_idx).point_w = planes(prev_idx).point_w + step_length * dir_w;
-        planes(current_idx).point = wRs' * planes(current_idx).point_w;
         
         % Update distance for next iteration
         furthest_distance = planes(current_idx).point_w - p_robot;

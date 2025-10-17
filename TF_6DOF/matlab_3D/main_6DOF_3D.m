@@ -28,19 +28,25 @@ N = length(time);   % Number of iterations
 global DEBUG;
 DEBUG = false;
 
+%% Matrix Dimensions
+n_dim = 3;          % Number of states
+m_dim = 4;          % Number of measurements
+i_dim = 6;          % Number of inputs 
+d_dim = 3;          % world space total dimensions
+s_dim = 4;          % number of echosonar
+w_dim = 6;          % world dimension
+t_dim = 1000;       % terrain sampling
+
 %% State Machine Definition
-cmd.start = false;          % Start command
-cmd.setpoint = false;       % Setpoint command
-cmd.reset = false;          % Angles to 0
-cmd.contact1 = false;       % Contact point 1
-cmd.contact2 = false;       % Contact point 2
-cmd.contact3 = false;       % Contact point 3
-cmd.contact4 = false;       % Contact point 4
-cmd.sensor_fail = 0;        % Number of failure
-cmd.end = false;            % End command
-cmd.emergency = false;      % Emergency command
-state = strings(1, N);      % State vector
-state(1) = 'Idle';          % Initial state
+cmd.start = false;              % Start command
+cmd.setpoint = false;           % Setpoint command
+cmd.reset = false;              % Angles to 0
+cmd.contact = false(s_dim,1);   % Contact points
+cmd.sensor_fail = 0;            % Number of failure
+cmd.end = false;                % End command
+cmd.emergency = false;          % Emergency command
+state = strings(1, N);          % State vector
+state(1) = 'Idle';              % Initial state
 
 % Goal structure definition
 i_goal.surge = 0;
@@ -50,15 +56,6 @@ i_goal.roll = 0;
 i_goal.pitch = 0;
 i_goal.yaw = 0; 
 goal(1:N) = i_goal;
-
-%% Matrix Dimensions
-n_dim = 3;          % Number of states
-m_dim = 4;          % Number of measurements
-i_dim = 6;          % Number of inputs 
-d_dim = 3;          % world space total dimensions
-s_dim = 4;          % number of echosonar
-w_dim = 6;          % world dimension
-t_dim = 1000;       % terrain sampling
 
 %% Noise
 [Q, R_tp, R_a] = noise_setup(n_dim, m_dim, d_dim);
@@ -96,10 +93,10 @@ s = zeros(d_dim,s_dim);             % Robot echosonar
 max_planes = 500; % Circular buffer size
 step_length = 2; % Distance between consecutive planes
 n0 = [0, 0, 1]';
-pp_init = [-8; 8; -15];
+pp_init_w = [-8; -8; 15];
 
 % terrain generation
-[plane, t_idx] = terrain_init(pp_init, prob(:,1), max_planes, step_length);
+[plane, t_idx] = terrain_init(pp_init_w, prob(:,1), max_planes, step_length, n0);
 
 % terrain variable estimation
 wRt = zeros(d_dim, d_dim, N);
@@ -128,7 +125,7 @@ i_err = zeros(i_dim, N);            % integral error
 t_sum = zeros(i_dim,N);
 
 % initial controller
-speed0 = [0.2; 0; 0; 0; 0; 0];
+speed0 = [0.2; 0.1; 0; 0; 0; 0];
 tau0 = tau0_values(speed0, i_dim);
 [Kp, Ki, Kd, Kt] = gainComputation(speed0, i_dim);
 
@@ -180,7 +177,7 @@ for k = 2:N
     rob_rot(:,k) = clean_rot(:,k) + v_ahrs;
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    [dvl_speed, prob(:,k)] = DVL_measurament(prob(:,k-1), u(:,k), wRr_real, Ts);
+    [dvl_speed_w, prob(:,k)] = DVL_measurament(prob(:,k-1), u(:,k), wRr_real, Ts);
     %%%%%%%%%%%%%%% NO NOISE FOR DVL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % I do not have a localization problem -> needed only for the sensors %
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -192,10 +189,10 @@ for k = 2:N
     wRr(:,:,k) = rotz(rob_rot(PSI,k))*roty(rob_rot(THETA,k))*rotx(rob_rot(PHI,k));
 
     %% Terrain Dynamic Update
-    [plane, t_idx] = terrain_generator(plane, prob(:,k), dvl_speed, t_idx, step_length, max_planes);
+    [plane, t_idx] = terrain_generator(plane, prob(:,k), dvl_speed_w, t_idx, step_length, max_planes, k);
     
     %% EKF: Real Measurement
-    [z_meas(:,k), hmes, n_mes(:,k), R(:,:,k), cmd] = SBES_measurament(plane, s_dim, prob(:,k), wRr_real, ...
+    [z_meas(:,k), hmes, n_mes(:,k), R(:,:,k), cmd, a_true, b_true] = SBES_measurament(plane, s_dim, prob(:,k), wRr_real, ...
                                             t_idx, R(:,:,k), cmd, k);
     
     %%%%%%%%%%%%%%% NO NOISE FOR SBES %%%%%%%%%%%%%%%%%%%%%%%
@@ -206,7 +203,7 @@ for k = 2:N
 
     %% EKF: True State update (based on state)
     % TRUE state estimation   !!! Va costruito il piano in base a inidici che si salva per i diversi sensori
-    % x_true(:,k) = [hmes, plane.alpha, plane.beta]';
+    x_true(:,k) = [hmes, a_true, b_true]';
 
     %% EKF: Prediction
     % State prediction

@@ -6,8 +6,8 @@ function gg = goal_def(c_state, ang, x_ekf, step)
     %% Goal Values
     u_star = 0.3;  
     u_star_slow = 0.05;
-    v_star = 0.3;  
-    v_star_slow = 0.05;
+    v_star = -0.2;  % -0.3
+    v_star_slow = -0.1; %-0.05;
     global h_ref;
     phi_ref = x_ekf(ALPHA);  % Desired roll angle
     theta_ref = x_ekf(BETA);  % Desired pitch angle

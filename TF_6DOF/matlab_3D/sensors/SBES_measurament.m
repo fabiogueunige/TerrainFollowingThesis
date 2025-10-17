@@ -1,8 +1,7 @@
-function [ymes, h_real, n_new, Rm, command] = SBES_measurament(planes, num_s, pr, wRr, ...
+function [ymes, h_real, n_new, Rm, command, a_new, b_new] = SBES_measurament(planes, num_s, pr, wRr, ...
                     t_idx, Rm, command, ite) 
     %% Definition
     printDebug('       SBES Measurament:\n');
-    check = [command.contact1, command.contact2, command.contact3, command.contact4];
 
     s = SBES_definition(wRr);
 
@@ -16,7 +15,7 @@ function [ymes, h_real, n_new, Rm, command] = SBES_measurament(planes, num_s, pr
     
     %% Search range - only check recently generated planes
     % Search backwards from current index for efficiency
-    search_range = 200;  % Number of planes to check
+    % search_range = 200;  % Number of planes to check
     max_planes = length(planes);
     
     %% Computation - for each sensor
@@ -65,18 +64,14 @@ function [ymes, h_real, n_new, Rm, command] = SBES_measurament(planes, num_s, pr
         %% Value check
         if isinf(t_star(j)) || t_star(j) <= 0
             Rm(:,:) = Rm(:,:) * 150;
-            fprintf('Error: No valid intersection for sensor %d at iteration %d\n', j, ite);
-            % error('Error for sensor %.0f\n', j);
-            % graphical check
-            [n_new, gen_point] = plane_computation(t_star, p_int);
-            m_visualization(pr, gen_point, n_new, num_s, p_int, wRr, ite);
-            check(j) = false;
+            printDebug('Error: No valid intersection for sensor %d at iteration %d\n', j, ite);
+            command.contact(j) = false;
             command.sensor_fail = command.sensor_fail + 1;
         else
-            check(j) = true;
+            command.contact(j) = true;
             % Calculate final intersection point and measurement
             p_int(:, j) = pr + t_star(j) * s(:, j);
-            y(j) = t_star(j);  % Distance is already t
+            y(j) = t_star(j);
         end
     end
     
@@ -87,17 +82,19 @@ function [ymes, h_real, n_new, Rm, command] = SBES_measurament(planes, num_s, pr
 
     %% Plane of the 4 measurements generation
     [n_new, gen_point] = plane_computation(t_star, p_int);
+    a_new = -asin(n_new(1));
+    b_new = atan2(n_new(2), n_new(3));
+    if norm(n_new) ~= 1 && n_new(3) == 10
+        n_new = planes(plane_contact_idx(n_new(1))).n_w;  % Use normal of first contacted plane
+        gen_point = planes(plane_contact_idx(n_new(1))).point_w;
+        a_new = planes(plane_contact_idx(n_new(1))).alpha;
+        b_new = planes(plane_contact_idx(n_new(1))).beta;
+    end
 
     %% Plot visualization
     if mod(ite, 2000) == 0 || ite == 30
         m_visualization(pr, gen_point, n_new, num_s, p_int, wRr, ite);
     end
-
-    %% Update command structure
-    command.contact1 = check(1);
-    command.contact2 = check(2);
-    command.contact3 = check(3);
-    command.contact4 = check(4);
 
     %% Sending Info's
     ymes = [y(1); y(2); y(3); y(4)];

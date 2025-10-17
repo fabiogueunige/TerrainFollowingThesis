@@ -4,14 +4,28 @@ function [n, p1] = plane_computation(t, p_points)
     
     % Filter valid points (t > 0)
     valid_idx = t > 0;
+    valid_t = t(valid_idx);
     valid_points = p_points(:, valid_idx);
     num_valid = sum(valid_idx);
     
     % Need at least 3 points to define a plane
     if num_valid < 3
-        % Return a default normal vector (pointing up)
-        n = [0; 0; 0];
-        warning('Not enough valid points to compute plane normal. Using default [0; 0; 1]');
+        % Not enough points: encode which sensors are valid in the normal
+        
+        % Get indices of valid sensors
+        s_index = find(valid_idx);
+        
+        if num_valid == 0
+            % No valid sensors at all
+            n = [0; 0; 0];
+            p1 = p_points(:,1);
+            warning('No valid points to compute plane normal. All sensors failed.');
+        else
+            n = [s_index(1); 0; 10];
+            
+            % Use the first valid point as reference
+            p1 = valid_points(:, 1);
+        end
         return;
     end
     
