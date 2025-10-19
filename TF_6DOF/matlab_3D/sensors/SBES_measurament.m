@@ -93,7 +93,7 @@ function [ymes, h_real, n_new, Rm, command, a_new, b_new] = SBES_measurament(pla
 
     %% Plot visualization
     if mod(ite, 2000) == 0 || ite == 30
-        m_visualization(pr, gen_point, n_new, num_s, p_int, wRr, ite);
+        m_visualization(pr, gen_point, n_new, num_s, p_int, wRr, ite, planes, plane_contact_idx);
     end
 
     %% Sending Info's

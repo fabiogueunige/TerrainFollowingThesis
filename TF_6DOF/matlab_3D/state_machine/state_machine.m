@@ -29,7 +29,7 @@ function [next_state] = state_machine(c_state, commands, step)
             elseif commands.sensor_fail == 4
                 % Completely loosed all 4 of them 
                     next_state = 'Reset';
-                    warning('State changed to Reset. %.0f.\n', step);
+                    fprintf('State changed to Reset. %.0f.\n', step);
             elseif commands.sensor_fail > 1 && commands.sensor_fail < 4
                 if ~commands.contact(1) && ~commands.contact(2)  
                     next_state = 'MovePitch';
@@ -51,7 +51,7 @@ function [next_state] = state_machine(c_state, commands, step)
             end
             if commands.emergency
                 next_state = 'Emergency';
-                warning('State changed to Emergency. %.0f.\n', step);
+                fprintf('State changed to Emergency. %.0f.\n', step);
             end
         case 'MovePitch' %% TO IMPROVE
             if commands.contact(1) && commands.contact(2)
@@ -67,7 +67,7 @@ function [next_state] = state_machine(c_state, commands, step)
             end
             if commands.emergency
                 next_state = 'Emergency';
-                warning('State changed to Emergency %.0f.\n', step);
+                fprintf('State changed to Emergency %.0f.\n', step);
             end
         case 'MoveRoll' %% TO IMPROVE
             if commands.contact(3) && commands.contact(4)
@@ -83,7 +83,7 @@ function [next_state] = state_machine(c_state, commands, step)
             end
             if commands.emergency
                 next_state = 'Emergency';
-                warning('State changed to Emergency %.0f.\n', step);
+                fprintf('State changed to Emergency %.0f.\n', step);
             end
         % case SlowFollowing when 2 different echosonar are not wotking
         case 'Following'
@@ -100,7 +100,7 @@ function [next_state] = state_machine(c_state, commands, step)
             elseif commands.sensor_fail == 4
                 % Completely loosed all 4 of them 
                     next_state = 'Reset';
-                    warning('State changed to Reset %.0f.\n', step);
+                    error('State changed to Reset %.0f.\n', step);
             else
                 next_state = 'Following';
             end
@@ -114,12 +114,12 @@ function [next_state] = state_machine(c_state, commands, step)
             end
             if commands.emergency
                 next_state = 'Emergency';
-                warning('State changed to Emergency %.0f.\n', step);
+                fprintf('State changed to Emergency %.0f.\n', step);
             end
         case 'Emergency'
             if ~commands.setpoint || commands.emergency
                 next_state = 'TargetAltitude';
-                warning('State changed to  target altitude %.0f.\n', step);
+                fprintf('State changed to  target altitude %.0f.\n', step);
             else
                 % Non capisco quando potrebbe succedere
                 next_state = 'EndSimulation';
