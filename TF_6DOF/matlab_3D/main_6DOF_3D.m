@@ -11,7 +11,7 @@ addpath('state_machine');
 addpath('visualization');
 addpath('world_generator');
 
-%% Global Variables Definition
+%%  Global Variables Definition
 IND_H = 1;      ALPHA = 2;      BETA = 3;  
 global PHI; global THETA; global PSI;          
 PHI = 1;        THETA = 2;      PSI = 3;  
@@ -45,6 +45,15 @@ cmd.contact = false(s_dim,1);   % Contact points
 cmd.sensor_fail = 0;            % Number of failure
 cmd.end = false;                % End command
 cmd.emergency = false;          % Emergency command
+
+% New fields for improved sensor diagnostics and recovery
+cmd.pitch_sensors_lost = false;     % Sensors 1-2 (pitch pair) both lost
+cmd.roll_sensors_lost = false;      % Sensors 3-4 (roll pair) both lost
+cmd.diagonal_sensors_lost = false;  % Diagonal sensors lost (1-4 or 2-3)
+cmd.sensor_fail_persistent = false; % Sensor failure persisted beyond grace period
+cmd.recovery_timeout = false;       % Recovery maneuver timed out
+cmd.recovery_progress = false;      % Recovery showing improvement
+
 state = strings(1, N);          % State vector
 state(1) = 'Idle';              % Initial state
 
@@ -91,7 +100,7 @@ s = zeros(d_dim,s_dim);             % Robot echosonar
 
 %% Terrain Parameters
 max_planes = 500; % Circular buffer size
-step_length = 2; % Distance between consecutive planes
+step_length = 4; % Distance between consecutive planes
 n0 = [0, 0, 1]';
 pp_init_w = [-8; -8; 15];
 
@@ -249,7 +258,7 @@ for k = 2:N
     % State Innovation
     ni(:,k) = (z_meas(:,k) - z_pred(:,k));
     % State Estimated
-    x_est(:,k) = x_pred(:,k) + K * ni(:,k);
+    x_est(:,k) = x_pred(:,k) + K * ni(:,k); 
     % Covariance
     P = (eye(n_dim) - K * H) * P_pred;
 
@@ -273,88 +282,6 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% Plotting %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% States
-ttl = {'altitude', 'alpha', 'beta'};
-for i = 1:n_dim
-    figure;
-    if (i == 1)
-        plot(time, h_ref(:), 'b', 'DisplayName', 'Desired')
-        hold on;
-        plot(time, x_true(i,:), 'r', 'DisplayName', 'True');
-        plot(time, x_est(i,:), 'g', 'DisplayName', 'Estimated');
-    else
-        plot(time, rad2deg(rob_rot(i-1,:)), 'r', 'DisplayName', 'Rob angle');
-        hold on;
-        plot(time, rad2deg(x_true(i,:)), 'b', 'DisplayName', 'True Terrain');
-        plot(time, rad2deg(x_est(i,:)), 'g', 'DisplayName', 'Estimated');
-    end
-    xlabel('Time [s]'); ylabel(sprintf('x_%d', i));
-    legend; grid on;
-    title(ttl{i})
-    hold off;
-end
-
-%% Robot angles
-ttl = {'roll', 'pitch', 'yaw'};
-for i = 1:d_dim
-    figure;
-    plot(time, rad2deg(clean_rot(i,:)), 'r', 'DisplayName', 'True');
-    hold on;
-    if i == 1
-        plot(time, rad2deg([goal.roll]), 'b', 'DisplayName', 'Goal');
-    end
-    if i == 2
-        plot(time, rad2deg([goal.pitch]), 'b', 'DisplayName', 'Goal');
-    end
-    plot(time, rad2deg(rob_rot(i,:)), 'g', 'DisplayName', 'Estimated');
-    xlabel('Time [s]'); ylabel(sprintf('x_%d', i));
-    legend; grid on;
-    title(ttl{i})
-    hold off;
-end
-
-%% Inputs
-ttl = {'u input', 'v input', 'w input', 'p input', 'q input', 'r input'};
-for i = 1:i_dim
-    figure;
-    if i <= HEAVE
-        plot(time, u(i,:), 'b', 'DisplayName', 'u');
-    else
-        plot(time, rad2deg(u(i,:)), 'b', 'DisplayName', ttl{i});
-    end
-    hold on
-    xlabel('Time [s]'); ylabel('Space [m]');
-    grid on;
-    title(ttl{i})
-    hold off;
-end
-
-%% Z axis i f parallel
-% tutto riferito a world frame -> Se rimangono vicine sono paralleli
-aa12 = zeros(1,N);
-aa13 = aa12; aa23 = aa12;
-for i = 1:N
-    aa12(i) = acosd(abs(dot(n_est(:,i)', n_mes(:,i)')))'; % tra n estimato e n da misure
-    aa13(i) = acosd(abs(dot(n_est(:,i)', wRr(:,3,i)')))'; % tra n estimato e n rob
-    aa23(i) = acosd(abs(dot(n_mes(:,i)', wRr(:,3,i)')))'; % tra n da misure e n rob
-end
-
-figure; hold on; grid on;
-plot(time, aa12, 'r', 'LineWidth', 1.5, 'DisplayName', 'estimato Vs misure');
-plot(time, aa13, 'g', 'LineWidth', 1.5, 'DisplayName', 'estimato Vs robot');
-plot(time, aa23, 'b', 'LineWidth', 1.5, 'DisplayName', 'misure Vs robot');
-xlabel('Tempo [s]');
-ylabel('Angolo tra normali [°]');
-title('Parallelismo tra le normali dei piani nel tempo');
-hold off;
-grid off;
-
-%% Points
-figure;
-scatter3(prob(1,:), prob(2,:), prob(3,:), [], time);
-colorbar; 
-colormap(jet);
-xlabel('On X');
-ylabel('On Z');
-title('Trajectory XYZ (Color = time)');
-grid on;
+fprintf('\nGenerating plots and statistics...\n');
+plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u, ...
+             n_est, n_mes, wRr, prob, n_dim, d_dim, i_dim);

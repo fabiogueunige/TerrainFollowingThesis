@@ -7,11 +7,11 @@ function [planes, current_idx] = terrain_generator(planes, p_robot, vel_w, curre
     if l_ite < 30
         angle_range = [-pi/6, pi/6];
     else
-        angle_range = [-pi/4, pi/4];% [-pi/3, pi/3];
+        angle_range = [-pi/5, pi/5];
     end
     n0 = [0; 0; 1]; 
-    rate_of_change = 4;
-    min_distance = 10;
+    rate_of_change = 3;
+    min_distance = 15;
     
     %% Check if we need to generate a new plane
     % Calculate distance from robot to furthest plane
@@ -44,9 +44,9 @@ function [planes, current_idx] = terrain_generator(planes, p_robot, vel_w, curre
                     valid = true;
                 end
             end
-        else
-            planes(current_idx).alpha = planes(prev_idx).alpha;
-            planes(current_idx).beta = planes(prev_idx).beta;
+        else   % small angle changes
+            planes(current_idx).alpha = planes(prev_idx).alpha + 0.1 * sin(0.1 * current_idx) + 0.1 * randn;
+            planes(current_idx).beta = planes(prev_idx).beta + 0.1 * sin(0.1 * current_idx) + 0.1 * randn;
         end
         
         %% Definition in inertial frame

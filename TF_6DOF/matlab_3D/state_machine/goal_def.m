@@ -6,79 +6,126 @@ function gg = goal_def(c_state, ang, x_ekf, step)
     %% Goal Values
     u_star = 0.3;  
     u_star_slow = 0.05;
-    v_star = -0.2;  % -0.3
-    v_star_slow = -0.1; %-0.05;
+    u_star_recovery = 0.02; % Even slower for recovery maneuvers
+    v_star = -0.2;  
+    v_star_slow = -0.1;
+    v_star_recovery = -0.05;
     global h_ref;
-    phi_ref = x_ekf(ALPHA);  % Desired roll angle
-    theta_ref = x_ekf(BETA);  % Desired pitch angle
+    phi_ref = x_ekf(ALPHA);  % Desired roll angle from terrain estimate
+    theta_ref = x_ekf(BETA);  % Desired pitch angle from terrain estimate
     psi_ref = 0;  
 
-    %% Predefinition of the goal
-    ang_to_cut = pi/10;  % Angle to cut for roll and pitch
+    %% Recovery parameters
+    ang_to_cut_initial = pi/12;  % Smaller initial adjustment (15 deg)
+    ang_to_cut_progressive = pi/8; % Progressive increase (22.5 deg)
+    altitude_offset = 1.0; % Altitude adjustment for recovery (meters)
 
-    g_altitude = h_ref(step);  % Desired altitude for everyone
+    g_altitude = h_ref(step);  % Desired altitude for most states
 
     switch c_state
         case 'Reset'
-            g_surge = 0;        % Safeness better no move on
-            g_sway = 0;         % Safeness better no move on
-            g_roll = 0;         % Angle to be 0
-            g_pitch = 0;        % Angle to be 0
-            g_yaw = 0;      % Desired yaw angle (not used for now)
+            g_surge = 0;
+            g_sway = 0;
+            g_roll = 0;
+            g_pitch = 0;
+            g_yaw = 0;
+            
         case 'TargetAltitude'
-            g_surge = 0;            % Safeness better no move on
-            g_sway = 0;             % Safeness better no move on
-            g_roll = ang(PHI);      % Keep angle as before
-            g_pitch = ang(THETA);   % Keep angle as before 
-            g_yaw = ang(PSI);       % Desired yaw angle
+            g_surge = 0;
+            g_sway = 0;
+            g_roll = ang(PHI);
+            g_pitch = ang(THETA);
+            g_yaw = ang(PSI);
+            
         case 'ContactSearch'
             g_surge = (u_star + u_star_slow) / 2;
             g_sway = (v_star + v_star_slow) / 2;
             g_roll = phi_ref;    
             g_pitch = theta_ref;
-            g_yaw = ang(PSI);  
-        case 'MovePitch' 
-            g_surge = u_star_slow;
-            g_sway = v_star_slow;
-            g_roll = (ang(PHI) + phi_ref) / 2;      % Keep angle as before
-            if ang(THETA) >= pi/4
-                g_pitch = theta_ref - ang_to_cut;
+            g_yaw = ang(PSI);
+            
+        case 'MovePitch'
+            % Slow movement with progressive pitch adjustment
+            g_surge = u_star_recovery;
+            g_sway = v_star_recovery;
+            g_roll = phi_ref; % Maintain roll aligned with terrain
+            
+            % Gradual pitch adjustment based on current angle
+            pitch_error = abs(ang(THETA) - theta_ref);
+            if pitch_error > pi/6
+                % Large error: use progressive adjustment
+                ang_adjustment = ang_to_cut_progressive;
             else
-                g_pitch = theta_ref + ang_to_cut;
+                % Small error: use gentle adjustment
+                ang_adjustment = ang_to_cut_initial;
             end
-            g_yaw = ang(PSI);  
-        case 'MoveRoll' %% TO IMPROVE
-            g_surge = u_star_slow;
-            g_sway = v_star;
-            if ang(PHI) >= pi/4
-                g_roll = phi_ref - ang_to_cut;
+            
+            % Determine direction based on which sensors are lost
+            % If sensors 1-2 are lost, they're in front, so increase pitch to dive slightly
+            if ang(THETA) >= 0
+                g_pitch = theta_ref + ang_adjustment;
             else
-                g_roll = phi_ref + ang_to_cut;
+                g_pitch = theta_ref - ang_adjustment;
             end
-            g_pitch = (ang(THETA) + theta_ref) / 2;    % Keep angle as before
-            g_yaw = ang(PSI);  
+            g_yaw = ang(PSI);
+            
+        case 'MoveRoll'
+            % Slow movement with progressive roll adjustment
+            g_surge = u_star_recovery;
+            g_sway = v_star_slow; % Maintain some lateral movement
+            g_pitch = theta_ref; % Maintain pitch aligned with terrain
+            
+            % Gradual roll adjustment based on current angle
+            roll_error = abs(ang(PHI) - phi_ref);
+            if roll_error > pi/6
+                % Large error: use progressive adjustment
+                ang_adjustment = ang_to_cut_progressive;
+            else
+                % Small error: use gentle adjustment
+                ang_adjustment = ang_to_cut_initial;
+            end
+            
+            % Determine direction based on which sensors are lost
+            % If sensors 3-4 are lost, adjust roll to bring them back to terrain
+            if ang(PHI) >= 0
+                g_roll = phi_ref + ang_adjustment;
+            else
+                g_roll = phi_ref - ang_adjustment;
+            end
+            g_yaw = ang(PSI);
+            
+        case 'RecoveryAltitude'
+            % Adjust altitude to try to recover sensor contact
+            % Slow movement, maintain orientation, adjust altitude
+            g_surge = u_star_recovery;
+            g_sway = v_star_recovery;
+            g_roll = phi_ref;
+            g_pitch = theta_ref;
+            g_yaw = ang(PSI);
+            % Increase target altitude to move closer to terrain
+            g_altitude = h_ref(step) - altitude_offset;
+            
         case 'Following'
             g_surge = u_star;
             g_sway = v_star;
             g_roll = phi_ref;    
             g_pitch = theta_ref; 
-            g_yaw = psi_ref;  
-
-        % case 'Acceleration' %% TO IMPROVE
-        % case 'Deceleration' %% TO IMPROVE
+            g_yaw = psi_ref;
 
         case 'Emergency'
             g_surge = 0;
             g_sway = 0;
             g_roll = ang(PHI);    
             g_pitch = ang(THETA); 
-            g_yaw = ang(PSI);  % Desired yaw angle
+            g_yaw = ang(PSI);
+            
         case 'EndSimulation'
             g_surge = 0;
             g_sway = 0;
             g_roll = 0;
             g_pitch = 0;
-            g_yaw = 0;  % Desired yaw angle (not used for now)
+            g_yaw = 0;
+            
         otherwise
             g_surge = 0;
             g_sway = 0;
@@ -87,11 +134,11 @@ function gg = goal_def(c_state, ang, x_ekf, step)
             g_yaw = 0;
     end
 
-    %% Assegnazione
-    gg.surge = g_surge;         % Desired surge speed
-    gg.sway = g_sway;           % Desired sway speed
-    gg.altitude = g_altitude;   % Desired altitude
-    gg.roll = g_roll;           % Desired roll angle
-    gg.pitch = g_pitch;         % Desired pitch angle
-    gg.yaw = g_yaw;             % Desired yaw angle 
+    %% Assignment
+    gg.surge = g_surge;
+    gg.sway = g_sway;
+    gg.altitude = g_altitude;
+    gg.roll = g_roll;
+    gg.pitch = g_pitch;
+    gg.yaw = g_yaw;
 end
