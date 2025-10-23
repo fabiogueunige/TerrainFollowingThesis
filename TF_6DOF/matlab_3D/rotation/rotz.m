@@ -1,5 +1,15 @@
-function Rz = rotz(a)
-    Rz = [cos(a), -sin(a), 0;
-          sin(a), cos(a), 0;
-            0, 0, 1];
+function Rz = rotz(angle)
+    % ROTZ Rotation matrix around Z-axis
+    %
+    % Input:
+    %   angle - Rotation angle [rad]
+    %
+    % Output:
+    %   Rz    - 3x3 rotation matrix
+    %
+    % Convention: Right-hand rule, counterclockwise positive
+    
+    Rz = [cos(angle), -sin(angle),  0;
+          sin(angle),  cos(angle),  0;
+                   0,           0,  1];
 end

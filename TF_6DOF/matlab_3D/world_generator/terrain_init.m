@@ -1,4 +1,5 @@
-function [planes, current_idx] = terrain_init(p_init, p_robot, max_planes, step_length, n0)
+function [planes, current_idx] = terrain_init(p_init, p_robot, max_planes, step_length, n0, ...
+                                    angle_range, rate_of_change)
     % Initialization of terrain planes with circular buffer
 
     %% Struct initial definition - First plane
@@ -26,7 +27,8 @@ function [planes, current_idx] = terrain_init(p_init, p_robot, max_planes, step_
     
     % Single call to terrain_generator - it will generate all needed planes
     % with the while loop until 20m coverage is reached
-    [planes, current_idx] = terrain_generator(planes, p_robot, initial_vel, current_idx, step_length, max_planes, 1);
+    [planes, current_idx] = terrain_generator(planes, p_robot, initial_vel, current_idx, step_length, ...
+                max_planes, 1, angle_range, rate_of_change);
     
     printDebug('Terrain initialized with %d planes\n', current_idx);
 end

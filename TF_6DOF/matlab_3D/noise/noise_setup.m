@@ -1,31 +1,39 @@
-function [Q, R, R_ang] = noise_setup (q_dim, r_dim, a_dim)
-    % State Noise
-    sigh = 0.099;           % State noise h
-    siga = deg2rad(0.55);      % State noise alpha
-    sigb = deg2rad(0.5);    % State noise beta
-
-    % Measurament noise (added a 0 to all)
-    eta1 = 0.177;           % Measurement noise y1
-    eta2 = 0.185;           % Measurement noise y2
-    eta3 = 0.177;           % Measurement noise y3
-    eta4 = 0.185;           % Measurement noise y4
-
-    % Initialization
-    Q = zeros(q_dim,q_dim); % Process noise covariance
-    Q(1,1) = (sigh^2);
-    Q(2,2) = (siga^2);
-    Q(3,3) = (sigb^2);
+function [Q, R_sbes, R_ahrs] = noise_setup(state_dim, meas_dim, angle_dim)
+    % NOISE_SETUP Configure noise covariance matrices for EKF
+    %
+    % Inputs:
+    %   state_dim  - Dimension of state vector (3)
+    %   meas_dim   - Dimension of measurement vector (4 SBES sensors)
+    %   angle_dim  - Dimension of angle measurements (3: roll, pitch, yaw)
+    %
+    % Outputs:
+    %   Q          - Process noise covariance matrix (state_dim x state_dim)
+    %   R_sbes     - SBES measurement noise covariance (meas_dim x meas_dim)
+    %   R_ahrs     - AHRS angle measurement noise covariance (angle_dim x angle_dim)
+    %
+    % Noise parameters tuned empirically for BlueROV2 in underwater terrain following
     
-    % Measurement noise covariance (r_dim x r_dim)
-    R = zeros(r_dim,r_dim);
-    R(1,1) = (eta1^2);
-    R(2,2) = (eta2^2);
-    R(3,3) = (eta3^2);
-    R(4,4) = (eta4^2);
-
-    % Measurament angle noise covariance (a_dim x a_dim)
-    R_ang = zeros(a_dim,a_dim);
-    R_ang(1,1) = (deg2rad(0.5)^2);
-    R_ang(2,2) = (deg2rad(0.5)^2);
-    R_ang(3,3) = (deg2rad(0.08)^2);
+    % Process noise standard deviations
+    sigma_altitude = 0.099;          % Altitude noise [m]
+    sigma_alpha    = deg2rad(0.55);  % Roll angle noise [rad]
+    sigma_beta     = deg2rad(0.5);   % Pitch angle noise [rad]
+    
+    % SBES measurement noise standard deviations
+    eta_sensor1 = 0.177;  % Rear sensor noise [m]
+    eta_sensor2 = 0.185;  % Front sensor noise [m]
+    eta_sensor3 = 0.177;  % Left sensor noise [m]
+    eta_sensor4 = 0.185;  % Right sensor noise [m]
+    
+    % AHRS angle measurement noise standard deviations
+    sigma_roll_meas  = deg2rad(0.5);   % Roll measurement noise [rad]
+    sigma_pitch_meas = deg2rad(0.5);   % Pitch measurement noise [rad]
+    sigma_yaw_meas   = deg2rad(0.08);  % Yaw measurement noise [rad]
+    
+    % Build covariance matrices (diagonal)
+    Q = diag([sigma_altitude^2, sigma_alpha^2, sigma_beta^2]);
+    
+    R_sbes = diag([eta_sensor1^2, eta_sensor2^2, eta_sensor3^2, eta_sensor4^2]);
+    
+    R_ahrs = diag([sigma_roll_meas^2, sigma_pitch_meas^2, sigma_yaw_meas^2]);
 end
+
