@@ -1,5 +1,8 @@
 clc; clear; close all;
+
+%% Add Paths
 addpath('controller');
+addpath('data_management');
 addpath('ekf_filter');
 addpath('kf_filter');
 addpath('math_function');
@@ -10,7 +13,6 @@ addpath('sensors');
 addpath('state_machine');
 addpath('visualization');
 addpath('world_generator');
-addpath('data_management');
 
 %%  Global Variables Definition
 IND_H = 1;      ALPHA = 2;      BETA = 3;  
@@ -75,11 +77,12 @@ index_N = round(N/2);
 global h_ref;
 h_ref = zeros(1, N);
 %%%%%%%%% CHANGE ALTITUDE GOAL %%%%%%%%%%%
-% index_N = round(N/2);
-% h_ref(1:index_N) = ;
-% h_ref(index_N:end) = 4;
+% index_N = round(N/2);                  %
+% h_ref(1:index_N) = ;                   %
+% h_ref(index_N:end) = 4;                %
 %%%%%%%%% NO CHANGE %%%%%%%%%%%%%%%%%%%%%%
-h_ref(:) = 3; % real goal 1:3
+h_ref(:) = 3;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% AUV Parameters 
 prob = zeros(d_dim,N);              % AUV initial position
@@ -100,16 +103,17 @@ wRr_real = zeros(d_dim, d_dim);     % Real robot rotation
 s = zeros(d_dim,s_dim);             % Robot echosonar
 
 %% Terrain Parameters
-max_planes = 500; % Circular buffer size
-step_length = 4; % Distance between consecutive planes
-angle_range = [-pi/3, pi/3];
-rate_of_change = 3;
-pp_init_w = [-8; -8; 15];
+max_planes = 300; % Circular buffer size
+step_length = 3.0; % Distance between consecutive planes
+angle_range = [-pi/5, pi/5];
+delta_limit = pi/4;
+rate_of_change = 2;
+pp_init_w = [-5; -5; 10];
 n0 = [0, 0, 1]';
 
 % terrain generation
 [plane, t_idx] = terrain_init(pp_init_w, prob(:,1), max_planes, step_length, n0, ...
-                    angle_range, rate_of_change);
+                    angle_range, rate_of_change, delta_limit);
 
 % terrain variable estimation
 wRt = zeros(d_dim, d_dim, N);
@@ -203,7 +207,7 @@ for k = 2:N
 
     %% Terrain Dynamic Update
     [plane, t_idx] = terrain_generator(plane, prob(:,k), dvl_speed_w, t_idx, step_length, max_planes, ...
-                        k, angle_range, rate_of_change);
+                        k, angle_range, rate_of_change, delta_limit);
     
     %% EKF: Real Measurement
     [z_meas(:,k), hmes, n_mes(:,k), R(:,:,k), cmd, a_true, b_true] = SBES_measurament(plane, s_dim, prob(:,k), wRr_real, ...
@@ -216,7 +220,7 @@ for k = 2:N
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
     %% EKF: True State update (based on state)
-    % TRUE state estimation   !!! Va costruito il piano in base a inidici che si salva per i diversi sensori
+    % TRUE state estimation
     x_true(:,k) = [hmes, a_true, b_true]';
 
     %% EKF: Prediction
@@ -302,23 +306,12 @@ fprintf('\nWould you like to save simulation data for future statistical analysi
 fprintf('Data will be saved in a timestamped folder (e.g., results/run_YYYYMMDD_HHMMSS/)\n');
 save_choice = input('Save data? (Y/N): ', 's');
 
-if strcmpi(save_choice, 'Y') || strcmpi(save_choice, 'Yes')
-    fprintf('\n--- DATA SAVING OPTIONS ---\n');
-    fprintf('1. Auto-generate run name (run_YYYYMMDD_HHMMSS)\n');
-    fprintf('2. Specify custom run name\n');
-    
-    name_choice = input('Choose option (1 or 2): ', 's');
-    
-    if strcmp(name_choice, '2')
-        custom_name = input('Enter custom run name (e.g., "test_high_altitude"): ', 's');
-        % Sanitize name (remove spaces, special chars)
-        custom_name = regexprep(custom_name, '[^\w-]', '_');
-        run_name = sprintf('run_%s', custom_name);
-    else
-        % Auto-generate with timestamp
-        run_name = '';  % Empty means auto-generate in save function
-    end
-    
+if strcmpi(save_choice, 'Y') || strcmpi(save_choice, 'Yes') || strcmpi(save_choice, 'y')
+    fprintf('\n--- DATA SAVING ---\n');
+    fprintf('Auto-generate run name (run_YYYYMMDD_HHMMSS)\n');
+    % Auto-generate with timestamp
+    run_name = '';  % Empty means auto-generate in save function
+
     % Collect all simulation data
     fprintf('\nCollecting simulation data...\n');
     sim_data = collect_simulation_data(time, Ts, Tf, N, h_ref, ...
@@ -327,7 +320,7 @@ if strcmpi(save_choice, 'Y') || strcmpi(save_choice, 'Yes')
         pid, u, u_dot, goal, integral_err, p_err, i_err, t_sum, ...
         prob, wRr, wRt, wRt_pre, state, ...
         Q, R_tp, R_a, Kp, Ki, Kd, Kt, speed0, tau0, x0, x0_est, ...
-        max_planes, step_length, angle_range, rate_of_change, pp_init_w, n0);
+        max_planes, step_length, angle_range, rate_of_change, delta_limit, pp_init_w, n0);
     
     % Save to disk
     if isempty(run_name)

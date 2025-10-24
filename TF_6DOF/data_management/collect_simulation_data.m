@@ -38,7 +38,7 @@ function sim_data = collect_simulation_data(time, Ts, Tf, N, h_ref, ...
     pid, u, u_dot, goal, integral_err, p_err, i_err, t_sum, ...
     prob, wRr, wRt, wRt_pre, state, ...
     Q, R_tp, R_a, Kp, Ki, Kd, Kt, speed0, tau0, x0, x0_est, ...
-    max_planes, step_length, angle_range, rate_of_change, pp_init_w, n0)
+    max_planes, step_length, angle_range, rate_of_change, delta_limit, pp_init_w, n0)
 
     fprintf('\n=== COLLECTING SIMULATION DATA ===\n');
     
@@ -112,6 +112,7 @@ function sim_data = collect_simulation_data(time, Ts, Tf, N, h_ref, ...
     sim_data.step_length = step_length;
     sim_data.angle_range = angle_range;
     sim_data.rate_of_change = rate_of_change;
+    sim_data.delta_limit = delta_limit;
     sim_data.pp_init_w = pp_init_w;
     sim_data.n0 = n0;
     

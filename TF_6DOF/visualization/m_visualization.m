@@ -17,7 +17,8 @@
 %     if nargin < 9, plane_contact_idx = []; end
 %     if nargin < 8, planes = []; end
 % 
-%     figure; hold on; grid on; box on;
+%     figure('Name', sprintf('AUV Situation iteration %d', j)); 
+%     hold on; grid on; box on;
 %     colors = lines(max(num_s, 6));
 % 
 %     %% 1) Draw robot as an oriented rectangular box
@@ -213,7 +214,8 @@ function m_visualization(pr, pplane, n, num_s, p_int, wRr, j, planes, plane_cont
     if nargin < 9, plane_contact_idx = []; end
     if nargin < 8, planes = []; end
 
-    figure; hold on; grid on; box on;
+    figure('Name', sprintf('AUV Situation iteration %d', j)); 
+    hold on; grid on; box on;
     colors = lines(max(num_s, 6));
 
     %% 1) Draw robot as an oriented rectangular box

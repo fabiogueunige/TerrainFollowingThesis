@@ -125,6 +125,7 @@ function save_simulation_data(sim_data, run_name)
     params.step_length = sim_data.step_length;  % Distance between planes
     params.angle_range = sim_data.angle_range;  % Terrain angle limits
     params.rate_of_change = sim_data.rate_of_change; % Terrain variation rate
+    params.delta_limit = sim_data.delta_limit;  % Max angle change between planes
     params.pp_init_w = sim_data.pp_init_w;      % Initial plane position
     params.n0 = sim_data.n0;                    % Reference normal vector
     save(fullfile(run_dir, 'parameters.mat'), '-struct', 'params');
@@ -160,6 +161,7 @@ function save_simulation_data(sim_data, run_name)
         rad2deg(sim_data.angle_range(1)), rad2deg(sim_data.angle_range(2)), ...
         sim_data.angle_range(1), sim_data.angle_range(2));
     fprintf(fid, 'Rate of change: %.2f\n', sim_data.rate_of_change);
+    fprintf(fid, 'Delta limit: %.2f deg (%.4f rad)\n', rad2deg(sim_data.delta_limit), sim_data.delta_limit);
     fprintf(fid, 'Initial plane position: [%.2f, %.2f, %.2f]\n', sim_data.pp_init_w);
     fprintf(fid, 'Reference normal: [%.2f, %.2f, %.2f]\n', sim_data.n0);
     fprintf(fid, '\n--- FINAL RESULTS ---\n');

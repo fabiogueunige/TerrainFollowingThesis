@@ -88,9 +88,7 @@ function [ymes, h_real, n_new, Rm, command, a_new, b_new] = SBES_measurament(pla
     end
 
     %% Plane of the 4 measurements generation
-    [n_new, gen_point] = plane_computation(t_star, p_int);
-    b_new = -asin(n_new(1));
-    a_new = atan2(n_new(2), n_new(3));
+    [n_new, gen_point, a_new, b_new] = plane_computation(t_star, p_int);
     if norm(n_new) ~= 1 && n_new(3) == 10
         n_new = planes(plane_contact_idx(n_new(1))).n_w;  % Use normal of first contacted plane
         gen_point = planes(plane_contact_idx(n_new(1))).point_w;

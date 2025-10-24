@@ -104,11 +104,6 @@ function [pid, int_term, pre_err, err_i, acc, term_sum] = input_control(ggg, x, 
     err(PITCH) = (ggg.pitch - angles(THETA));
     err(YAW) = (ggg.yaw - angles(PSI));
 
-    % Rotational errors (in body frame)
-    err(ROLL) = (ggg.roll - angles(PHI));
-    err(PITCH) = (ggg.pitch - angles(THETA));
-    err(YAW) = (ggg.yaw - angles(PSI));
-
     %% Controller Implementation
     if type == "A+D"
         % ============================================================

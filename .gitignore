@@ -1,10 +1,10 @@
 slprj/**
 test/**
-matlab_2EKF/**
-matlab_2EKF
 *.slxc
 *.asv
 slprj
 *.mat
-TF_6DOF/matlab_3D/results/**
+TF_6DOF/results/**
+CONTRIBUTING.md
+DEVELOPMENT_NOTES.md
 

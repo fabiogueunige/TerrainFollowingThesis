@@ -3,7 +3,7 @@ function gg = goal_def(c_state, ang, x_ekf, step)
     IND_H = 1;      ALPHA = 2;      BETA = 3;  
     global PHI; global THETA; global PSI;   
 
-    %% Goal Values
+    %% Goal Values (u, v, w are in terrain frame)
     u_star = 0.3;  
     u_star_slow = 0.05;
     u_star_recovery = 0.02; % Even slower for recovery maneuvers

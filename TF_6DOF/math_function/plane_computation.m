@@ -47,7 +47,7 @@
 %
 % See also: SBES_measurament, reference_correction, vector_normalization
 
-function [n, p1] = plane_computation(t, p_points)
+function [n, p1, alpha, beta] = plane_computation(t, p_points)
     %% Filter Valid Measurements
     % Only consider points with positive t values (valid range measurements)
     valid_idx = t > 0;
@@ -68,6 +68,9 @@ function [n, p1] = plane_computation(t, p_points)
             n = [0; 0; 0];
             p1 = p_points(:,1);
             warning('No valid points to compute plane normal. All sensors failed.');
+            % Angles undefined in failure mode
+            alpha = NaN;
+            beta = NaN;
         else
             % Partial failure: encode first valid sensor index
             % Format: [sensor_id; 0; 10] to distinguish from geometric normal
@@ -75,6 +78,9 @@ function [n, p1] = plane_computation(t, p_points)
             
             % Use the first valid point as reference
             p1 = valid_points(:, 1);
+            % Angles undefined in failure mode
+            alpha = NaN;
+            beta = NaN;
         end
         return;
     end
@@ -95,4 +101,43 @@ function [n, p1] = plane_computation(t, p_points)
     
     % Normalize to unit vector
     n = vector_normalization(n);
+
+    % Compute roll (alpha) and pitch (beta) BEFORE enforcing normal direction
+    % This ensures angles match terrain_generator convention regardless of
+    % the initial normal direction from cross product
+    % 
+    % terrain_generator uses: wRs = (rotz(0)*roty(beta)*rotx(alpha))*rotx(pi);
+    % n_w = wRs * [0;0;1]
+    % Applying transformations right to left:
+    %   1. rotx(pi) * [0;0;1] = [0;0;-1]
+    %   2. rotx(alpha) * [0;0;-1] = [0; sin(alpha); -cos(alpha)]
+    %   3. roty(beta) * [0; sin(alpha); -cos(alpha)] = 
+    %      [-sin(beta)*cos(alpha); sin(alpha); -cos(beta)*cos(alpha)]
+    % So for n_w = [nx; ny; nz]:
+    %   nx = -sin(beta)*cos(alpha)
+    %   ny = sin(alpha)
+    %   nz = -cos(beta)*cos(alpha)
+    
+    % First check if we need to flip normal to match convention (nz < 0)
+    % If so, flip it before angle extraction
+    n_for_angles = n;
+    if n_for_angles(3) > 0
+        n_for_angles = -n_for_angles;
+    end
+    
+    % Extract angles from the correctly oriented normal:
+    alpha = asin(n_for_angles(2));  % from ny = sin(alpha)
+    % From nx = -sin(beta)*cos(alpha) and nz = -cos(beta)*cos(alpha):
+    %   sin(beta) = -nx / cos(alpha)
+    %   cos(beta) = -nz / cos(alpha)
+    cos_alpha = cos(alpha);
+    sin_beta = -n_for_angles(1) / cos_alpha;
+    cos_beta = -n_for_angles(3) / cos_alpha;
+    beta = atan2(sin_beta, cos_beta);
+    
+    % Now enforce the normal direction for output
+    % In this project upward direction corresponds to negative Z
+    if n(3) > 0
+        n = -n;
+    end
 end

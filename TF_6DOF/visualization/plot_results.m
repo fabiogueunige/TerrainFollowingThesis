@@ -26,12 +26,12 @@ function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u
     for i = 1:n_dim
         figure('Name', sprintf('State: %s', ttl{i}));
         if (i == 1)
-            plot(time, h_ref(:), 'b', 'LineWidth', 2.5, 'DisplayName', 'Desired')
+            plot(time, h_ref(:), 'b', 'LineWidth', 3.5, 'DisplayName', 'Desired')
             hold on;
             plot(time, x_true(i,:), 'r', 'DisplayName', 'True');
             plot(time, x_est(i,:), 'g', 'DisplayName', 'Estimated');
         else
-            plot(time, rad2deg(x_true(i,:)), 'b', 'LineWidth', 2.5, 'DisplayName', 'True (desired) Terrain');
+            plot(time, rad2deg(x_true(i,:)), 'b', 'LineWidth', 3.5, 'DisplayName', 'True (desired) Terrain');
             hold on;
             plot(time, rad2deg(rob_rot(i-1,:)), 'r', 'DisplayName', 'Rob angle');
             plot(time, rad2deg(x_est(i,:)), 'g', 'DisplayName', 'Estimated');
@@ -78,6 +78,17 @@ function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u
         title(ttl{i})
         hold off;
     end
+
+    %% Normal z-sign analysis
+    figure('Name', 'z-sign'); 
+    plot(time, n_est(3,:), 'r', 'LineWidth', 1.5, 'DisplayName', 'z-sign estimated');
+    hold on;
+    plot(time, n_mes(3,:), 'g', 'LineWidth', 1.5, 'DisplayName', 'z-sign measured (t)');
+    xlabel('Tempo [s]');
+    ylabel('z value');
+    title('Sign of the z of the normal plane');
+    legend('Location', 'best');
+    hold off;
     
     %% Normal vectors analysis: parallelism and z-component alignment
     fprintf('Analyzing normal vectors...\n');

@@ -54,7 +54,7 @@ Ho creato un sistema completo per salvare e analizzare i dati delle simulazioni.
 - Parametri EKF (Q, R, P0)
 - Guadagni controllore (Kp, Ki, Kd, Kt)
 - Condizioni iniziali
-- **Parametri generazione terreno** (max_planes, step_length, angle_range, rate_of_change, pp_init_w, n0)
+- **Parametri generazione terreno** (max_planes, step_length, angle_range, rate_of_change, delta_limit, pp_init_w, n0)
 
 **7. Metadata** (`metadata.txt`)
 - File di testo leggibile con sommario della simulazione
@@ -99,10 +99,11 @@ errore_altitudine = sim_data.h_ref - sim_data.x_est(1,:);
 velocita_surge = sim_data.u(1,:);
 
 % Parametri del terreno
-buffer_terreno = sim_data.max_planes;        % 500
+buffer_terreno = sim_data.max_planes;        % 300
 distanza_piani = sim_data.step_length;       % 4 m
 angoli_limite = sim_data.angle_range;        % [-π/3, π/3]
-variazione_terreno = sim_data.rate_of_change; % 3
+variazione_terreno = sim_data.rate_of_change; % 3  
+max_cambiamento_angolo = sim_data.delta_limit % π/4
 ```
 
 ### 3. Analisi Statistica

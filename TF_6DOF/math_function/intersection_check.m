@@ -37,6 +37,13 @@
 % See also: SBES_measurament, plane_computation
 
 function [is_intersect] = intersection_check(p_end, p_start, p_int, dir)
+    %% Tolerance Parameter
+    % Allow intersections slightly outside segment bounds to handle
+    % oblique sensor rays and discretization issues with small step_length
+    % This tolerance prevents sensor failures when intersection falls just
+    % beyond segment boundaries due to geometric/numerical reasons
+    tolerance = 0.3; % meters - allows ~20% overshoot beyond segment bounds
+    
     %% Vector Computations
     % Vector from p_start to intersection point
     v_start_int = p_int - p_start;
@@ -51,10 +58,11 @@ function [is_intersect] = intersection_check(p_end, p_start, p_int, dir)
     % Project segment vector onto direction
     proj_end = dot(v_start_end, dir);
     
-    %% Bounds Check
-    % Intersection valid if projection lies between 0 and proj_end
-    % This ensures: p_start ≤ p_int ≤ p_end along direction
-    if proj_int >= 0 && proj_int <= proj_end
+    %% Bounds Check with Tolerance
+    % Intersection valid if projection lies within extended bounds
+    % Range: [-tolerance, proj_end + tolerance]
+    % This ensures: (p_start - tol) ≤ p_int ≤ (p_end + tol) along direction
+    if proj_int >= -tolerance && proj_int <= (proj_end + tolerance)
         is_intersect = true;
     else
         is_intersect = false;
