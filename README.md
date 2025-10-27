@@ -83,6 +83,7 @@ This enables the robot to **mimic terrain inclination** in real-time, providing:
 | **SBES** | 4 | Terrain ranging | Cross-pattern (±22.5°) |
 | **AHRS** | 1 | Attitude measurement | Roll, Pitch, Yaw |
 | **DVL** | 1 | Velocity & position | Bottom-lock mode |
+| **DS** | 1 | Depth from pressure | Pre-installed |
 
 **4-SBES Configuration:**
 ```
