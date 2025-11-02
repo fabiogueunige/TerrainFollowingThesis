@@ -1,4 +1,4 @@
-function [Q, R_sbes, R_ahrs] = noise_setup(state_dim, meas_dim, angle_dim)
+function [Q, R_sbes, R_ahrs] = noise_setup_sbes(state_dim, meas_dim, angle_dim)
     % NOISE_SETUP Configure noise covariance matrices for EKF
     %
     % Inputs:

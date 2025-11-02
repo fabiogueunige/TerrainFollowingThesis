@@ -3,8 +3,10 @@ clc; clear; close all;
 %% Add Paths
 addpath('controller');
 addpath('data_management');
-addpath('ekf_filter');
-addpath('kf_filter');
+addpath('ekf_position');
+addpath('ekf_position/noise');
+addpath('ekf_sbes');
+addpath('ekf_sbes/noise');
 addpath('math_function');
 addpath('model');
 addpath('noise');
@@ -70,7 +72,7 @@ i_goal.yaw = 0;
 goal(1:N) = i_goal;
 
 %% Noise
-[Q, R_tp, R_a] = noise_setup(n_dim, m_dim, d_dim);
+[Q, R_tp, R_a] = noise_setup_sbes(n_dim, m_dim, d_dim);
 
 %% Software Design
 index_N = round(N/2);
