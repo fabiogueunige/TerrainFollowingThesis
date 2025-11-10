@@ -18,13 +18,13 @@ v = 0.1;                % [m/s] Surge velocity (forward speed)
 t_react = 0.5;          % [s] Controller reaction time
 
 % TERRAIN CHARACTERISTICS (3D - both axes)
-alpha_terrain_max = deg2rad(50);  % [rad] Maximum terrain slope (roll direction)
-beta_terrain_max = deg2rad(50);   % [rad] Maximum terrain slope (pitch direction)
+alpha_terrain_max = deg2rad(80);  % [rad] Maximum terrain slope (roll direction)
+beta_terrain_max = deg2rad(80);   % [rad] Maximum terrain slope (pitch direction)
 
 % ROBOT ORIENTATION (3D - both roll and pitch)
 % Different scenarios for gamma_max calculation
-robot_roll = deg2rad(35);         % [rad] Robot roll angle (φ) - positive = right wing down
-robot_pitch = deg2rad(35);        % [rad] Robot pitch angle (θ) - positive = nose up
+robot_roll = deg2rad(55);         % [rad] Robot roll angle (φ) - positive = right wing down
+robot_pitch = deg2rad(55);        % [rad] Robot pitch angle (θ) - positive = nose up
 tracking_error = deg2rad(10);     % [rad] Tracking error when following terrain
 
 fprintf('System Parameters:\n');
@@ -486,6 +486,10 @@ grid on;
 
 sgtitle('SBES Angle Optimization: Multi-Objective Analysis', 'FontSize', 14, 'FontWeight', 'bold');
 
+% Save figure
+% saveas(gcf, 'sbes_sensitivity_analysis.png');
+% fprintf('✓ Figure saved: sbes_sensitivity_analysis.png\n');
+
 %% ============================================================================
 % 10. GEOMETRIC CONSTRAINT VISUALIZATION
 %% ============================================================================
@@ -567,6 +571,10 @@ xlim([0 rad2deg(beta_terrain_max)]);
 ylim([0 100]);
 
 sgtitle('SBES Geometric Constraints Analysis', 'FontSize', 14, 'FontWeight', 'bold');
+
+% Save figure
+% saveas(gcf, 'sbes_geometric_constraints.png');
+% fprintf('✓ Figure saved: sbes_geometric_constraints.png\n');
 
 %% ============================================================================
 % 11. PITCH SENSITIVITY ANALYSIS
@@ -651,6 +659,10 @@ grid on;
 legend('Precision degradation', 'Current', 'Baseline efficiency', 'Current', 'Location', 'best');
 
 sgtitle('SBES Performance vs Robot Pitch', 'FontSize', 14, 'FontWeight', 'bold');
+
+% Save figure
+% saveas(gcf, 'sbes_pitch_impact.png');
+% fprintf('✓ Figure saved: sbes_pitch_impact.png\n');
 
 %% ============================================================================
 % 12. ROLL vs PITCH SEPARATE ANALYSIS
@@ -870,6 +882,10 @@ title('Worst-Case Effective Slope [°]');
 grid on;
 
 sgtitle('Roll vs Pitch: Independent Axis Analysis', 'FontSize', 14, 'FontWeight', 'bold');
+
+% Save figure
+% saveas(gcf, 'sbes_roll_pitch_separate.png');
+% fprintf('✓ Figure saved: sbes_roll_pitch_separate.png\n');
 
 %% ============================================================================
 % 13. OPTIMIZATION RESULTS FOR ALL SCENARIOS
