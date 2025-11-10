@@ -17,19 +17,23 @@ h = 3.0;                % [m] Perpendicular distance from terrain (constant)
 v = 0.1;                % [m/s] Surge velocity (forward speed)
 t_react = 0.5;          % [s] Controller reaction time
 
-% TERRAIN CHARACTERISTICS
-beta_terrain_max = deg2rad(60);  % [rad] Maximum terrain slope (pitch direction)
+% TERRAIN CHARACTERISTICS (3D - both axes)
+alpha_terrain_max = deg2rad(50);  % [rad] Maximum terrain slope (roll direction)
+beta_terrain_max = deg2rad(50);   % [rad] Maximum terrain slope (pitch direction)
 
-% ROBOT ORIENTATION (pitch angle)
+% ROBOT ORIENTATION (3D - both roll and pitch)
 % Different scenarios for gamma_max calculation
-robot_pitch = deg2rad(50);       % [rad] Robot pitch angle (θ) - positive = nose up
-tracking_error = deg2rad(10);    % [rad] Tracking error when following terrain
+robot_roll = deg2rad(35);         % [rad] Robot roll angle (φ) - positive = right wing down
+robot_pitch = deg2rad(35);        % [rad] Robot pitch angle (θ) - positive = nose up
+tracking_error = deg2rad(10);     % [rad] Tracking error when following terrain
 
 fprintf('System Parameters:\n');
 fprintf('  - Altitude h = %.2f m\n', h);
 fprintf('  - Velocity v = %.3f m/s\n', v);
 fprintf('  - Reaction time = %.3f s\n', t_react);
-fprintf('  - Max terrain slope (β) = %.0f°\n', rad2deg(beta_terrain_max));
+fprintf('  - Max terrain slope (α_roll) = %.0f°\n', rad2deg(alpha_terrain_max));
+fprintf('  - Max terrain slope (β_pitch) = %.0f°\n', rad2deg(beta_terrain_max));
+fprintf('  - Robot roll (φ) = %.1f°\n', rad2deg(robot_roll));
 fprintf('  - Robot pitch (θ) = %.1f°\n', rad2deg(robot_pitch));
 fprintf('  - Tracking error (δ) = %.0f°\n\n', rad2deg(tracking_error));
 
@@ -38,10 +42,10 @@ fprintf('  - Tracking error (δ) = %.0f°\n\n', rad2deg(tracking_error));
 %% ============================================================================
 
 % SBES SENSOR CHARACTERISTICS
-freq_sbes = 400;        % [kHz] SBES frequency [200]
-sigma_sbes = 0.005;     % [m] Sensor resolution (depth measurement error) [0.01]
-beamwidth = deg2rad(4.0);        % [deg] Beam opening angle [8.0]
-f_ping = 20;            % [Hz] Ping rate (measurement update frequency)
+freq_sbes = 400;                % [kHz] SBES frequency [200]
+sigma_sbes = 0.005;             % [m] Sensor resolution (depth measurement error) [0.01]
+beamwidth = deg2rad(4.0);       % [deg] Beam opening angle [8.0]
+f_ping = 20;                    % [Hz] Ping rate (measurement update frequency)
 
 fprintf('Sensor Specifications (SBES %d kHz):\n', freq_sbes);
 fprintf('  - Resolution σ = %.2f mm\n', sigma_sbes*1000);
@@ -89,22 +93,31 @@ theta_eff_tracking = tracking_error + beamwidth/2;
 gamma_max_tracking = pi/2 - tracking_error - beamwidth/2;
 
 % SCENARIO 3: Fixed horizontal robot on inclined terrain
-% Robot stays horizontal (θ = 0), terrain at maximum slope β_terrain_max
-% θ_eff = γ + β_terrain_max + beamwidth/2 < 90°
-theta_eff_fixed = beta_terrain_max + beamwidth/2;
-gamma_max_fixed = pi/2 - beta_terrain_max - beamwidth/2;
+% Robot stays horizontal (φ = 0, θ = 0), terrain at maximum slope
+% Take the worst case between roll and pitch axes
+theta_eff_fixed_roll = alpha_terrain_max + beamwidth/2;
+theta_eff_fixed_pitch = beta_terrain_max + beamwidth/2;
+theta_eff_fixed = max(theta_eff_fixed_roll, theta_eff_fixed_pitch);
+gamma_max_fixed = pi/2 - max(alpha_terrain_max, beta_terrain_max) - beamwidth/2;
 
-% SCENARIO 4: Current robot orientation on terrain
-% Geometric correction: ray-terrain angle depends on relative orientation
-% When robot follows terrain (both pitch up/down), use |θ - β|
-% This represents the actual misalignment between robot and terrain
-if sign(robot_pitch) == sign(beta_terrain_max)
-    % Same direction: relative angle is the difference
-    effective_slope_current = abs(abs(robot_pitch) - abs(beta_terrain_max)) + tracking_error;
+% SCENARIO 4: Current robot orientation on terrain (3D)
+% Geometric correction for both axes independently
+% ROLL axis (sensors E/W): influenced by φ_robot and α_terrain
+if sign(robot_roll) == sign(alpha_terrain_max)
+    effective_slope_roll = abs(abs(robot_roll) - abs(alpha_terrain_max)) + tracking_error;
 else
-    % Opposite directions: angles add up
-    effective_slope_current = abs(robot_pitch) + abs(beta_terrain_max) + tracking_error;
+    effective_slope_roll = abs(robot_roll) + abs(alpha_terrain_max) + tracking_error;
 end
+
+% PITCH axis (sensors N/S): influenced by θ_robot and β_terrain
+if sign(robot_pitch) == sign(beta_terrain_max)
+    effective_slope_pitch = abs(abs(robot_pitch) - abs(beta_terrain_max)) + tracking_error;
+else
+    effective_slope_pitch = abs(robot_pitch) + abs(beta_terrain_max) + tracking_error;
+end
+
+% Take worst case (most restrictive) between the two axes
+effective_slope_current = max(effective_slope_roll, effective_slope_pitch);
 theta_eff_current = effective_slope_current + beamwidth/2;
 gamma_max_current = pi/2 - effective_slope_current - beamwidth/2;
 
@@ -223,7 +236,7 @@ fprintf('  - Search range: [%.2f°, %.2f°]\n\n', rad2deg(gamma_min), rad2deg(ga
 
 % Objective function for fminbnd (minimizes, so we use negative J)
 objective_neg = @(gamma) -objective_function(gamma, h, v, t_react, ...
-                    beta_terrain_max, robot_pitch, tracking_error, ...
+                    alpha_terrain_max, beta_terrain_max, robot_roll, robot_pitch, tracking_error, ...
                     s_ref, k_c, gamma_opt_ref, sigma_gamma, ...
                     w1, w2, w3, w4, denom_min_safe, scale_uncertainty);
 
@@ -247,13 +260,25 @@ baseline_opt = 2 * h * tan(gamma_opt);
 d_ahead_opt = h * tan(gamma_opt);
 r_range_opt = h / cos(gamma_opt);
 
-% Ray-terrain geometry with robot pitch
-% Corrected: use relative orientation between robot and terrain
-if sign(robot_pitch) == sign(beta_terrain_max)
-    effective_slope = abs(abs(robot_pitch) - abs(beta_terrain_max)) + tracking_error;
+% Ray-terrain geometry with robot orientation (3D)
+% Compute effective slope for both axes
+
+% ROLL axis (sensors E/W)
+if sign(robot_roll) == sign(alpha_terrain_max)
+    effective_slope_roll = abs(abs(robot_roll) - abs(alpha_terrain_max)) + tracking_error;
 else
-    effective_slope = abs(robot_pitch) + abs(beta_terrain_max) + tracking_error;
+    effective_slope_roll = abs(robot_roll) + abs(alpha_terrain_max) + tracking_error;
 end
+
+% PITCH axis (sensors N/S)
+if sign(robot_pitch) == sign(beta_terrain_max)
+    effective_slope_pitch = abs(abs(robot_pitch) - abs(beta_terrain_max)) + tracking_error;
+else
+    effective_slope_pitch = abs(robot_pitch) + abs(beta_terrain_max) + tracking_error;
+end
+
+% Take worst case for stability
+effective_slope = max(effective_slope_roll, effective_slope_pitch);
 theta_ray_terrain_opt = gamma_opt + effective_slope;
 denom_opt = cos(theta_ray_terrain_opt) / cos(effective_slope);
 r_worst_case = h / max(abs(denom_opt), 0.001);  % Range in worst case
@@ -276,37 +301,49 @@ f_cov_opt = 1 - exp(-k_c * (d_ahead_opt - v*t_react));
 f_rob_opt = exp(-(gamma_opt - gamma_opt_ref)^2 / (2*sigma_gamma^2));
 f_unc_opt = tanh(max(denom_opt, denom_min_safe) / scale_uncertainty);
 
-% Baseline correction for robot pitch
-baseline_correction = cos(robot_pitch);
-baseline_effective = baseline_opt * baseline_correction;
+% Baseline correction for robot orientation (3D)
+% Sensors N/S affected by pitch, sensors E/W affected by roll
+baseline_correction_pitch = cos(robot_pitch);   % For N/S sensors
+baseline_correction_roll = cos(robot_roll);     % For E/W sensors
+baseline_correction_avg = (baseline_correction_pitch + baseline_correction_roll) / 2;
+baseline_effective = baseline_opt * baseline_correction_avg;
 
-% Precision degradation factor
-precision_degradation = 1 / baseline_correction;
+% Precision degradation factor (average of both axes)
+precision_degradation_pitch = 1 / baseline_correction_pitch;
+precision_degradation_roll = 1 / baseline_correction_roll;
+precision_degradation = (precision_degradation_pitch + precision_degradation_roll) / 2;
 
 fprintf('OPERATIVE METRICS:\n\n');
 
 fprintf('GEOMETRY:\n');
 fprintf('  - Baseline (robot frame) = %.3f m\n', baseline_opt);
-fprintf('  - Baseline (effective, with θ=%.1f°) = %.3f m\n', rad2deg(robot_pitch), baseline_effective);
-fprintf('  - Baseline correction factor = %.3f\n', baseline_correction);
+fprintf('  - Baseline (effective, 3D avg) = %.3f m\n', baseline_effective);
+fprintf('  - Baseline correction (pitch axis, θ=%.1f°) = %.3f\n', rad2deg(robot_pitch), baseline_correction_pitch);
+fprintf('  - Baseline correction (roll axis, φ=%.1f°) = %.3f\n', rad2deg(robot_roll), baseline_correction_roll);
+fprintf('  - Baseline correction (average) = %.3f\n', baseline_correction_avg);
 fprintf('  - Look-ahead distance = %.3f m\n', d_ahead_opt);
 fprintf('  - SBES range (flat terrain, aligned robot) = %.3f m\n', r_range_opt);
-fprintf('  - SBES range (worst case: β=%.0f°, θ=%.1f°) = %.2f m\n', ...
-         rad2deg(beta_terrain_max), rad2deg(robot_pitch), r_worst_case);
+fprintf('  - SBES range (worst case: 3D terrain+orientation) = %.2f m\n', r_worst_case);
 fprintf('  - Footprint area ≈ %.2f m²\n\n', baseline_effective^2);
 
-fprintf('RAY-TERRAIN GEOMETRY:\n');
+fprintf('RAY-TERRAIN GEOMETRY (3D):\n');
+fprintf('  - Robot roll (φ) = %.1f°\n', rad2deg(robot_roll));
 fprintf('  - Robot pitch (θ) = %.1f°\n', rad2deg(robot_pitch));
-fprintf('  - Terrain slope (β) = %.0f°\n', rad2deg(beta_terrain_max));
+fprintf('  - Terrain slope (α_roll) = %.0f°\n', rad2deg(alpha_terrain_max));
+fprintf('  - Terrain slope (β_pitch) = %.0f°\n', rad2deg(beta_terrain_max));
 fprintf('  - Tracking error (δ) = %.0f°\n', rad2deg(tracking_error));
-fprintf('  - Effective slope = |θ| + β + δ = %.1f°\n', rad2deg(effective_slope));
+fprintf('  - Effective slope (roll axis) = %.1f°\n', rad2deg(effective_slope_roll));
+fprintf('  - Effective slope (pitch axis) = %.1f°\n', rad2deg(effective_slope_pitch));
+fprintf('  - Effective slope (worst case) = %.1f°\n', rad2deg(effective_slope));
 fprintf('  - Ray-terrain angle = γ + effective_slope = %.2f°\n', rad2deg(theta_ray_terrain_opt));
 fprintf('  - Margin to 90° = %.2f°\n\n', rad2deg(pi/2 - theta_ray_terrain_opt));
 
 fprintf('PRECISION:\n');
-fprintf('  - Angle estimation error σ_β = %.3f° = %.2f mrad\n', rad2deg(sigma_theta_opt), sigma_theta_opt*1000);
+fprintf('  - Angle estimation error σ_α = %.3f° = %.2f mrad\n', rad2deg(sigma_theta_opt), sigma_theta_opt*1000);
 fprintf('  - Angular SNR = %.0f:1\n', snr_angular);
-fprintf('  - Precision degradation due to pitch = %.2f×\n\n', precision_degradation);
+fprintf('  - Precision degradation (pitch axis) = %.2f×\n', precision_degradation_pitch);
+fprintf('  - Precision degradation (roll axis) = %.2f×\n', precision_degradation_roll);
+fprintf('  - Precision degradation (average) = %.2f×\n\n', precision_degradation);
 
 fprintf('TIMING:\n');
 fprintf('  - Time available for reaction = %.2f s\n', t_available);
@@ -349,9 +386,11 @@ f4_plot = zeros(size(gamma_plot));
 for i = 1:length(gamma_plot)
     J_plot(i) = -objective_neg(gamma_plot(i));
     
-    % Component 1: Resolution with pitch correction
+    % Component 1: Resolution with 3D correction (average of both axes)
     baseline = 2 * h * tan(gamma_plot(i));
-    baseline_eff_i = baseline * cos(robot_pitch);
+    baseline_eff_pitch_i = baseline * cos(robot_pitch);
+    baseline_eff_roll_i = baseline * cos(robot_roll);
+    baseline_eff_i = (baseline_eff_pitch_i + baseline_eff_roll_i) / 2;
     f1_plot(i) = tanh(baseline_eff_i / s_ref);
     
     % Component 2: Coverage
@@ -361,10 +400,22 @@ for i = 1:length(gamma_plot)
     % Component 3: Robustness
     f3_plot(i) = exp(-(gamma_plot(i) - gamma_opt_ref)^2 / (2*sigma_gamma^2));
     
-    % Component 4: Uncertainty with pitch geometry
-    eff_slope = abs(robot_pitch) + beta_terrain_max + tracking_error;
-    theta_eff_i = gamma_plot(i) + eff_slope;
-    denom_plot = cos(theta_eff_i) / cos(eff_slope);
+    % Component 4: Uncertainty with 3D geometry (worst case)
+    % Roll axis
+    if sign(robot_roll) == sign(alpha_terrain_max)
+        eff_slope_roll_i = abs(abs(robot_roll) - abs(alpha_terrain_max)) + tracking_error;
+    else
+        eff_slope_roll_i = abs(robot_roll) + abs(alpha_terrain_max) + tracking_error;
+    end
+    % Pitch axis
+    if sign(robot_pitch) == sign(beta_terrain_max)
+        eff_slope_pitch_i = abs(abs(robot_pitch) - abs(beta_terrain_max)) + tracking_error;
+    else
+        eff_slope_pitch_i = abs(robot_pitch) + abs(beta_terrain_max) + tracking_error;
+    end
+    eff_slope_i = max(eff_slope_roll_i, eff_slope_pitch_i);
+    theta_eff_i = gamma_plot(i) + eff_slope_i;
+    denom_plot = cos(theta_eff_i) / cos(eff_slope_i);
     f4_plot(i) = tanh(max(denom_plot, denom_min_safe) / scale_uncertainty);
 end
 
@@ -592,17 +643,236 @@ plot(rad2deg(abs(robot_pitch)), precision_degradation, 'bo', 'MarkerSize', 10, '
 yyaxis right;
 plot(rad2deg(orient_angles), baseline_reduction * 100, 'r-', 'LineWidth', 2);
 ylabel('Baseline Efficiency [%]', 'Color', 'r');
-plot(rad2deg(abs(robot_pitch)), baseline_correction * 100, 'ro', 'MarkerSize', 10, 'LineWidth', 2);
+plot(rad2deg(abs(robot_pitch)), baseline_correction_avg * 100, 'ro', 'MarkerSize', 10, 'LineWidth', 2);
 
-xlabel('Robot Pitch |θ| [degrees]');
-title('Measurement Quality vs Robot Pitch');
+xlabel('Robot Orientation |φ|, |θ| [degrees]');
+title('Measurement Quality vs Robot Orientation (3D)');
 grid on;
 legend('Precision degradation', 'Current', 'Baseline efficiency', 'Current', 'Location', 'best');
 
 sgtitle('SBES Performance vs Robot Pitch', 'FontSize', 14, 'FontWeight', 'bold');
 
 %% ============================================================================
-% 12. OPTIMIZATION RESULTS FOR ALL SCENARIOS
+% 12. ROLL vs PITCH SEPARATE ANALYSIS
+%% ============================================================================
+
+figure('Name', 'Roll vs Pitch Separate Analysis', 'NumberTitle', 'off', ...
+       'Position', [250 50 1200 900]);
+
+% Test ranges for roll and pitch independently
+roll_range = linspace(-deg2rad(60), deg2rad(60), 50);
+pitch_range = linspace(-deg2rad(60), deg2rad(60), 50);
+
+% === ROLL AXIS ANALYSIS (keep pitch constant) ===
+
+% Subplot 1: gamma_max vs roll (with constant pitch)
+subplot(3,3,1);
+gamma_max_vs_roll = zeros(size(roll_range));
+for i = 1:length(roll_range)
+    if sign(roll_range(i)) == sign(alpha_terrain_max)
+        eff_slope_roll_i = abs(abs(roll_range(i)) - abs(alpha_terrain_max)) + tracking_error;
+    else
+        eff_slope_roll_i = abs(roll_range(i)) + abs(alpha_terrain_max) + tracking_error;
+    end
+    % Keep pitch constant at current value
+    if sign(robot_pitch) == sign(beta_terrain_max)
+        eff_slope_pitch_i = abs(abs(robot_pitch) - abs(beta_terrain_max)) + tracking_error;
+    else
+        eff_slope_pitch_i = abs(robot_pitch) + abs(beta_terrain_max) + tracking_error;
+    end
+    eff_slope_worst = max(eff_slope_roll_i, eff_slope_pitch_i);
+    gamma_max_vs_roll(i) = pi/2 - eff_slope_worst - beamwidth/2;
+end
+plot(rad2deg(roll_range), rad2deg(gamma_max_vs_roll), 'b-', 'LineWidth', 2);
+hold on;
+plot(rad2deg(robot_roll), rad2deg(gamma_max), 'r*', 'MarkerSize', 15, 'LineWidth', 2);
+plot([rad2deg(roll_range(1)), rad2deg(roll_range(end))], [0 0], 'k--', 'LineWidth', 1);
+xlabel('Robot Roll φ [degrees]');
+ylabel('γ_{max} [degrees]');
+title('Max Feasible Angle vs Roll');
+grid on;
+legend('γ_{max}(φ)', 'Current', 'Location', 'best');
+
+% Subplot 2: Effective baseline vs roll
+subplot(3,3,2);
+baseline_vs_roll = 2 * h * tan(gamma_opt) .* cos(abs(roll_range));
+plot(rad2deg(roll_range), baseline_vs_roll, 'b-', 'LineWidth', 2);
+hold on;
+plot(rad2deg(robot_roll), baseline_opt * cos(robot_roll), 'r*', 'MarkerSize', 15, 'LineWidth', 2);
+xlabel('Robot Roll φ [degrees]');
+ylabel('Effective Baseline [m]');
+title('Baseline (E/W sensors) vs Roll');
+grid on;
+legend('Baseline_{eff}(φ)', 'Current', 'Location', 'best');
+
+% Subplot 3: Ray-terrain angle vs roll
+subplot(3,3,3);
+theta_ray_vs_roll = zeros(size(roll_range));
+for i = 1:length(roll_range)
+    if sign(roll_range(i)) == sign(alpha_terrain_max)
+        eff_slope_roll_i = abs(abs(roll_range(i)) - abs(alpha_terrain_max)) + tracking_error;
+    else
+        eff_slope_roll_i = abs(roll_range(i)) + abs(alpha_terrain_max) + tracking_error;
+    end
+    theta_ray_vs_roll(i) = gamma_opt + eff_slope_roll_i;
+end
+plot(rad2deg(roll_range), rad2deg(theta_ray_vs_roll), 'b-', 'LineWidth', 2);
+hold on;
+plot(rad2deg(robot_roll), rad2deg(gamma_opt + effective_slope_roll), 'r*', 'MarkerSize', 15, 'LineWidth', 2);
+plot([rad2deg(roll_range(1)), rad2deg(roll_range(end))], [90 90], 'r--', 'LineWidth', 2);
+xlabel('Robot Roll φ [degrees]');
+ylabel('Ray-Terrain Angle [degrees]');
+title('Ray-Terrain Angle (Roll Axis)');
+grid on;
+legend('θ_{ray}(φ)', 'Current', '90° limit', 'Location', 'best');
+ylim([0 100]);
+
+% === PITCH AXIS ANALYSIS (keep roll constant) ===
+
+% Subplot 4: gamma_max vs pitch (with constant roll)
+subplot(3,3,4);
+gamma_max_vs_pitch = zeros(size(pitch_range));
+for i = 1:length(pitch_range)
+    % Keep roll constant at current value
+    if sign(robot_roll) == sign(alpha_terrain_max)
+        eff_slope_roll_i = abs(abs(robot_roll) - abs(alpha_terrain_max)) + tracking_error;
+    else
+        eff_slope_roll_i = abs(robot_roll) + abs(alpha_terrain_max) + tracking_error;
+    end
+    if sign(pitch_range(i)) == sign(beta_terrain_max)
+        eff_slope_pitch_i = abs(abs(pitch_range(i)) - abs(beta_terrain_max)) + tracking_error;
+    else
+        eff_slope_pitch_i = abs(pitch_range(i)) + abs(beta_terrain_max) + tracking_error;
+    end
+    eff_slope_worst = max(eff_slope_roll_i, eff_slope_pitch_i);
+    gamma_max_vs_pitch(i) = pi/2 - eff_slope_worst - beamwidth/2;
+end
+plot(rad2deg(pitch_range), rad2deg(gamma_max_vs_pitch), 'g-', 'LineWidth', 2);
+hold on;
+plot(rad2deg(robot_pitch), rad2deg(gamma_max), 'r*', 'MarkerSize', 15, 'LineWidth', 2);
+plot([rad2deg(pitch_range(1)), rad2deg(pitch_range(end))], [0 0], 'k--', 'LineWidth', 1);
+xlabel('Robot Pitch θ [degrees]');
+ylabel('γ_{max} [degrees]');
+title('Max Feasible Angle vs Pitch');
+grid on;
+legend('γ_{max}(θ)', 'Current', 'Location', 'best');
+
+% Subplot 5: Effective baseline vs pitch
+subplot(3,3,5);
+baseline_vs_pitch = 2 * h * tan(gamma_opt) .* cos(abs(pitch_range));
+plot(rad2deg(pitch_range), baseline_vs_pitch, 'g-', 'LineWidth', 2);
+hold on;
+plot(rad2deg(robot_pitch), baseline_opt * cos(robot_pitch), 'r*', 'MarkerSize', 15, 'LineWidth', 2);
+xlabel('Robot Pitch θ [degrees]');
+ylabel('Effective Baseline [m]');
+title('Baseline (N/S sensors) vs Pitch');
+grid on;
+legend('Baseline_{eff}(θ)', 'Current', 'Location', 'best');
+
+% Subplot 6: Ray-terrain angle vs pitch
+subplot(3,3,6);
+theta_ray_vs_pitch = zeros(size(pitch_range));
+for i = 1:length(pitch_range)
+    if sign(pitch_range(i)) == sign(beta_terrain_max)
+        eff_slope_pitch_i = abs(abs(pitch_range(i)) - abs(beta_terrain_max)) + tracking_error;
+    else
+        eff_slope_pitch_i = abs(pitch_range(i)) + abs(beta_terrain_max) + tracking_error;
+    end
+    theta_ray_vs_pitch(i) = gamma_opt + eff_slope_pitch_i;
+end
+plot(rad2deg(pitch_range), rad2deg(theta_ray_vs_pitch), 'g-', 'LineWidth', 2);
+hold on;
+plot(rad2deg(robot_pitch), rad2deg(gamma_opt + effective_slope_pitch), 'r*', 'MarkerSize', 15, 'LineWidth', 2);
+plot([rad2deg(pitch_range(1)), rad2deg(pitch_range(end))], [90 90], 'r--', 'LineWidth', 2);
+xlabel('Robot Pitch θ [degrees]');
+ylabel('Ray-Terrain Angle [degrees]');
+title('Ray-Terrain Angle (Pitch Axis)');
+grid on;
+legend('θ_{ray}(θ)', 'Current', '90° limit', 'Location', 'best');
+ylim([0 100]);
+
+% === COMPARISON PLOTS ===
+
+% Subplot 7: Effective slopes comparison
+subplot(3,3,7);
+eff_slope_roll_array = zeros(size(roll_range));
+for i = 1:length(roll_range)
+    if sign(roll_range(i)) == sign(alpha_terrain_max)
+        eff_slope_roll_array(i) = abs(abs(roll_range(i)) - abs(alpha_terrain_max)) + tracking_error;
+    else
+        eff_slope_roll_array(i) = abs(roll_range(i)) + abs(alpha_terrain_max) + tracking_error;
+    end
+end
+eff_slope_pitch_array = zeros(size(pitch_range));
+for i = 1:length(pitch_range)
+    if sign(pitch_range(i)) == sign(beta_terrain_max)
+        eff_slope_pitch_array(i) = abs(abs(pitch_range(i)) - abs(beta_terrain_max)) + tracking_error;
+    else
+        eff_slope_pitch_array(i) = abs(pitch_range(i)) + abs(beta_terrain_max) + tracking_error;
+    end
+end
+plot(rad2deg(roll_range), rad2deg(eff_slope_roll_array), 'b-', 'LineWidth', 2, 'DisplayName', 'Roll axis');
+hold on;
+plot(rad2deg(pitch_range), rad2deg(eff_slope_pitch_array), 'g-', 'LineWidth', 2, 'DisplayName', 'Pitch axis');
+plot(rad2deg(robot_roll), rad2deg(effective_slope_roll), 'bo', 'MarkerSize', 10, 'LineWidth', 2, 'DisplayName', 'Current roll');
+plot(rad2deg(robot_pitch), rad2deg(effective_slope_pitch), 'go', 'MarkerSize', 10, 'LineWidth', 2, 'DisplayName', 'Current pitch');
+xlabel('Robot Orientation [degrees]');
+ylabel('Effective Slope [degrees]');
+title('Effective Slope Comparison');
+grid on;
+legend('Location', 'best');
+
+% Subplot 8: Precision degradation comparison
+subplot(3,3,8);
+precision_roll = 1 ./ cos(abs(roll_range));
+precision_pitch = 1 ./ cos(abs(pitch_range));
+plot(rad2deg(roll_range), precision_roll, 'b-', 'LineWidth', 2, 'DisplayName', 'Roll axis (E/W)');
+hold on;
+plot(rad2deg(pitch_range), precision_pitch, 'g-', 'LineWidth', 2, 'DisplayName', 'Pitch axis (N/S)');
+plot(rad2deg(robot_roll), precision_degradation_roll, 'bo', 'MarkerSize', 10, 'LineWidth', 2, 'DisplayName', 'Current roll');
+plot(rad2deg(robot_pitch), precision_degradation_pitch, 'go', 'MarkerSize', 10, 'LineWidth', 2, 'DisplayName', 'Current pitch');
+xlabel('Robot Orientation [degrees]');
+ylabel('Precision Degradation Factor');
+title('Precision Degradation: Roll vs Pitch');
+grid on;
+legend('Location', 'best');
+
+% Subplot 9: 2D heatmap of worst-case effective slope
+subplot(3,3,9);
+[Roll_grid, Pitch_grid] = meshgrid(linspace(-60, 60, 30), linspace(-60, 60, 30));
+Eff_slope_grid = zeros(size(Roll_grid));
+for i = 1:size(Roll_grid, 1)
+    for j = 1:size(Roll_grid, 2)
+        roll_val = deg2rad(Roll_grid(i,j));
+        pitch_val = deg2rad(Pitch_grid(i,j));
+        % Roll contribution
+        if sign(roll_val) == sign(alpha_terrain_max)
+            eff_roll = abs(abs(roll_val) - abs(alpha_terrain_max)) + tracking_error;
+        else
+            eff_roll = abs(roll_val) + abs(alpha_terrain_max) + tracking_error;
+        end
+        % Pitch contribution
+        if sign(pitch_val) == sign(beta_terrain_max)
+            eff_pitch = abs(abs(pitch_val) - abs(beta_terrain_max)) + tracking_error;
+        else
+            eff_pitch = abs(pitch_val) + abs(beta_terrain_max) + tracking_error;
+        end
+        Eff_slope_grid(i,j) = rad2deg(max(eff_roll, eff_pitch));
+    end
+end
+contourf(Roll_grid, Pitch_grid, Eff_slope_grid, 20);
+hold on;
+plot(rad2deg(robot_roll), rad2deg(robot_pitch), 'r*', 'MarkerSize', 20, 'LineWidth', 3);
+colorbar;
+xlabel('Robot Roll φ [degrees]');
+ylabel('Robot Pitch θ [degrees]');
+title('Worst-Case Effective Slope [°]');
+grid on;
+
+sgtitle('Roll vs Pitch: Independent Axis Analysis', 'FontSize', 14, 'FontWeight', 'bold');
+
+%% ============================================================================
+% 13. OPTIMIZATION RESULTS FOR ALL SCENARIOS
 %% ============================================================================
 
 fprintf('\n');
@@ -668,7 +938,7 @@ for s = 1:4
                 s, scenario_names{s}, rad2deg(gmax));
     else
         % Mark the selected scenario with ►
-        marker = '';
+        marker = '   ';
         if s == original_scenario
             marker = ' ►';
         end
@@ -716,7 +986,7 @@ end
 fprintf('\n');
 
 %% ============================================================================
-% 13. DISPLAY VERSORS FOR MATLAB CODE GENERATION
+% 14. DISPLAY VERSORS FOR MATLAB CODE GENERATION
 %% ============================================================================
 
 fprintf('\n');
@@ -747,14 +1017,14 @@ fprintf('r_s(:, 3) = [%+.6f, %+.6f, %+.6f]''  %% Right\n', 0, -sin_l, cos_l);
 fprintf('r_s(:, 4) = [%+.6f, %+.6f, %+.6f]''  %% Left\n\n', 0, -sin_g, cos_g);
 
 %% ============================================================================
-% 14. DEFINE OBJECTIVE FUNCTION
+% 15. DEFINE OBJECTIVE FUNCTION
 %% ============================================================================
 
 function J = objective_function(gamma, h, v, t_react, ...
-                                beta_terrain_max, robot_pitch, tracking_error, ...
+                                alpha_terrain_max, beta_terrain_max, robot_roll, robot_pitch, tracking_error, ...
                                 s_ref, k_c, gamma_opt_ref, sigma_gamma, ...
                                 w1, w2, w3, w4, denom_min_safe, scale_uncertainty)
-    % Multi-objective function to MAXIMIZE
+    % Multi-objective function to MAXIMIZE (3D version)
     % J(γ) = w1·f_res(γ) + w2·f_cov(γ) + w3·f_rob(γ) + w4·f_unc(γ)
     %
     % INPUTS (all angles in radians):
@@ -762,7 +1032,9 @@ function J = objective_function(gamma, h, v, t_react, ...
     %   h                  - Altitude above terrain [m]
     %   v                  - Robot velocity [m/s]
     %   t_react            - Reaction time [s]
+    %   alpha_terrain_max  - Maximum terrain slope (roll direction) [rad]
     %   beta_terrain_max   - Maximum terrain slope (pitch direction) [rad]
+    %   robot_roll         - Robot roll angle φ [rad]
     %   robot_pitch        - Robot pitch angle θ [rad]
     %   tracking_error     - Tracking error δ [rad]
     %   s_ref              - Reference baseline [m]
@@ -776,10 +1048,12 @@ function J = objective_function(gamma, h, v, t_react, ...
     % OUTPUT:
     %   J - Combined objective value (to be maximized)
     
-    % Component 1: Resolution (maximize baseline size)
-    % Baseline projected on terrain plane (considering robot pitch)
+    % Component 1: Resolution (maximize baseline size) - 3D
+    % Baseline projected on terrain plane for both axes
     baseline_robot = 2 * h * tan(gamma);  % Baseline in robot frame
-    baseline_effective = baseline_robot * cos(robot_pitch);  % Projection correction
+    baseline_eff_pitch = baseline_robot * cos(robot_pitch);  % N/S sensors
+    baseline_eff_roll = baseline_robot * cos(robot_roll);    % E/W sensors
+    baseline_effective = (baseline_eff_pitch + baseline_eff_roll) / 2;  % Average
     f_res = tanh(baseline_effective / s_ref);
     
     % Component 2: Coverage (look-ahead distance)
@@ -789,19 +1063,25 @@ function J = objective_function(gamma, h, v, t_react, ...
     % Component 3: Robustness (acoustic return quality)
     f_rob = exp(-(gamma - gamma_opt_ref)^2 / (2*sigma_gamma^2));
     
-    % Component 4: Uncertainty (geometric stability on inclined terrain)
-    % This component considers the full geometry:
-    % - Terrain slope: beta_terrain_max
-    % - Robot pitch: robot_pitch
-    % - Tracking quality: tracking_error
+    % Component 4: Uncertainty (geometric stability on inclined terrain) - 3D
+    % Consider both roll and pitch axes independently
     
-    % Worst-case effective angle between ray and terrain normal
-    % Corrected: use relative orientation between robot and terrain
-    if sign(robot_pitch) == sign(beta_terrain_max)
-        effective_slope = abs(abs(robot_pitch) - abs(beta_terrain_max)) + tracking_error;
+    % ROLL axis (sensors E/W): influenced by φ and α
+    if sign(robot_roll) == sign(alpha_terrain_max)
+        effective_slope_roll = abs(abs(robot_roll) - abs(alpha_terrain_max)) + tracking_error;
     else
-        effective_slope = abs(robot_pitch) + abs(beta_terrain_max) + tracking_error;
+        effective_slope_roll = abs(robot_roll) + abs(alpha_terrain_max) + tracking_error;
     end
+    
+    % PITCH axis (sensors N/S): influenced by θ and β
+    if sign(robot_pitch) == sign(beta_terrain_max)
+        effective_slope_pitch = abs(abs(robot_pitch) - abs(beta_terrain_max)) + tracking_error;
+    else
+        effective_slope_pitch = abs(robot_pitch) + abs(beta_terrain_max) + tracking_error;
+    end
+    
+    % Take worst case (most restrictive)
+    effective_slope = max(effective_slope_roll, effective_slope_pitch);
     theta_ray_terrain = gamma + effective_slope;
     
     % Denominator represents margin before ray becomes parallel to terrain

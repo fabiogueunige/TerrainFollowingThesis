@@ -11,12 +11,12 @@
 ### 1.1 System Configuration
 
 We consider an AUV equipped with four SBES sensors arranged in an X-configuration:
-- **Sensor placement:** North (+pitch), South (-pitch), East (+roll), West (-roll)
+- **Sensor placement:** North (+pitch), South (-pitch), East (+roll), West (-roll)  
 - **Mounting geometry:** Each sensor tilted at angle γ from the robot's vertical axis
 - **Operational mode:** Constant-altitude terrain-following at height h above seafloor
 
 **System parameters:**
-- γ ∈ [γ_min, γ_max]: SBES mounting angle (optimization variable)
+- γ ∈ [γ_min, γ_max]: SBES mounting angle (optimization variable)  
 - h = 3.0 m: Nominal altitude above terrain (constant)
 - v = 0.1 m/s: Surge velocity (forward speed)
 - t_react = 0.5 s: Control system reaction time
