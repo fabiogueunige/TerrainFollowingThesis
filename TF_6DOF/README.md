@@ -121,6 +121,7 @@ main_6DOF_3D
 ```
 
 **Expected Output:**
+
 - Console: State transitions, diagnostics (~40,000 iterations)
 - Figures (auto-generated):
   - State tracking (altitude, alpha, beta)

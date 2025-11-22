@@ -54,9 +54,9 @@ function [a, b] = reference_correction(n_cap, alph, bet)
     epsilon = 1e-6;  % Tolerance for zero comparisons
     
     %% Check Normal Direction
-    % In world frame (NED), terrain normal should point downward (n_z < 0)
+    % In world frame (NED), terrain normal should point upward and be negative (n_z < 0)
     if n_cap(3) > epsilon
-        % Normal points upward → needs correction
+        % Normal points downward → needs correction
         printDebug('Reference correction: Inverting normal vector (n_z = %.4f)\n', n_cap(3));
         
         %% Invert and Normalize
@@ -90,7 +90,7 @@ function [a, b] = reference_correction(n_cap, alph, bet)
         
         printDebug('  Corrected angles: alpha = %.4f rad, beta = %.4f rad\n', a, b);
     else
-        % Normal already points downward → no correction needed
+        % Normal already points upward → no correction needed
         a = alph;
         b = bet;
     end
