@@ -50,6 +50,7 @@ r_s(:,4) = [0, -sin(Zeta), cos(Zeta)]'    % Right
 ```
 
 **Transformed to world frame:**
+
 ```matlab
 s(:,j) = wRr * r_s(:,j)  % Robot rotation matrix applied
 ```
@@ -88,6 +89,7 @@ y(j) = t_star(j)  % Measurement = range [m]
 ```
 
 **Key Features:**
+
 - **Circular buffer search**: Scans all terrain planes efficiently
 - **Closest intersection**: Multiple planes may intersect, keep nearest
 - **Boundary check**: Ensure intersection within plane segment
@@ -98,14 +100,17 @@ y(j) = t_star(j)  % Measurement = range [m]
 ### Measurement Model
 
 From ray-casting, measurement vector:
+
 ```
 z = [y1, y2, y3, y4]'
 ```
 
 **Physical interpretation:**
+
 - y_j: Range from robot to terrain along sensor j direction [m]
 
 **Noise model:**
+
 ```matlab
 v_sbes ~ N(0, R_sbes)
 z_meas = z_true + v_sbes
@@ -114,6 +119,7 @@ R_sbes = diag([0.177², 0.185², 0.177², 0.185²])
 ```
 
 **Noise characteristics:**
+
 - Acoustic scattering: ~5% range error
 - Resolution: ~1 cm (limited by sampling rate)
 - Front/rear sensors slightly noisier due to robot motion
@@ -125,6 +131,7 @@ R_sbes = diag([0.177², 0.185², 0.177², 0.185²])
 **Cause**: Terrain too steep, sensor parallel to plane, out of range
 
 **Detection:**
+
 ```matlab
 if isinf(t_star(j)) || t_star(j) <= 0
     command.contact(j) = false
@@ -134,11 +141,13 @@ end
 ```
 
 **Impact:**
+
 - 1 sensor lost: Tolerated, EKF uses remaining 3
 - 2 sensors lost (same axis): Triggers recovery maneuver
 - 4 sensors lost: Emergency reset
 
 **Statistics** (from typical run):
+
 - Failure rate: < 2% of samples
 - Duration: Usually transient (< 0.5s)
 
@@ -166,6 +175,7 @@ n_mes = n_mes / norm(n_mes)
 ```
 
 **Requirements:**
+
 - At least 3 valid sensors (4th redundant)
 - Points not collinear
 - Normal points downward (checked by `reference_correction`)
@@ -187,6 +197,7 @@ yaw   (ψ):   Rotation around Z-axis (vertical)
 ### Integration from Angular Velocities
 
 **Linearized model** (small angles):
+
 ```matlab
 φ_{k+1} = φ_k + p_k * Ts
 θ_{k+1} = θ_k + q_k * Ts
@@ -196,6 +207,7 @@ yaw   (ψ):   Rotation around Z-axis (vertical)
 where (p, q, r) are angular velocities from gyroscope [rad/s].
 
 **Rotation matrix:**
+
 ```matlab
 wRr = rotz(ψ) * roty(θ) * rotx(φ)
 ```
@@ -210,12 +222,14 @@ R_ahrs = diag([deg2rad(0.5)², deg2rad(0.5)², deg2rad(0.08)²])
 ```
 
 **Interpretation:**
+
 - Roll/pitch: 0.5° std dev (typical MEMS IMU)
 - Yaw: 0.08° std dev (magnetometer-aided)
 
 ### Usage in System
 
 **Not estimated by EKF** (assumed measured directly):
+
 - `rob_rot` used for coordinate transformations
 - `wRr` computed from measured angles
 - Provides robot orientation in world frame
@@ -237,6 +251,7 @@ velocity:  [u, v, w]' in robot frame [m/s]
 ### Position Integration
 
 **Perfect integration** (no drift in simulation):
+
 ```matlab
 % Velocity in world frame
 w_speed = wRr * u(SURGE:HEAVE)
@@ -252,6 +267,7 @@ p_robot_{k+1} = p_robot_k + w_speed * Ts
 **Currently**: No noise added (perfect measurement)
 
 **Realistic model** (commented out):
+
 ```matlab
 v_dvl ~ N(0, σ_dvl²)
 σ_dvl ≈ 0.01 m/s  % 1% velocity error
@@ -318,6 +334,7 @@ s_world(:,j) = wRr * r_s(:,j)
 - Altitude projection (dashed line to terrain)
 
 **Example:**
+
 ```
    Y_r (green)
     ↑
@@ -541,5 +558,5 @@ angle_est_mes = acos(abs(dot(n_est, n_mes)))
 
 ---
 
-**Author**: Fabio Gueunige  
+**Author**: Fabio Guelfi  
 **Last Updated**: 2025-01-23

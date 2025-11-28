@@ -9,7 +9,6 @@ addpath('ekf_sbes');
 addpath('ekf_sbes/noise');
 addpath('math_function');
 addpath('model');
-addpath('noise');
 addpath('rotation');
 addpath('sensors');
 addpath('state_machine');
@@ -174,12 +173,17 @@ for k = 2:N
     % no change in commands during the State Machine
     state(k) = state_machine(state(k-1), cmd, k);
     goal(k) = goal_def(state(k), rob_rot(:,k-1), x_est(:,k-1), k);
+
+    %% A+D Gain computation
+    if mod(k, 50) == 0
+        [Kp, Ki, Kd, Kt] = gainComputation(u(:,k-1), i_dim);
+    end
     
     %% EKF: Input Control Computation
     if k >= 3
         % PID Values with Saturation
-        [pid(:,k), integral_err(:,k), p_err(:,k), i_err(:,k), u_dot(:,k), t_sum(:,k)] = input_control(goal(k), x_est(:,k-1), rob_rot(:,k-1), pid(:,k-1), integral_err(:,k-1), ...
-                         u(:,k-1), u(:,k-2), u_dot(:,k-1), t_sum(:,k-1), wRr(:,:,k-1), wRt(:,:,k-1), Ts, i_dim, p_err(:,k-1), i_err(:,k-1),  Kp, Ki, Kd, Kt);   
+        [pid(:,k), integral_err(:,k), u_dot(:,k), t_sum(:,k)] = input_control(goal(k), x_est(:,k-1), rob_rot(:,k-1), pid(:,k-1), integral_err(:,k-1), ...
+                         u(:,k-1), u(:,k-2), u_dot(:,k-1), t_sum(:,k-1), wRr(:,:,k-1), n_est(:,k-1), state(k), Ts, i_dim, Kp, Ki, Kd, Kt);   
     end
     %% EKF: Dynamic and Kinematic Model
     % Dynamic model

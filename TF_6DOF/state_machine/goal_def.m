@@ -20,10 +20,9 @@ function gg = goal_def(c_state, ang, x_ekf, step)
     ang_to_cut_progressive = pi/8; % Progressive increase (22.5 deg)
     altitude_offset = 1.0; % Altitude adjustment for recovery (meters)
 
-    g_altitude = h_ref(step);  % Desired altitude for most states
-
     switch c_state
         case 'Reset'
+            g_altitude = 0;
             g_surge = 0;
             g_sway = 0;
             g_roll = 0;
@@ -31,6 +30,7 @@ function gg = goal_def(c_state, ang, x_ekf, step)
             g_yaw = 0;
             
         case 'TargetAltitude'
+            g_altitude = h_ref(step) + 1; % Move to a safe altitude above target
             g_surge = 0;
             g_sway = 0;
             g_roll = ang(PHI);
@@ -38,6 +38,7 @@ function gg = goal_def(c_state, ang, x_ekf, step)
             g_yaw = ang(PSI);
             
         case 'ContactSearch'
+            g_altitude = (h_ref(step) + x_ekf(IND_H)) / 2; % Maintain current altitude
             g_surge = (u_star + u_star_slow) / 2;
             g_sway = (v_star + v_star_slow) / 2;
             g_roll = phi_ref;    
@@ -46,6 +47,7 @@ function gg = goal_def(c_state, ang, x_ekf, step)
             
         case 'MovePitch'
             % Slow movement with progressive pitch adjustment
+            g_altitude = h_ref(step);
             g_surge = u_star_recovery;
             g_sway = v_star_recovery;
             g_roll = phi_ref; % Maintain roll aligned with terrain
@@ -71,6 +73,7 @@ function gg = goal_def(c_state, ang, x_ekf, step)
             
         case 'MoveRoll'
             % Slow movement with progressive roll adjustment
+            g_altitude = h_ref(step);
             g_surge = u_star_recovery;
             g_sway = v_star_slow; % Maintain some lateral movement
             g_pitch = theta_ref; % Maintain pitch aligned with terrain
@@ -97,15 +100,15 @@ function gg = goal_def(c_state, ang, x_ekf, step)
         case 'RecoveryAltitude'
             % Adjust altitude to try to recover sensor contact
             % Slow movement, maintain orientation, adjust altitude
+            g_altitude = h_ref(step) + 5;
             g_surge = u_star_recovery;
             g_sway = v_star_recovery;
             g_roll = phi_ref;
             g_pitch = theta_ref;
             g_yaw = ang(PSI);
-            % Increase target altitude to move closer to terrain
-            g_altitude = h_ref(step) - altitude_offset;
             
         case 'Following'
+            g_altitude = h_ref(step);
             g_surge = u_star;
             g_sway = v_star;
             g_roll = phi_ref;    
@@ -113,13 +116,15 @@ function gg = goal_def(c_state, ang, x_ekf, step)
             g_yaw = psi_ref;
 
         case 'Emergency'
+            g_altitude = h_ref(step) + 5;
             g_surge = 0;
             g_sway = 0;
-            g_roll = ang(PHI);    
-            g_pitch = ang(THETA); 
+            g_roll = 0;    
+            g_pitch = 0; 
             g_yaw = ang(PSI);
             
         case 'EndSimulation'
+            g_altitude = x_ekf(IND_H);
             g_surge = 0;
             g_sway = 0;
             g_roll = 0;
@@ -127,6 +132,7 @@ function gg = goal_def(c_state, ang, x_ekf, step)
             g_yaw = 0;
             
         otherwise
+            g_altitude = 0;
             g_surge = 0;
             g_sway = 0;
             g_roll = 0;
