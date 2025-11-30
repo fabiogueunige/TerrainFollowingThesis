@@ -7,9 +7,9 @@ function gg = goal_def(c_state, ang, x_ekf, step)
     u_star = 0.3;  
     u_star_slow = 0.05;
     u_star_recovery = 0.02; % Even slower for recovery maneuvers
-    v_star = -0.2;  
-    v_star_slow = -0.1;
-    v_star_recovery = -0.05;
+    v_star = 0.0;  
+    v_star_slow = 0.0;
+    v_star_recovery = 0.1; % Slight lateral movement for recovery
     global h_ref;
     phi_ref = x_ekf(ALPHA);  % Desired roll angle from terrain estimate
     theta_ref = x_ekf(BETA);  % Desired pitch angle from terrain estimate
@@ -53,21 +53,26 @@ function gg = goal_def(c_state, ang, x_ekf, step)
             g_roll = phi_ref; % Maintain roll aligned with terrain
             
             % Gradual pitch adjustment based on current angle
-            pitch_error = abs(ang(THETA) - theta_ref);
-            if pitch_error > pi/6
-                % Large error: use progressive adjustment
-                ang_adjustment = ang_to_cut_progressive;
-            else
-                % Small error: use gentle adjustment
-                ang_adjustment = ang_to_cut_initial;
-            end
-            
-            % Determine direction based on which sensors are lost
-            % If sensors 1-2 are lost, they're in front, so increase pitch to dive slightly
-            if ang(THETA) >= 0
-                g_pitch = theta_ref + ang_adjustment;
-            else
-                g_pitch = theta_ref - ang_adjustment;
+            if abs(ang(THETA)) >= pi/4 % back to safe limit
+                if ang(THETA) > 0
+                    g_pitch  = theta_ref - ang_to_cut_progressive;
+                else
+                    g_pitch  = theta_ref + ang_to_cut_progressive;
+                end
+            else 
+                if ang(THETA) > 0
+                    if theta_ref > 0
+                        g_pitch = theta_ref - ang_to_cut_initial;
+                    else
+                        g_pitch = theta_ref + ang_to_cut_initial;
+                    end
+                else
+                    if theta_ref > 0
+                        g_pitch = theta_ref + ang_to_cut_initial;
+                    else
+                        g_pitch = theta_ref - ang_to_cut_initial;
+                    end
+                end
             end
             g_yaw = ang(PSI);
             
@@ -79,21 +84,26 @@ function gg = goal_def(c_state, ang, x_ekf, step)
             g_pitch = theta_ref; % Maintain pitch aligned with terrain
             
             % Gradual roll adjustment based on current angle
-            roll_error = abs(ang(PHI) - phi_ref);
-            if roll_error > pi/6
-                % Large error: use progressive adjustment
-                ang_adjustment = ang_to_cut_progressive;
-            else
-                % Small error: use gentle adjustment
-                ang_adjustment = ang_to_cut_initial;
-            end
-            
-            % Determine direction based on which sensors are lost
-            % If sensors 3-4 are lost, adjust roll to bring them back to terrain
-            if ang(PHI) >= 0
-                g_roll = phi_ref + ang_adjustment;
-            else
-                g_roll = phi_ref - ang_adjustment;
+            if abs(ang(PHI)) >= pi/5 % back to safe limit
+                if ang(PHI) > 0
+                    g_roll  = phi_ref - ang_to_cut_progressive;
+                else
+                    g_roll  = phi_ref + ang_to_cut_progressive;
+                end
+            else 
+                if ang(PHI) > 0
+                    if phi_ref > 0
+                        g_roll = phi_ref - ang_to_cut_initial;
+                    else
+                        g_roll = phi_ref + ang_to_cut_initial;
+                    end
+                else
+                    if phi_ref > 0
+                        g_roll = phi_ref + ang_to_cut_initial;
+                    else
+                        g_roll = phi_ref - ang_to_cut_initial;
+                    end
+                end
             end
             g_yaw = ang(PSI);
             

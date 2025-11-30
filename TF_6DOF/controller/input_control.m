@@ -88,7 +88,7 @@ function [pid, int_term, acc, term_sum] = input_control(ggg, x, angles, old_pid,
     % h_contribution is the velocity command in robot frame [surge; sway; heave]
     err_h = -(ggg.altitude - x(IND_H));  % = h(k-1) - h_star (current - target)
 
-    if (stat == "Following" || stat == "MoveRoll" || stat == "MovePitch")
+    if (stat == "Following" || stat == "MoveRoll" || stat == "MovePitch" || stat == "ContactSearch")
         h_contribution = err_h * r_n;  % [surge; sway; heave] contribution
 
         %% Compute Control Errors
