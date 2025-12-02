@@ -541,5 +541,5 @@ angle_est_mes = acos(abs(dot(n_est, n_mes)))
 
 ---
 
-**Author**: Fabio Gueunige  
+**Author**: Fabio Guelfi
 **Last Updated**: 2025-01-23

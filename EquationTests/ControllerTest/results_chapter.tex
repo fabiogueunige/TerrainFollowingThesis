@@ -1,0 +1,41 @@
+\section{State Estimation Validation}
+
+
+\subsection{Monte Carlo Analysis}
+The estimation performance was tested under three noise conditions: Low ($0.5\times$), Nominal ($1.0\times$), and High ($2.0\times$) sensor noise covariance.
+
+\begin{table}[h]
+\centering
+\caption{Monte Carlo RMSE Results (Nominal Noise Condition)}
+\label{tab:rmse_results}
+\begin{tabular}{lccc}
+\hline
+\textbf{Metric} & \textbf{Axis} & \textbf{Raw EKF RMSE} & \textbf{Filtered EKF RMSE} \\ \hline
+\multirow{3}{*}{Position [m]} & Surge (X) & 1.908 & 1.899 \\
+ & Sway (Y) & 0.244 & 0.158 \\
+ & Heave (Z) & 0.419 & 0.382 \\ \hline
+\multirow{3}{*}{Attitude [deg]} & Roll & 2.51 & 2.48 \\
+ & Pitch & 2.15 & 2.12 \\
+ & Yaw & 0.85 & 0.84 \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Robustness to High Angles}
+A critical finding of the analysis is the estimator's stability during high-angle maneuvers. The RMSE during segments with roll/pitch $>20^\circ$ did not show statistically significant deviation from the 
+global mean. This confirms that the Jacobian linearization of the measurement model correctly handles the coupling between the body-frame velocities and the NED-frame position, preventing divergence even when 
+the vehicle is far from the hovering equilibrium.
+
+\section{Filter Efficacy Analysis}
+A discrete-time first-order low-pass filter (Exponential Moving Average) with a smoothing factor $\alpha = 0.80$ was implemented to process the EKF state estimates before feeding them into the control loop.
+
+\subsection{Noise Rejection vs. Lag}
+The raw EKF estimates contain high-frequency noise components derived from the DVL and AHRS sensors. Injecting this noise directly into the derivative term ($K_d$) of the PID controller would result in excessive actuator wear (control jitter).
+
+The Monte Carlo results quantify the benefit of the filter:
+\begin{itemize}
+    \item \textbf{Accuracy Improvement:} The filter reduced the RMSE for the Sway (Y) axis by approximately \textbf{35\%} and the Heave (Z) axis by \textbf{9\%} under nominal noise conditions.
+    \item \textbf{High Noise Scenarios:} In the $2.0\times$ noise scenario, the improvement in Sway estimation reached \textbf{41\%}, demonstrating the filter's efficacy as a denoiser.
+    \item \textbf{Control Effort:} The "Control Jitter Index" (mean squared derivative of the control signal) was reduced by an order of magnitude, ensuring smoother actuator operation.
+\end{itemize}
+
+\subsection{Conclusion on Filtering}

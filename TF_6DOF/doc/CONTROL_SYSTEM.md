@@ -543,5 +543,5 @@ end
 
 ---
 
-**Author**: Fabio Gueunige  
+**Author**: Fabio Guelfi  
 **Last Updated**: 2025-01-23

@@ -376,6 +376,6 @@ If you use this code, please cite:
 
 ---
 
-**Author**: Fabio Gueunige  
+**Author**: Fabio Guelfi  
 **Project**: Terrain Following Thesis (TFThesis)  
 **Last Updated**: 2025-01-23

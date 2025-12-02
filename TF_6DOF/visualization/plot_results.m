@@ -166,14 +166,15 @@ function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u
     %% Trajectory 3D
     fprintf('Plotting 3D trajectory...\n');
     figure('Name', 'Robot Trajectory');
-    scatter3(prob(1,:), prob(2,:), prob(3,:), [], time);
+    scatter3(prob(1,:), prob(2,:), -prob(3,:), [], time);  % -prob(3,:) per NED convention
     colorbar; 
     colormap(jet);
-    xlabel('On X');
-    ylabel('On Y');
-    zlabel('On Z');
-    title('Trajectory XYZ (Color = time)');
+    xlabel('X (North)');
+    ylabel('Y (East)');
+    zlabel('Z (Down) - NED');
+    title('Trajectory XYZ - NED Convention (Color = time)');
     grid on;
+    set(gca, 'ZDir', 'reverse');  % Inverte la direzione dell'asse Z per visualizzazione NED
     
     fprintf('All plots completed!\n');
 end

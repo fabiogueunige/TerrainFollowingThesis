@@ -14,18 +14,18 @@ clear all; close all; clc;
 
 % ALTITUDE AND VELOCITY
 h = 3.0;                % [m] Perpendicular distance from terrain (constant)
-v = 0.1;                % [m/s] Surge velocity (forward speed)
-t_react = 0.5;          % [s] Controller reaction time
+v = 0.3;                % [m/s] Surge velocity (forward speed)
+t_react = 1;          % [s] Controller reaction time
 
 % TERRAIN CHARACTERISTICS (3D - both axes)
-alpha_terrain_max = deg2rad(80);  % [rad] Maximum terrain slope (roll direction)
-beta_terrain_max = deg2rad(80);   % [rad] Maximum terrain slope (pitch direction)
+alpha_terrain_max = deg2rad(20);  % [rad] Maximum terrain slope (roll direction)
+beta_terrain_max = deg2rad(50);   % [rad] Maximum terrain slope (pitch direction)
 
 % ROBOT ORIENTATION (3D - both roll and pitch)
 % Different scenarios for gamma_max calculation
-robot_roll = deg2rad(55);         % [rad] Robot roll angle (φ) - positive = right wing down
-robot_pitch = deg2rad(55);        % [rad] Robot pitch angle (θ) - positive = nose up
-tracking_error = deg2rad(10);     % [rad] Tracking error when following terrain
+robot_roll = deg2rad(10);         % [rad] Robot roll angle (φ) - positive = right wing down
+robot_pitch = deg2rad(5);        % [rad] Robot pitch angle (θ) - positive = nose up
+tracking_error = deg2rad(30);     % [rad] Tracking error when following terrain
 
 fprintf('System Parameters:\n');
 fprintf('  - Altitude h = %.2f m\n', h);

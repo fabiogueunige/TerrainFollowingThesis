@@ -219,10 +219,10 @@ function m_visualization(pr, pplane, n, num_s, p_int, wRr, j, planes, plane_cont
     colors = lines(max(num_s, 6));
 
     %% 1) Draw robot as an oriented rectangular box
-    % Assumptions for robot dimensions (meters)
-    Lx = 0.8;   % length along robot x
-    Wy = 0.4;   % width along robot y
-    Hz = 0.2;   % height along robot z (small height)
+    % Assumptions for robot dimensions (meters) - INGRANDITO per migliore visibilità
+    Lx = 1.2;   % length along robot x (era 0.8)
+    Wy = 0.6;   % width along robot y (era 0.4)
+    Hz = 0.3;   % height along robot z (era 0.2)
 
     % Local cube vertices centered at origin
     hx = Lx/2; hy = Wy/2; hz = Hz/2;

@@ -4,6 +4,32 @@
 
 This data management system allows you to save, load, and analyze simulation data for statistical analysis and performance evaluation.
 
+**NEW:** Enhanced with comprehensive performance metrics following **RESULTS_GUIDE_2.pdf** specifications (Section 2.4).
+
+## 🚀 Quick Start
+
+### Single Run Analysis (All Results + All Plots)
+```matlab
+analyze_single_run();                   % Analyze most recent run
+analyze_single_run('run_20251201_105813');  % Analyze specific run
+```
+
+### Batch Statistical Analysis (Variance, Covariance, Confidence Intervals)
+```matlab
+stats = batch_statistical_analysis();   % Analyze all runs
+% Access results:
+stats.summary       % Mean, std, variance, min, max
+stats.covariance    % Covariance matrix between metrics
+stats.correlation   % Pearson correlation coefficients
+stats.confidence    % 95% and 99% confidence intervals
+stats.distribution  % Skewness, kurtosis
+```
+
+### Test Complete Workflow
+```matlab
+test_complete_workflow;  % Run verification tests
+```
+
 ## 📁 Directory Structure
 
 After running simulations with data saving enabled, the following structure is created:
@@ -137,14 +163,56 @@ terrain_variation = sim_data.rate_of_change; % 3
 ### Statistical Analysis
 
 **Analyze all runs:**
+
 ```matlab
 stats = analyze_statistics();
 ```
 
 **Analyze specific runs:**
+
 ```matlab
 run_list = {'run1', 'run2', 'run3'};
 stats = analyze_statistics(run_list);
+```
+
+### 🆕 Performance Metrics (RESULTS_GUIDE_2.pdf)
+
+**Compute comprehensive metrics for single run:**
+
+```matlab
+% Load simulation data
+sim_data = load_simulation_data('run_20251201_120426');
+
+% Compute all metrics
+metrics = compute_performance_metrics(sim_data);
+
+% Display formatted results
+display_performance_metrics(metrics, true);  % true = verbose mode
+```
+
+**Performance Metrics Computed:**
+
+1. **RMS Altitude Error** - Altitude-holding precision
+2. **Mean Angle Tracking Error** - |φ-α| and |θ-β| tracking
+3. **Sensor Failure Rate** - % time with sensor_fail > 0
+4. **State Transition Frequency** - Transitions per minute
+5. **Control Effort** - Time-averaged ||u||₂
+6. **Maximum Innovation** - ||ν||∞ (EKF consistency)
+7. **Normal Parallelism** - ∠(n_est, n_mes) consistency
+8. **Robot-Terrain Alignment** - ∠(z_robot, n_est)
+
+**Quick performance check:**
+
+```matlab
+% Summary display only
+display_performance_metrics(metrics, false);
+```
+
+**Batch analysis example:**
+
+```matlab
+% Run example script
+example_performance_analysis
 ```
 
 **Access statistics:**

@@ -460,5 +460,5 @@ Tested on laptop (Intel i7, 16GB RAM):
 
 ---
 
-**Author**: Fabio Gueunige  
+**Author**: Fabio Guelfi
 **Last Updated**: 2025-01-23
