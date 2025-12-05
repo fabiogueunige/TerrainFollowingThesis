@@ -15,6 +15,14 @@ function gg = goal_def(c_state, ang, x_ekf, step)
     theta_ref = x_ekf(BETA);  % Desired pitch angle from terrain estimate
     psi_ref = 0;  
 
+    %% AUV angles constraint
+    if abs(x_ekf(PHI)) > pi/4
+        phi_ref = pi/4 * (x_ekf(PHI)/abs(x_ekf(PHI)));
+    end
+    if (abs(x_ekf(THETA)) > deg2rad(80))
+        theta_ref = deg2rad(80) * (x_ekf(THETA)/abs(x_ekf(THETA)));
+    end
+
     %% Recovery parameters
     ang_to_cut_initial = pi/12;  % Smaller initial adjustment (15 deg)
     ang_to_cut_progressive = pi/8; % Progressive increase (22.5 deg)

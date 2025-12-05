@@ -56,7 +56,7 @@ function tau0 = tau0_values(sp0, i_dim)
     g = 9.81;           % Gravitational acceleration [m/s²]
 
     % Restoring force parameters
-    z = 0.0420;         % Vertical distance to center of buoyancy [m]
+    z = -0.0420;         % Vertical distance to center of buoyancy [m]
     B = rho * volume * g;  % Buoyancy force [N]
 
     %% Damping Coefficients

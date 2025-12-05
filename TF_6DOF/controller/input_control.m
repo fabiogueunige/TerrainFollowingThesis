@@ -1,5 +1,5 @@
-function [pid, int_term, pre_err, err_i, acc, term_sum] = input_control(ggg, x, angles, old_pid, int_term, speed, old_speed, ...
-                        acc, old_t_s, wRr, wRt, Ts, dim_i, pre_err, err_i, Kp, Ki, Kd, Kt)
+function [pid, term_sum] = input_control(ggg, x, angles, old_pid, speed, ...
+                        acc, old_t_s, wRr, w_n, Ts, dim_i, Kp, Ki, Kd)
     %% State Indices
     IND_H = 1;      ALPHA = 2;      BETA = 3;  
     global PHI; global THETA; global PSI; 
@@ -9,26 +9,22 @@ function [pid, int_term, pre_err, err_i, acc, term_sum] = input_control(ggg, x, 
     printDebug('       Input Control\n');
 
     %% Initialize Control Variables
-    max_pid = ones(dim_i, 1);  % Saturation limits for all DOFs
+    max_pid = ones(dim_i, 1) * 10;  % Saturation limits for all DOFs
     term_sum = zeros(dim_i, 1);
     pid = zeros(dim_i, 1);
-
-    %% Compute Current Acceleration
-    % Numerical differentiation of velocity
-    acc = derivator(acc, speed, old_speed, Ts); 
-    
-    %% Transform Velocities and Accelerations to Terrain Frame
-    % Express velocities in terrain-aligned frame for surge/sway/heave control
-    s_speed = wRt' * wRr * speed(SURGE:HEAVE);
-    s_acc = wRt' * wRr * acc(SURGE:HEAVE);
-
-    %% Compute Control Errors
     err = zeros(dim_i, 1);
     
+    h_err = (ggg.altitude - x(IND_H)); 
+    % Normal vector in robot frame (how altitude h projects onto robot axes)
+    % Transform world normal to robot frame
+    r_n = wRr' * w_n;  % Normal in robot frame
+    r_n = r_n / norm(r_n);  % Normalize
+    h_contribution = h_err * r_n;  % [surge; sway; heave] contribution
+    
     % Translational errors (in terrain frame)
-    err(SURGE) = (ggg.surge - s_speed(SURGE));
-    err(SWAY) = (ggg.sway - s_speed(SWAY));
-    err(HEAVE) = (ggg.altitude - x(IND_H));  % Altitude tracking (not velocity)
+    err(SURGE) = (ggg.surge - speed(SURGE) + 0.3 * h_contribution(SURGE));
+    err(SWAY) = (ggg.sway - speed(SWAY) + 0.3 * h_contribution(SWAY));
+    err(HEAVE) = h_contribution(HEAVE);  % Altitude tracking
     
     % Rotational errors (in body frame)
     err(ROLL) = (ggg.roll - angles(PHI));
@@ -39,7 +35,6 @@ function [pid, int_term, pre_err, err_i, acc, term_sum] = input_control(ggg, x, 
     % ============================================================
     % DELTA FORM WITH ANTI-WINDUP (Recommended)
     % ============================================================
-    % This form integrates: Ki*e - Kp*v - Kd*a - Kt*pid_old
     % Provides better anti-windup and smoother control
     
     % Compute PID terms for each DOF
@@ -50,44 +45,22 @@ function [pid, int_term, pre_err, err_i, acc, term_sum] = input_control(ggg, x, 
         if j == SURGE || j == SWAY
             % PI control for surge/sway (no derivative)
             % Proportional acts on acceleration (terrain frame)
-            p_err = (Kp(j) * s_acc(j));
+            p_err = (Kp(j) * acc(j));
             d_err = 0;
-        elseif j == HEAVE
-            % PID control for heave (altitude tracking)
-            % Proportional acts on vertical velocity
-            % Derivative acts on vertical acceleration
-            p_err = (Kp(j) * s_speed(j));
-            d_err = (Kd(j) * s_acc(j));
         else
-            % PID control for roll/pitch/yaw
+            % PID control for heave/roll/pitch/yaw
             % Proportional and derivative act on angular rates
             p_err = (Kp(j) * speed(j));
             d_err = (Kd(j) * acc(j));
-        end
         
         % Delta term sum: I - P - D - anti-windup
         term_sum(j) = i_err - p_err - d_err;
-    end
-    
-    % Transform surge/sway/heave terms back to robot frame
-    tp_speed = wRr' * wRt * [term_sum(SURGE); term_sum(SWAY); term_sum(HEAVE)];
-    
-    % Integrate with anti-windup for each DOF
-    for j = 1:dim_i
-        % Update translational components with transformed values
-        if j < ROLL
-            term_sum(j) = tp_speed(j);
-        end
-        
-        % Add anti-windup correction term
-        term_sum(j) = term_sum(j) - Kt(j)*old_pid(j);
         
         % Integrate the delta term
-        int_term(j) = integrator(int_term(j), term_sum(j), old_t_s(j), Ts);
+        pid(j) = integrator(old_pid(j), term_sum(j), old_t_s(j), Ts);
         
         % Apply saturation and compute anti-windup correction
-        pid_sat = max(min(int_term(j), max_pid(j)), -max_pid(j));
-        pid(j) = int_term(j) - pid_sat;  % Store difference for next iteration
+        pid(j) = max(min(pid(j), max_pid(j)), -max_pid(j));
     end
 
     %% Debug Output

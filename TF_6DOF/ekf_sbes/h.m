@@ -65,7 +65,7 @@ function z = h(x, s, num_s, num_m, n)
     % Compute predicted range for each sensor
     for j = 1:num_s
         % Check for parallel condition (singularity)
-        if (n'*s(:,j)) == 0
+        if abs(n'*s(:,j)) < 1e-6
             error('n and sensor %.0f are parallel', j);
         end
         

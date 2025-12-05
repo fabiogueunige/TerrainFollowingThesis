@@ -62,7 +62,7 @@
 %
 % See also: tau0_values, gainComputation, integrator
 
-function [new_vel] = dynamic_model(tau, tau0, sp0, ang, v_old, Ts, i_dim, old_acc)
+function [s_dotdot, new_vel] = dynamic_model(tau, tau0, sp0, ang, v_old, Ts, i_dim, old_acc)
     printDebug('       Dynamic Model\n');
     
     %% State Indices
@@ -82,7 +82,7 @@ function [new_vel] = dynamic_model(tau, tau0, sp0, ang, v_old, Ts, i_dim, old_ac
     rho = 1028;         % Seawater density [kg/m³]
     volume = 0.011054;  % Displaced volume [m³]
     g = 9.81;           % Gravitational acceleration [m/s²]
-    z = 0.0420;         % Vertical distance to center of buoyancy [m]
+    z = -0.0420;         % Vertical distance to center of buoyancy [m]
     B = rho * volume * g;  % Buoyancy force [N]
 
     %% Hydrodynamic Coefficients
@@ -107,67 +107,41 @@ function [new_vel] = dynamic_model(tau, tau0, sp0, ang, v_old, Ts, i_dim, old_ac
     
     % Velocity deviation from operating point
     delta = v_old - sp0;
-    % Velocity deviation from operating point
-    delta = v_old - sp0;
     
     %% Linearized Dynamics - Compute Accelerations
     % Initialize acceleration vector
     s_dotdot = zeros(i_dim,1);
     
-    % Linearized equation: M * a = tau - tau0 - D_lin * (v - v0)
-    % For each DOF: a = (tau - tau0 - D_lin*delta_v) / M
-    
-    % Surge: X-axis acceleration (forward/backward)
-    s_dotdot(SURGE) = (tau(SURGE) - tau0(SURGE) - dv_lin(U)*delta(SURGE)) / mv(U);
-
-    % Sway: Y-axis acceleration (left/right)
-    s_dotdot(SWAY) = (tau(SWAY) - tau0(SWAY) - dv_lin(V)*delta(SWAY)) / mv(V);
- 
-    % Heave: Z-axis acceleration (up/down)
-    s_dotdot(HEAVE) = (tau(HEAVE) - tau0(HEAVE) - dv_lin(W)*delta(HEAVE)) / mv(W);
-
-    % Roll: K-torque acceleration (rotation about x-axis)
-    s_dotdot(ROLL) = (tau(ROLL) - tau0(ROLL) - dv_lin(P)*delta(ROLL)) / mv(P);
-    
-    % Pitch: M-torque acceleration (rotation about y-axis)
-    s_dotdot(PITCH) = (tau(PITCH) - tau0(PITCH) - dv_lin(Q)*delta(PITCH)) / mv(Q);
-
-    % Yaw: N-torque acceleration (rotation about z-axis)
-    s_dotdot(YAW) = (tau(YAW) - tau0(YAW) - dv_lin(R)*delta(YAW)) / mv(R);
+    % for j = 1:i_dim
+    %     s_dotdot(j) = (tau(j) - tau0(j) - dv_lin(j)*delta(j)) / mv(j);
+    % end
 
     %% NONLINEAR MODEL (ALTERNATIVE - Currently Commented)
-    % Full 6-DOF nonlinear dynamics including:
-    % - Coriolis and centripetal forces (coupling between DOFs)
-    % - Nonlinear quadratic damping
-    % - Full restoring force coupling with orientation
-    %
-    % Uncomment to use full nonlinear model instead of linearized version
-    %
     % Surge: includes lateral/vertical velocity coupling
-    % s_dotdot(U) = (tau(U) + mv(V)*v_old(V)*v_old(R) - mv(W)*v_old(W)*v_old(Q) ...
-    %                - dv(U)*v_old(U)) / mv(U);
-    %
+    s_dotdot(U) = (tau(U) + mv(V)*v_old(V)*v_old(R) - mv(W)*v_old(W)*v_old(Q) ...
+                - dv(U)*v_old(U)) / mv(U);
+
     % Sway: includes longitudinal/vertical velocity coupling
-    % s_dotdot(V) = (tau(V) - mv(U)*v_old(U)*v_old(R) + mv(W)*v_old(W)*v_old(P) ...
-    %                - dv(V)*v_old(V)) / mv(V);
-    %
+    s_dotdot(V) = (tau(V) - mv(U)*v_old(U)*v_old(R) + mv(W)*v_old(W)*v_old(P) ...
+                - dv(V)*v_old(V)) / mv(V);
+
     % Heave: includes longitudinal/lateral velocity coupling
-    % s_dotdot(W) = (tau(W) + mv(U)*v_old(U)*v_old(Q) - mv(V)*v_old(V)*v_old(P) ...
-    %                - dv(W)*v_old(W)) / mv(W);
-    %
+    s_dotdot(W) = (tau(W) + mv(U)*v_old(U)*v_old(Q) - mv(V)*v_old(V)*v_old(P) ...
+                - dv(W)*v_old(W)) / mv(W);
+
     % Roll: includes sway/heave and pitch/yaw rate coupling + restoring moment
-    % s_dotdot(P) = (tau(P) + (mv(V)-mv(W))*v_old(V)*v_old(W) ...
-    %                + (mv(Q)-mv(R))*v_old(Q)*v_old(R) - dv(P)*v_old(P) ...
-    %                - z*B*cos(ang(THETA))*sin(ang(PHI))) / mv(P);
-    %
+    s_dotdot(P) = (tau(P) + (mv(V)-mv(W))*v_old(V)*v_old(W) ...
+                + (mv(Q)-mv(R))*v_old(Q)*v_old(R) - dv(P)*v_old(P) ...
+                - z*B*cos(ang(THETA))*sin(ang(PHI))) / mv(P);
+
     % Pitch: includes surge/heave and roll/yaw rate coupling + restoring moment
-    % s_dotdot(Q) = (tau(Q) - (mv(U)-mv(W))*v_old(U)*v_old(W) ...
-    %                - (mv(P)-mv(R))*v_old(P)*v_old(R) - dv(Q)*v_old(Q) ...
-    %                + z*B*sin(ang(THETA))) / mv(Q);
-    %
+    s_dotdot(Q) = (tau(Q) - (mv(U)-mv(W))*v_old(U)*v_old(W) ...
+                - (mv(P)-mv(R))*v_old(P)*v_old(R) - dv(Q)*v_old(Q) ...
+                + z*B*sin(ang(THETA))) / mv(Q);
+
     % Yaw: includes surge/sway and roll/pitch rate coupling
-    % s_dotdot(R) = (tau(R) + (mv(U)-mv(V))*v_old(U)*v_old(V) ...
-    %                + (mv(P)-mv(Q))*v_old(P)*v_old(Q) - dv(R)*v_old(R)) / mv(R);
+    s_dotdot(R) = (tau(R) + (mv(U)-mv(V))*v_old(U)*v_old(V) ...
+                + (mv(P)-mv(Q))*v_old(P)*v_old(Q) - dv(R)*v_old(R)) / mv(R);
 
     %% Velocity Integration
     % Integrate accelerations to get new velocities using Tustin method

@@ -25,7 +25,7 @@ ROLL = 4;   PITCH = 5;  YAW = 6;
 
 %% Simulation Parameters
 Ts = 0.001;         % Sampling time [s]
-Tf = 40;            % Final time [s]
+Tf = 50;            % Final time [s]
 time = 0:Ts:Tf;     % Time vector
 N = length(time);   % Number of iterations
 global DEBUG;
@@ -69,50 +69,49 @@ i_goal.pitch = 0;
 i_goal.yaw = 0; 
 goal(1:N) = i_goal;
 
+%% Structure for position ekf_position
+% mettere struttura per avere anche nel main le informazioni di ekf_position
+
 %% Noise
-[Q, R_tp, R_a] = noise_setup_sbes(n_dim, m_dim, d_dim);
+[Q] = ekf_setup_sbes();
 
 %% Software Design
-index_N = round(N/2);
 global h_ref;
 h_ref = zeros(1, N);
-%%%%%%%%% CHANGE ALTITUDE GOAL %%%%%%%%%%%
-% index_N = round(N/2);                  %
-% h_ref(1:index_N) = ;                   %
-% h_ref(index_N:end) = 4;                %
-%%%%%%%%% NO CHANGE %%%%%%%%%%%%%%%%%%%%%%
 h_ref(:) = 3;
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% AUV Parameters 
-prob = zeros(d_dim,N);              % AUV initial position
+% position & orientation 
+eta = zeros(w_dim,N);            % robot position & orientation
+eta_gt = zeros(w_dim,N);         % NO Noise Position & Orientation for real state
 
-% robot velocities & acceleration
-u = zeros(i_dim, N);                % Known inputs
-u_dot = zeros(i_dim,N);             % AUV acceleration
+% velocity & angular rates
+nu = zeros(i_dim, N);            % Known inputs
+nu_gt = zeros(i_dim, N);         % NO Noise Known inputs for real state
 
-% robot angles
-rob_rot = zeros(d_dim, N);          % Robot angles roll, pitch, yaw
-clean_rot = zeros(d_dim,N);         % NO Noise Rotation for real state
+nu_dot = zeros(i_dim,N);         % AUV acceleration
+nu_dot_gt = zeros(i_dim,N);      % NO Noise AUV acceleration for real state
+
+eta_dot = zeros(w_dim,N);        % robot velocities & angular rates
 
 % robot rotations
 wRr = zeros(d_dim, d_dim, N);       % Robot in world rotation
-wRr_real = zeros(d_dim, d_dim);     % Real robot rotation
+wRr_gt = zeros(d_dim, d_dim);  % Real robot rotation (ground truth)
 
 % echosonar part
 s = zeros(d_dim,s_dim);             % Robot echosonar
 
 %% Terrain Parameters
 max_planes = 300; % Circular buffer size
-step_length = 3.0; % Distance between consecutive planes
-angle_range = [-pi/5, pi/5];
-delta_limit = pi/4;
-rate_of_change = 2;
+step_length = 1.0; % Distance between consecutive planes
+angle_range = [-pi/6, pi/6];
+delta_limit = pi/3;
+rate_of_change = 3;
 pp_init_w = [-5; -5; 10];
 n0 = [0, 0, 1]';
 
 % terrain generation
-[plane, t_idx] = terrain_init(pp_init_w, prob(:,1), max_planes, step_length, n0, ...
+[plane, t_idx] = terrain_init(pp_init_w, eta(1:3,1), max_planes, step_length, n0, ...
                     angle_range, rate_of_change, delta_limit);
 
 % terrain variable estimation
@@ -122,13 +121,19 @@ n_pre = zeros(d_dim,N);                 % Surface vector predicted
 n_est = zeros(d_dim, N);                % surface vector estimated
 n_mes = zeros(d_dim, N);                % surface vector measured
 
+%% Sensors readings
+z_AHRS = zeros(6, N);
+z_DVL = zeros(3, N);
+z_PS = zeros(1, N);
+[R_AHRS, R_DVL, R_PS, R_SBES] = setup_sensors();
+
 %% EKF Parameters
 x_pred = zeros(n_dim, N);                       % State predicted
 x_est = zeros(n_dim, N);                        % Estimated state
 x_true = zeros(n_dim, N);                       % True state
 z_meas = zeros(m_dim, N);                       % Measurements
 z_pred = zeros(m_dim, N);                       % Predicted output
-R = repmat(R_tp, 1, 1, N);                      % Observation matrix
+R = repmat(R_SBES, 1, 1, N);                      % Observation matrix
 x0 = [10, plane(1).alpha, plane(1).beta]';      % True initial state 
 x0_est = zeros(n_dim, 1);                       % Estimated initial state
 ni = zeros(m_dim, N);                           % Innovation
@@ -142,14 +147,15 @@ i_err = zeros(i_dim, N);            % integral error
 t_sum = zeros(i_dim,N);
 
 % initial controller
-speed0 = [0.2; 0; 0.05; 0; 0; 0];
+speed0 = [0.2; 0; 0; 0; 0; 0];
 tau0 = tau0_values(speed0, i_dim);
-[Kp, Ki, Kd, Kt] = gainComputation(speed0, i_dim);
+[Kp, Ki, Kd] = gainComputation(speed0, i_dim);
+
 
 %% EKF Start
 % covariance 
 P0 = diag([1, 0.08, 2]);
-P0 = P0 * (1.1) + 5*rand;
+P0 = P0 * (1.1) + 2*rand;
 P = P0;
 
 % State
@@ -171,54 +177,47 @@ for k = 2:N
     %% State Machine %%
     % no change in commands during the State Machine
     state(k) = state_machine(state(k-1), cmd, k);
-    goal(k) = goal_def(state(k), rob_rot(:,k-1), x_est(:,k-1), k);
+    goal(k) = goal_def(state(k), eta(4:6,k-1), x_est(:,k-1), k);
 
-    % if mod(k, 2000) == 0
-    %     [Kp, Ki, Kd, Kt] = gainComputation(u(:,k-1), i_dim);
+    % if mod(k, 5000) == 0
+    %     [Kp, Ki, Kd] = gainComputation(nu(:,k-1), i_dim);
     % end
     
     %% EKF: Input Control Computation
     if k >= 3
         % PID Values with Saturation
-        [pid(:,k), integral_err(:,k), p_err(:,k), i_err(:,k), u_dot(:,k), t_sum(:,k)] = input_control(goal(k), x_est(:,k-1), rob_rot(:,k-1), pid(:,k-1), integral_err(:,k-1), ...
-                         u(:,k-1), u(:,k-2), u_dot(:,k-1), t_sum(:,k-1), wRr(:,:,k-1), wRt(:,:,k-1), Ts, i_dim, p_err(:,k-1), i_err(:,k-1),  Kp, Ki, Kd, Kt); 
+        [pid(:,k), t_sum(:,k)] = input_control(goal(k), x_est(:,k-1), eta(4:6,k-1), pid(:,k-1), nu(:,k-1), nu_dot(:,k-1), ...
+                                t_sum(:,k-1), wRr(:,:,k-1), n_est(:,k-1), Ts, i_dim, Kp, Ki, Kd); 
     end
     %% EKF: Dynamic and Kinematic Model
-    % Dynamic model
-    [u(:,k)] = dynamic_model(pid(:,k), tau0, speed0, rob_rot(:, k-1), u(:,k-1), Ts, i_dim, u_dot(:,k-1));
+    % Dynamic model  %% mettere i ground truth qui
+    [nu_dot(:,k), nu(:,k)] = dynamic_model(pid(:,k), tau0, speed0, eta(4:6, k-1), nu(:,k-1), Ts, i_dim, nu_dot(:,k-1));
+    [eta_dot(:,k), eta(:,k)] = kinematic_model(eta(:,k-1), nu(:,k), wRr(:,:,k-1), eta_dot(:,k-1), i_dim, Ts);
     
-    %% KF -> robot pos and rot update
-    % sensors measurament
-    [clean_rot(:,k), wRr_real] = AHRS_measurement(clean_rot(:,k-1), u(:,k), Ts);
-    %%%%%%%%%%%%%%% NO NOISE FOR AHRS %%%%%%%%%%%%%%%%%%%%%%%
-    % rob_rot(:,k) = clean_rot(:,k);                        %
-    %%%%%%%%%%%%%%% YES NOISE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    v_ahrs = mvnrnd(zeros(d_dim,1), R_a)';
-    rob_rot(:,k) = clean_rot(:,k) + v_ahrs;
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Update rotation matrix with NEW angles after integration
+    wRr(:,:,k) = rotz(eta(YAW,k))*roty(eta(PITCH,k))*rotx(eta(ROLL,k));
+    wRr_gt = wRr(:,:,k);
+    
+    %% Sensor readings
+    z_AHRS(:,k) = read_AHRS(eta(4:6,k), nu(4:6,k), R_AHRS);
+    z_DVL(:,k) = read_DVL(nu(1:3,k), R_DVL);
+    z_PS(:,k) = read_PS(eta(1,k), R_PS);
 
-    [dvl_speed_w, prob(:,k)] = DVL_measurament(prob(:,k-1), u(:,k), wRr_real, Ts);
-    %%%%%%%%%%%%%%% NO NOISE FOR DVL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % I do not have a localization problem -> needed only for the sensors %
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    % Kalman Filter for best estimation
-    % [] = kf_estimation();
-
-    % Robot rotation matrix computation
-    wRr(:,:,k) = rotz(rob_rot(PSI,k))*roty(rob_rot(THETA,k))*rotx(rob_rot(PHI,k));
+    %% EKF Position Estimation
+    % [] = ekf_position();
 
     %% Terrain Dynamic Update
-    [plane, t_idx] = terrain_generator(plane, prob(:,k), dvl_speed_w, t_idx, step_length, max_planes, ...
+    w_sp = wRr(:,:,k) * nu(1:3,k);
+    [plane, t_idx] = terrain_generator(plane, eta(1:3,k), w_sp, t_idx, step_length, max_planes, ...
                         k, angle_range, rate_of_change, delta_limit);
     
     %% EKF: Real Measurement
-    [z_meas(:,k), hmes, n_mes(:,k), R(:,:,k), cmd, a_true, b_true] = SBES_measurament(plane, s_dim, prob(:,k), wRr_real, ...
+    [z_meas(:,k), hmes, n_mes(:,k), R(:,:,k), cmd, a_true, b_true] = SBES_measurament(plane, s_dim, eta(1:3,k), wRr_gt, ...
                                             t_idx, R(:,:,k), cmd, k);
     
     %%%%%%%%%%%%%%% NO NOISE FOR SBES %%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%% YES NOISE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    v_sbes = mvnrnd(zeros(m_dim,1), R_tp)'; 
+    v_sbes = mvnrnd(zeros(m_dim,1), R_SBES)'; 
     z_meas(:,k) = z_meas(:,k) + v_sbes;
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
@@ -229,14 +228,14 @@ for k = 2:N
     %% EKF: Prediction
     % State prediction
     w = mvnrnd(zeros(n_dim,1), Q)'; % Process noise
-    [x_pred(:,k), wRt_pre(:,:,k)] = f(x_est(:,k-1), u(:,k), Ts, wRr(:,:,k));
+    [x_pred(:,k), wRt_pre(:,:,k)] = f(x_est(:,k-1), nu(:,k), Ts, wRr(:,:,k));
     %%%%%%%%%%%%%%% NO NOISE %%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%% YES NOISE %%%%%%%%%%%%%%%%%%%%%%
     x_pred(:,k) = x_pred(:,k) + w;
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     % Dynamics Jacobian
-    F = jacobian_f(x_est(:,k-1), u(:,k), Ts, n_dim, wRr(:,:,k)); 
+    F = jacobian_f(x_est(:,k-1), nu(:,k), Ts, n_dim, wRr(:,:,k)); 
     % Covariance prediction
     P_pred = F * P * F' + Q;
 
@@ -289,14 +288,14 @@ for k = 2:N
     % end
 
     %% State Machine Check of Results
-    cmd = goal_controller(cmd, x_est(:,k), rob_rot(:,k), goal(k), N, state(k), k, d_dim);
+    cmd = goal_controller(cmd, x_est(:,k), eta(4:6,k), goal(k), N, state(k), k, d_dim);
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% Plotting %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fprintf('\nGenerating plots and statistics...\n');
-plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u, ...
-             n_est, n_mes, wRr, prob, n_dim, d_dim, i_dim);
+plot_results(time, N, h_ref, x_true, x_est, eta(4:6,:), eta_gt(4:6,:), goal, nu, ...
+             n_est, n_mes, wRr, eta(1:3,:), n_dim, d_dim, i_dim);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% Data Saving %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -319,10 +318,10 @@ if strcmpi(save_choice, 'Y') || strcmpi(save_choice, 'Yes') || strcmpi(save_choi
     fprintf('\nCollecting simulation data...\n');
     sim_data = collect_simulation_data(time, Ts, Tf, N, h_ref, ...
         x_true, x_est, x_pred, ni, S, P, P0, ...
-        z_meas, z_pred, n_mes, n_est, n_pre, rob_rot, clean_rot, R, ...
-        pid, u, u_dot, goal, integral_err, p_err, i_err, t_sum, ...
-        prob, wRr, wRt, wRt_pre, state, ...
-        Q, R_tp, R_a, Kp, Ki, Kd, Kt, speed0, tau0, x0, x0_est, ...
+        z_meas, z_pred, n_mes, n_est, n_pre, eta(4:6,:), eta_gt(4:6,:), R, ...
+        pid, nu, nu_dot, goal, integral_err, p_err, i_err, t_sum, ...
+        eta(1:3,:), wRr, wRt, wRt_pre, state, ...
+        Q, R_SBES, R_AHRS, Kp, Ki, Kd, 0, speed0, tau0, x0, x0_est, ...
         max_planes, step_length, angle_range, rate_of_change, delta_limit, pp_init_w, n0);
     
     % Save to disk

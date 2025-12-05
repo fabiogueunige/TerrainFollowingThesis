@@ -1,0 +1,43 @@
+=== SIMULATION RUN METADATA ===
+Run name: run_20251204_160543
+Date: 04-Dec-2025 16:05:44
+
+--- SIMULATION PARAMETERS ---
+Sampling time: 0.0010 s
+Final time: 40.0 s
+Iterations: 40001
+Reference altitude: 3.00 m
+
+--- INITIAL CONDITIONS ---
+Initial true state: [10.00, 0.0000, 0.0000]
+Initial estimated state: [0.00, 0.0000, 0.0000]
+Operating point velocity: [0.20, 0.00, 0.00, 0.00, 0.00, 0.00]
+
+--- EKF PARAMETERS ---
+Process noise Q:
+  0.009801  0.000000  0.000000
+  0.000000  0.000092  0.000000
+  0.000000  0.000000  0.000076
+Initial covariance P0:
+  2.938264  1.838264  1.838264
+  1.838264  1.926264  1.838264
+  1.838264  1.838264  4.038264
+
+--- CONTROLLER GAINS ---
+Kp: [8.8371, 16.8038, 205.3842, 6.0016, 6.1752, 6.1752]
+Ki: [6.1728, 5.9923, 66.2530, 1.9360, 1.9920, 1.9920]
+Kd: [0.0000, 0.0000, 432.8439, 12.1808, 12.5476, 12.5476]
+
+--- TERRAIN PARAMETERS ---
+Max planes (buffer): 300
+Step length: 2.00 m
+Angle range: [-45.00, 45.00] deg ([-0.7854, 0.7854] rad)
+Rate of change: 2.00
+Delta limit: 60.00 deg (1.0472 rad)
+Initial plane position: [-5.00, -5.00, 10.00]
+Reference normal: [0.00, 0.00, 1.00]
+
+--- FINAL RESULTS ---
+Final altitude error: -0.0865 m
+Mean altitude error: -1.2950 m
+RMS altitude error: 3.4864 m
