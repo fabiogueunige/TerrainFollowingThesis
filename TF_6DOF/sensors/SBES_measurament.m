@@ -17,6 +17,10 @@ function [ymes, h_real, n_new, Rm, command, a_new, b_new] = SBES_measurament(pla
     % Search backwards from current index for efficiency
     % search_range = 200;  % Number of planes to check
     max_planes = length(planes);
+
+    %% noise sensors
+    v_sbes = mvnrnd(zeros(num_s,1), Rm)'; 
+    
     
     %% Computation - for each sensor
     for j = 1:num_s
@@ -103,6 +107,10 @@ function [ymes, h_real, n_new, Rm, command, a_new, b_new] = SBES_measurament(pla
 
     %% Sending Info's
     ymes = [y(1); y(2); y(3); y(4)];
+
+    %% Additive noise
+    y_mes = ymes + v_sbes;
+    
     printDebug('h real: %.3f | y1: %.3f | y2: %.3f | y3: %.3f | y4: %.3f\n', ...
                h_real, y(1), y(2), y(3), y(4));
 

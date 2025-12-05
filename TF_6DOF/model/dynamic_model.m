@@ -62,7 +62,7 @@
 %
 % See also: tau0_values, gainComputation, integrator
 
-function [s_dotdot, new_vel] = dynamic_model(tau, tau0, sp0, ang, v_old, Ts, i_dim, old_acc)
+function [s_dotdot, new_vel] = dynamic_model(tau, ang, v_old, Ts, i_dim, old_acc)
     printDebug('       Dynamic Model\n');
     
     %% State Indices
@@ -103,10 +103,10 @@ function [s_dotdot, new_vel] = dynamic_model(tau, tau0, sp0, ang, v_old, Ts, i_d
     dv = -tau_r - tau_d .* abs(v_old);
     
     % Linearized damping around operating point sp0
-    dv_lin = -tau_r - 2 * tau_d .* abs(sp0);
-    
-    % Velocity deviation from operating point
-    delta = v_old - sp0;
+    % dv_lin = -tau_r - 2 * tau_d .* abs(sp0);
+    % 
+    % % Velocity deviation from operating point
+    % delta = v_old - sp0;
     
     %% Linearized Dynamics - Compute Accelerations
     % Initialize acceleration vector

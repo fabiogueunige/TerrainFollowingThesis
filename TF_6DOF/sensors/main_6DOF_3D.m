@@ -32,6 +32,7 @@ DEBUG = false;
 
 %% Matrix Dimensions
 n_dim = 3;          % Number of states
+m_dim = 4;          % Number of measurements
 i_dim = 6;          % Number of inputs 
 d_dim = 3;          % world space total dimensions
 s_dim = 4;          % number of echosonar
@@ -83,10 +84,13 @@ x_loc = zeros(dim_ekf, N);                  % EKF position state
 
 eta = zeros(w_dim,N);                       % robot position & orientation
 eta_gt = zeros(w_dim,N);                    % NO Noise Position & Orientation for real state
+
 % velocity & angular rates
 nu = zeros(i_dim, N);            % Known inputs
 nu_gt = zeros(i_dim, N);         % NO Noise Known inputs for real state
+
 nu_dot = zeros(i_dim,N);         % AUV accelerationte
+
 eta_dot_gt = zeros(w_dim,N);     % robot velocities & angular rates
 
 % robot rotations
@@ -122,13 +126,13 @@ n_mes = zeros(d_dim, N);                % surface vector measured
 x_pred = zeros(n_dim, N);                       % State predicted
 x_est = zeros(n_dim, N);                        % Estimated state
 x_true = zeros(n_dim, N);                       % True state
-z_meas = zeros(s_dim, N);                       % Measurements
-z_pred = zeros(s_dim, N);                       % Predicted output
+z_meas = zeros(m_dim, N);                       % Measurements
+z_pred = zeros(m_dim, N);                       % Predicted output
 R = repmat(R_SBES, 1, 1, N);                      % Observation matrix
 x0 = [10, plane(1).alpha, plane(1).beta]';      % True initial state 
 x0_est = zeros(n_dim, 1);                       % Estimated initial state
-ni = zeros(s_dim, N);                           % Innovation
-S = zeros(s_dim, s_dim, N);                     % Covariance Innovation
+ni = zeros(m_dim, N);                           % Innovation
+S = zeros(m_dim, m_dim, N);                     % Covariance Innovation
      
 %% Controller Parameters
 pid = zeros(i_dim, N);              % PID for Dynamics
@@ -178,8 +182,8 @@ for k = 2:N
     end
     %% EKF: Dynamic and Kinematic Model
     % Dynamic model  %% mettere i ground truth qui
-    [nu_dot(:,k), nu_gt(:,k)] = dynamic_model(pid(:,k), eta_gt(4:6, k-1), nu_gt(:,k-1), Ts, i_dim, nu_dot(:,k-1));
-    [eta_dot_gt(:,k), eta_gt(:,k)] = kinematic_model(eta_gt(:,k-1), nu_gt(:,k), wRr(:,:,k-1), eta_dot_gt(:,k-1), i_dim, Ts);
+    [nu_dot(:,k), nu_gt(:,k)] = dynamic_model(pid(:,k), eta(4:6, k-1), nu(:,k-1), Ts, i_dim, nu_dot(:,k-1));
+    [eta_dot_gt(:,k), eta_gt(:,k)] = kinematic_model(eta(:,k-1), nu_gt(:,k), wRr(:,:,k-1), eta_dot_gt(:,k-1), i_dim, Ts);
     wRr_gt = rotz(eta_gt(YAW,k))*roty(eta_gt(PITCH,k))*rotx(eta_gt(ROLL,k));
 
     %% EKF Position estimation
@@ -220,7 +224,7 @@ for k = 2:N
    
     %% EKF: Gain and Prediction Update
     % Observation Jacobian
-    H = jacobian_h(x_pred(:,k), s, s_dim, n_dim, s_dim, n_pre(:,k), n0);
+    H = jacobian_h(x_pred(:,k), s, m_dim, n_dim, s_dim, n_pre(:,k), n0);
     if any(isnan(H(:)))
         error('Esecuzione interrotta: H contiene valori NaN. Istante %0.f', k);
     end
@@ -233,7 +237,7 @@ for k = 2:N
     end
     
     % Measurament prediction
-    z_pred(:,k) = h(x_pred(:,k), s, s_dim, s_dim, n_pre(:,k));      
+    z_pred(:,k) = h(x_pred(:,k), s, s_dim, m_dim, n_pre(:,k));      
 
     %% EKF: State Update
     % State Innovation
