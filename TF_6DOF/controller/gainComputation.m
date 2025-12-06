@@ -41,7 +41,8 @@
 %
 % See also: input_control, tau0_values, dynamic_model
 
-function [kp, ki, kd, kt] = gainComputation(speed0, dim_i)
+% function [kp, ki, kd, kt] = gainComputation(speed0, dim_i)
+function [kp, ki, kd] = gainComputation(speed0, dim_i)
     global PHI; global THETA; global PSI; 
     global SURGE; global SWAY; global HEAVE;
     global ROLL; global PITCH; global YAW;
@@ -52,19 +53,13 @@ function [kp, ki, kd, kt] = gainComputation(speed0, dim_i)
     damp = 0.6;     % Damping ratio (0.6 = slightly underdamped)
     p = 10;         % Additional pole for PID controller
 
-    %% Control Design Parameters
-    % Natural frequency and damping for pole placement
-    wn = 0.4;       % Natural frequency [rad/s]
-    damp = 0.6;     % Damping ratio (0.6 = slightly underdamped)
-    p = 10;         % Additional pole for PID controller
-
     % Initialize gain vectors
     kp = zeros(dim_i, 1);
     ki = zeros(dim_i, 1);
     kd = zeros(dim_i, 1);
-    Ti = zeros(dim_i, 1);   % Integral time constant
-    Td = zeros(dim_i, 1);   % Derivative time constant
-    kt = zeros(dim_i, 1);   % Anti-windup gain
+    % Ti = zeros(dim_i, 1);   % Integral time constant
+    % Td = zeros(dim_i, 1);   % Derivative time constant
+    % kt = zeros(dim_i, 1);   % Anti-windup gain
 
     %% BlueROV2 Physical Parameters
     m = 11.5;   % Total mass [kg]
@@ -83,37 +78,29 @@ function [kp, ki, kd, kt] = gainComputation(speed0, dim_i)
     % Virtual mass (total mass + added mass)
     mv = [m; m; m; I(1,1); I(2,2); I(3,3)] - tau_a;
 
-    % Dissipative forces linearized around operating point speed0
-    % d = -tau_r - tau_d*|v| (nonlinear model)
-    dv = -tau_r - tau_d .* abs(speed0);
-    
-    % Linearized dissipative forces (for controller design)
-    % d_linear = -tau_r - 2*tau_d*|v0| (linearization)
-    dv_lin = -tau_r - 2 * tau_d .* abs(speed0);
-    % Linearized dissipative forces (for controller design)
     % d_linear = -tau_r - 2*tau_d*|v0| (linearization)
     dv_lin = -tau_r - 2 * tau_d .* abs(speed0);
     
     %% Gain Computation
     % Different control strategies for translational vs rotational DOFs
     for l = 1:dim_i
-        if l == SURGE || l == SWAY
+        if l == 1 || l == 2
             % PI control for surge and sway (horizontal motion)
             % No derivative action needed for stable horizontal dynamics
             kp(l) = 2*damp*wn*mv(l) - dv_lin(l);
             ki(l) = wn^2 * mv(l);
             kd(l) = 0;
-            Ti(l) = kp(l)/ki(l);
-            kt(l) = 1/Ti(l);  % Anti-windup gain
+            % Ti(l) = kp(l)/ki(l);
+            % kt(l) = 1/Ti(l);  % Anti-windup gain
         else
             % PID control for heave, roll, pitch, yaw
             % Derivative action helps with stability and faster response
             kp(l) = mv(l)*((wn^2) + 2*damp*p*wn);
             ki(l) = p*(wn^2)*mv(l);
             kd(l) = (p + 2*damp*wn)*mv(l) - dv_lin(l);
-            Ti(l) = kp(l)/ki(l);
-            Td(l) = kd(l)/kp(l);
-            kt(l) = 1 / sqrt(Ti(l)*Td(l));  % Anti-windup gain (geometric mean)
+            % Ti(l) = kp(l)/ki(l);
+            % Td(l) = kd(l)/kp(l);
+            % kt(l) = 1 / sqrt(Ti(l)*Td(l));  % Anti-windup gain (geometric mean)
         end
     end
 end
