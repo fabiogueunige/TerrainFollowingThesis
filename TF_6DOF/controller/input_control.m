@@ -9,7 +9,7 @@ function [pid, term_sum] = input_control(ggg, x, angles, old_pid, speed, ...
     printDebug('       Input Control\n');
 
     %% Initialize Control Variables
-    max_pid = ones(dim_i, 1) * 10;  % Saturation limits for all DOFs
+    max_pid = ones(dim_i, 1) * 2;  % Saturation limits for all DOFs
     term_sum = zeros(dim_i, 1);
     pid = zeros(dim_i, 1);
     err = zeros(dim_i, 1);
@@ -52,6 +52,7 @@ function [pid, term_sum] = input_control(ggg, x, angles, old_pid, speed, ...
             % Proportional and derivative act on angular rates
             p_err = (Kp(j) * speed(j));
             d_err = (Kd(j) * acc(j));
+        end
         
         % Delta term sum: I - P - D - anti-windup
         term_sum(j) = i_err - p_err - d_err;

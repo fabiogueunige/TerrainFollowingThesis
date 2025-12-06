@@ -37,8 +37,9 @@ function sim_data = collect_simulation_data(time, Ts, Tf, N, h_ref, ...
     z_meas, z_pred, n_mes, n_est, n_pre, rob_rot, clean_rot, R, ...
     pid, u, u_dot, goal, integral_err, p_err, i_err, t_sum, ...
     prob, wRr, wRt, wRt_pre, state, ...
-    Q, R_tp, R_a, Kp, Ki, Kd, Kt, speed0, tau0, x0, x0_est, ...
-    max_planes, step_length, angle_range, rate_of_change, delta_limit, pp_init_w, n0)
+    Q, R_SBES, Kp, Ki, Kd, speed0, x0, x0_est, ...
+    max_planes, step_length, angle_range, rate_of_change, delta_limit, pp_init_w, n0, ...
+    x_loc, eta_gt, nu_gt, wRr_gt)
 
     fprintf('\n=== COLLECTING SIMULATION DATA ===\n');
     
@@ -95,14 +96,11 @@ function sim_data = collect_simulation_data(time, Ts, Tf, N, h_ref, ...
     %% Simulation Parameters
     fprintf('Collecting simulation parameters...\n');
     sim_data.Q = Q;
-    sim_data.R_tp = R_tp;
-    sim_data.R_a = R_a;
+    sim_data.R_SBES = R_SBES;
     sim_data.Kp = Kp;
     sim_data.Ki = Ki;
     sim_data.Kd = Kd;
-    sim_data.Kt = Kt;
     sim_data.speed0 = speed0;
-    sim_data.tau0 = tau0;
     sim_data.x0 = x0;
     sim_data.x0_est = x0_est;
     
@@ -115,6 +113,13 @@ function sim_data = collect_simulation_data(time, Ts, Tf, N, h_ref, ...
     sim_data.delta_limit = delta_limit;
     sim_data.pp_init_w = pp_init_w;
     sim_data.n0 = n0;
+    
+    %% EKF Position Filter Data (Ground Truth comparison)
+    fprintf('Collecting EKF position filter data...\n');
+    sim_data.x_loc = x_loc;           % Full EKF position state [15 x N]
+    sim_data.eta_gt = eta_gt;         % Ground truth position & orientation [6 x N]
+    sim_data.nu_gt = nu_gt;           % Ground truth body velocities [6 x N]
+    sim_data.wRr_gt = wRr_gt;         % Ground truth rotation matrices [3 x 3 x N]
     
     fprintf('Collection complete!\n');
     fprintf('Total data fields: %d\n\n', length(fieldnames(sim_data)));

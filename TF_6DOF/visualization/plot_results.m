@@ -1,22 +1,27 @@
 function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u, ...
-                      n_est, n_mes, wRr, prob, n_dim, d_dim, i_dim)
+                      n_est, n_mes, wRr, prob, n_dim, d_dim, i_dim, ...
+                      x_loc, eta_gt, nu_gt, wRr_gt)
     %% PLOT_RESULTS - Visualizzazione completa dei risultati della simulazione
     % 
     % Inputs:
     %   time: vettore temporale
     %   N: numero di iterazioni
     %   h_ref: altitudine di riferimento
-    %   x_true: stati veri
-    %   x_est: stati stimati
-    %   rob_rot: angoli del robot con rumore
-    %   clean_rot: angoli del robot senza rumore
+    %   x_true: stati veri (SBES EKF)
+    %   x_est: stati stimati (SBES EKF)
+    %   rob_rot: angoli del robot (from EKF position filter)
+    %   clean_rot: angoli del robot ground truth
     %   goal: struttura con i goal
-    %   u: input di controllo
+    %   u: body velocities (from EKF position filter)
     %   n_est: normali stimate
     %   n_mes: normali misurate
-    %   wRr: matrici di rotazione del robot
-    %   prob: posizioni del robot
+    %   wRr: matrici di rotazione del robot (from EKF)
+    %   prob: posizioni del robot (from EKF)
     %   n_dim, d_dim, i_dim: dimensioni
+    %   x_loc: EKF position filter full state [15 x N]
+    %   eta_gt: ground truth position & orientation [6 x N]
+    %   nu_gt: ground truth body velocities [6 x N]
+    %   wRr_gt: ground truth rotation matrices [3 x 3 x N]
     
     global HEAVE;
     
@@ -175,6 +180,186 @@ function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u
     title('Trajectory XYZ - NED Convention (Color = time)');
     grid on;
     set(gca, 'ZDir', 'reverse');  % Inverte la direzione dell'asse Z per visualizzazione NED
+    
+    %% ========================================================================
+    %% EKF POSITION FILTER STATES - Comparison with Ground Truth
+    %% ========================================================================
+    fprintf('Plotting EKF Position Filter states vs Ground Truth...\n');
+    
+    %% Position States (x, y, z)
+    figure('Name', 'EKF Position: XYZ vs Ground Truth');
+    pos_labels = {'X (North)', 'Y (East)', 'Z (Down)'};
+    for i = 1:3
+        subplot(3,1,i);
+        plot(time, eta_gt(i,:), 'b', 'LineWidth', 1.5, 'DisplayName', 'Ground Truth');
+        hold on;
+        plot(time, x_loc(i,:), 'r--', 'LineWidth', 1.2, 'DisplayName', 'EKF Estimate');
+        xlabel('Time [s]');
+        ylabel([pos_labels{i} ' [m]']);
+        title(['Position ' pos_labels{i}]);
+        legend('Location', 'best');
+        grid on;
+        hold off;
+    end
+    sgtitle('EKF Position Filter: Position States');
+    
+    %% Orientation States (phi, theta, psi)
+    figure('Name', 'EKF Position: Angles vs Ground Truth');
+    ang_labels = {'Roll (φ)', 'Pitch (θ)', 'Yaw (ψ)'};
+    for i = 1:3
+        subplot(3,1,i);
+        plot(time, rad2deg(eta_gt(3+i,:)), 'b', 'LineWidth', 1.5, 'DisplayName', 'Ground Truth');
+        hold on;
+        plot(time, rad2deg(x_loc(3+i,:)), 'r--', 'LineWidth', 1.2, 'DisplayName', 'EKF Estimate');
+        xlabel('Time [s]');
+        ylabel([ang_labels{i} ' [deg]']);
+        title(['Orientation ' ang_labels{i}]);
+        legend('Location', 'best');
+        grid on;
+        hold off;
+    end
+    sgtitle('EKF Position Filter: Orientation States');
+    
+    %% Linear Velocity States (u, v, w)
+    figure('Name', 'EKF Position: Linear Velocities vs Ground Truth');
+    vel_labels = {'Surge (u)', 'Sway (v)', 'Heave (w)'};
+    for i = 1:3
+        subplot(3,1,i);
+        plot(time, nu_gt(i,:), 'b', 'LineWidth', 1.5, 'DisplayName', 'Ground Truth');
+        hold on;
+        plot(time, x_loc(6+i,:), 'r--', 'LineWidth', 1.2, 'DisplayName', 'EKF Estimate');
+        xlabel('Time [s]');
+        ylabel([vel_labels{i} ' [m/s]']);
+        title(['Velocity ' vel_labels{i}]);
+        legend('Location', 'best');
+        grid on;
+        hold off;
+    end
+    sgtitle('EKF Position Filter: Linear Velocity States');
+    
+    %% Angular Velocity States (p, q, r)
+    figure('Name', 'EKF Position: Angular Velocities vs Ground Truth');
+    rate_labels = {'Roll rate (p)', 'Pitch rate (q)', 'Yaw rate (r)'};
+    for i = 1:3
+        subplot(3,1,i);
+        plot(time, rad2deg(nu_gt(3+i,:)), 'b', 'LineWidth', 1.5, 'DisplayName', 'Ground Truth');
+        hold on;
+        plot(time, rad2deg(x_loc(9+i,:)), 'r--', 'LineWidth', 1.2, 'DisplayName', 'EKF Estimate');
+        xlabel('Time [s]');
+        ylabel([rate_labels{i} ' [deg/s]']);
+        title(['Angular Rate ' rate_labels{i}]);
+        legend('Location', 'best');
+        grid on;
+        hold off;
+    end
+    sgtitle('EKF Position Filter: Angular Velocity States');
+    
+    %% Gyro Bias States (if present in x_loc indices 13-15)
+    if size(x_loc, 1) >= 15
+        figure('Name', 'EKF Position: Gyro Bias Estimates');
+        bias_labels = {'Gyro Bias X', 'Gyro Bias Y', 'Gyro Bias Z'};
+        for i = 1:3
+            subplot(3,1,i);
+            plot(time, rad2deg(x_loc(12+i,:)), 'r', 'LineWidth', 1.2, 'DisplayName', 'Bias Estimate');
+            xlabel('Time [s]');
+            ylabel([bias_labels{i} ' [deg/s]']);
+            title(bias_labels{i});
+            legend('Location', 'best');
+            grid on;
+        end
+        sgtitle('EKF Position Filter: Gyro Bias Estimates');
+    end
+    
+    %% Position Estimation Errors
+    figure('Name', 'EKF Position: Estimation Errors');
+    
+    % Position errors
+    subplot(2,2,1);
+    pos_err = x_loc(1:3,:) - eta_gt(1:3,:);
+    plot(time, pos_err(1,:), 'r', 'LineWidth', 1.2, 'DisplayName', 'X error');
+    hold on;
+    plot(time, pos_err(2,:), 'g', 'LineWidth', 1.2, 'DisplayName', 'Y error');
+    plot(time, pos_err(3,:), 'b', 'LineWidth', 1.2, 'DisplayName', 'Z error');
+    xlabel('Time [s]');
+    ylabel('Position Error [m]');
+    title('Position Estimation Errors');
+    legend('Location', 'best');
+    grid on;
+    
+    % Orientation errors  
+    subplot(2,2,2);
+    ang_err = rad2deg(x_loc(4:6,:) - eta_gt(4:6,:));
+    plot(time, ang_err(1,:), 'r', 'LineWidth', 1.2, 'DisplayName', 'φ error');
+    hold on;
+    plot(time, ang_err(2,:), 'g', 'LineWidth', 1.2, 'DisplayName', 'θ error');
+    plot(time, ang_err(3,:), 'b', 'LineWidth', 1.2, 'DisplayName', 'ψ error');
+    xlabel('Time [s]');
+    ylabel('Orientation Error [deg]');
+    title('Orientation Estimation Errors');
+    legend('Location', 'best');
+    grid on;
+    
+    % Velocity errors
+    subplot(2,2,3);
+    vel_err = x_loc(7:9,:) - nu_gt(1:3,:);
+    plot(time, vel_err(1,:), 'r', 'LineWidth', 1.2, 'DisplayName', 'u error');
+    hold on;
+    plot(time, vel_err(2,:), 'g', 'LineWidth', 1.2, 'DisplayName', 'v error');
+    plot(time, vel_err(3,:), 'b', 'LineWidth', 1.2, 'DisplayName', 'w error');
+    xlabel('Time [s]');
+    ylabel('Velocity Error [m/s]');
+    title('Linear Velocity Estimation Errors');
+    legend('Location', 'best');
+    grid on;
+    
+    % Angular rate errors
+    subplot(2,2,4);
+    rate_err = rad2deg(x_loc(10:12,:) - nu_gt(4:6,:));
+    plot(time, rate_err(1,:), 'r', 'LineWidth', 1.2, 'DisplayName', 'p error');
+    hold on;
+    plot(time, rate_err(2,:), 'g', 'LineWidth', 1.2, 'DisplayName', 'q error');
+    plot(time, rate_err(3,:), 'b', 'LineWidth', 1.2, 'DisplayName', 'r error');
+    xlabel('Time [s]');
+    ylabel('Angular Rate Error [deg/s]');
+    title('Angular Rate Estimation Errors');
+    legend('Location', 'best');
+    grid on;
+    
+    sgtitle('EKF Position Filter: Estimation Errors');
+    
+    %% RMSE Summary for EKF Position Filter
+    fprintf('\n=== EKF POSITION FILTER: ERROR STATISTICS ===\n');
+    
+    % Position RMSE
+    pos_rmse = sqrt(mean(pos_err.^2, 2));
+    fprintf('Position RMSE:\n');
+    fprintf('  X: %.4f m\n', pos_rmse(1));
+    fprintf('  Y: %.4f m\n', pos_rmse(2));
+    fprintf('  Z: %.4f m\n', pos_rmse(3));
+    fprintf('  Total: %.4f m\n', norm(pos_rmse));
+    
+    % Orientation RMSE
+    ang_rmse = sqrt(mean(ang_err.^2, 2));
+    fprintf('\nOrientation RMSE:\n');
+    fprintf('  Roll:  %.4f deg\n', ang_rmse(1));
+    fprintf('  Pitch: %.4f deg\n', ang_rmse(2));
+    fprintf('  Yaw:   %.4f deg\n', ang_rmse(3));
+    
+    % Velocity RMSE
+    vel_rmse = sqrt(mean(vel_err.^2, 2));
+    fprintf('\nLinear Velocity RMSE:\n');
+    fprintf('  Surge: %.4f m/s\n', vel_rmse(1));
+    fprintf('  Sway:  %.4f m/s\n', vel_rmse(2));
+    fprintf('  Heave: %.4f m/s\n', vel_rmse(3));
+    
+    % Angular rate RMSE
+    rate_rmse = sqrt(mean(rate_err.^2, 2));
+    fprintf('\nAngular Rate RMSE:\n');
+    fprintf('  p: %.4f deg/s\n', rate_rmse(1));
+    fprintf('  q: %.4f deg/s\n', rate_rmse(2));
+    fprintf('  r: %.4f deg/s\n', rate_rmse(3));
+    
+    fprintf('=====================================\n\n');
     
     fprintf('All plots completed!\n');
 end

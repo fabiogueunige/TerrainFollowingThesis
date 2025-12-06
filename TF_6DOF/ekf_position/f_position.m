@@ -10,6 +10,7 @@ function [x_pred] = f_position(x_old, tau, wRr_old, Q_loc, dim_f, Ts)
 
     eta = x_old(1:6);
     nu = x_old(7:12);
+    bias_gyro = x_old(13:15);
 
     %% BlueROV2 Physical Parameters
     m = 11.5;       % Total mass [kg]
@@ -42,7 +43,7 @@ function [x_pred] = f_position(x_old, tau, wRr_old, Q_loc, dim_f, Ts)
     %% position
     x_predict(1:3) = wRr_old * nu(1:3) * Ts;
     T = transformationT(eta(4:6));
-    x_predict(4:6) = T * nu(4:6) * Ts;
+    x_predict(4:6) = T * (nu(4:6) - bias_gyro) * Ts;
 
     %% velocity
     x_predict(7) = (tau(U) + mv(V)*nu(V)*nu(R) - mv(W)*nu(W)*nu(Q) ...

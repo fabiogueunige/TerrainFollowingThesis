@@ -208,6 +208,52 @@ function display_performance_metrics(metrics, verbose)
     end
     fprintf('\n');
     
+    %% 8. EKF Position Filter Performance (NEW)
+    fprintf('┌─────────────────────────────────────────────────────────────┐\n');
+    fprintf('│ 8. EKF POSITION FILTER PERFORMANCE                          │\n');
+    fprintf('└─────────────────────────────────────────────────────────────┘\n');
+    
+    if isfield(metrics, 'ekf_position') && ~isempty(fieldnames(metrics.ekf_position))
+        fprintf('\n  Position Estimation RMSE:\n');
+        fprintf('    X (North):             %8.4f m\n', metrics.ekf_position.pos_rmse_x);
+        fprintf('    Y (East):              %8.4f m\n', metrics.ekf_position.pos_rmse_y);
+        fprintf('    Z (Down):              %8.4f m\n', metrics.ekf_position.pos_rmse_z);
+        fprintf('    Total:                 %8.4f m\n', metrics.ekf_position.pos_rmse_total);
+        
+        fprintf('\n  Orientation Estimation RMSE:\n');
+        fprintf('    Roll:                  %8.4f°\n', metrics.ekf_position.ang_rmse_roll);
+        fprintf('    Pitch:                 %8.4f°\n', metrics.ekf_position.ang_rmse_pitch);
+        fprintf('    Yaw:                   %8.4f°\n', metrics.ekf_position.ang_rmse_yaw);
+        
+        fprintf('\n  Linear Velocity Estimation RMSE:\n');
+        fprintf('    Surge:                 %8.4f m/s\n', metrics.ekf_position.vel_rmse_surge);
+        fprintf('    Sway:                  %8.4f m/s\n', metrics.ekf_position.vel_rmse_sway);
+        fprintf('    Heave:                 %8.4f m/s\n', metrics.ekf_position.vel_rmse_heave);
+        
+        fprintf('\n  Angular Rate Estimation RMSE:\n');
+        fprintf('    p (roll rate):         %8.4f°/s\n', metrics.ekf_position.rate_rmse_p);
+        fprintf('    q (pitch rate):        %8.4f°/s\n', metrics.ekf_position.rate_rmse_q);
+        fprintf('    r (yaw rate):          %8.4f°/s\n', metrics.ekf_position.rate_rmse_r);
+        
+        fprintf('\n  Maximum Errors:\n');
+        fprintf('    Position:              %8.4f m\n', metrics.ekf_position.pos_max_err);
+        fprintf('    Orientation:           %8.4f°\n', metrics.ekf_position.ang_max_err);
+        fprintf('    Velocity:              %8.4f m/s\n', metrics.ekf_position.vel_max_err);
+        fprintf('    Angular Rate:          %8.4f°/s\n', metrics.ekf_position.rate_max_err);
+        
+        % Quality assessment
+        if metrics.ekf_position.pos_rmse_total < 0.1
+            fprintf('\n                           ✓ Excellent position accuracy\n');
+        elseif metrics.ekf_position.pos_rmse_total < 0.5
+            fprintf('\n                           ✓ Good position accuracy\n');
+        else
+            fprintf('\n                           ⚠ Check position filter tuning\n');
+        end
+    else
+        fprintf('  EKF Position Filter data not available\n');
+    end
+    fprintf('\n');
+    
     %% Summary Assessment
     fprintf('═══════════════════════════════════════════════════════════════\n');
     fprintf('                         SUMMARY ASSESSMENT                    \n');

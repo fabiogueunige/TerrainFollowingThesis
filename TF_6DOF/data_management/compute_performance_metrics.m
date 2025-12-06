@@ -48,20 +48,12 @@ function metrics = compute_performance_metrics(sim_data)
     %% 2. Mean Angle Tracking Error
     % From guide: "Average absolute difference between estimated and true terrain angles"
     
-    % Extract roll (phi) and pitch (theta) from rotation matrices
-    % Robot orientation with noise
-    N = size(sim_data.wRr_noisy, 3);
-    phi_measured = zeros(1, N);
-    theta_measured = zeros(1, N);
+    % Get robot orientation (from rob_rot which is eta(4:6,:))
+    N = size(sim_data.rob_rot, 2);
+    phi_measured = sim_data.rob_rot(1,:);    % Roll from EKF position filter
+    theta_measured = sim_data.rob_rot(2,:);  % Pitch from EKF position filter
     
-    for i = 1:N
-        R_noisy = sim_data.wRr_noisy(:,:,i);
-        % Extract Euler angles from rotation matrix (ZYX convention)
-        theta_measured(i) = asin(-R_noisy(3,1));
-        phi_measured(i) = atan2(R_noisy(3,2), R_noisy(3,3));
-    end
-    
-    % Terrain angles from state
+    % Terrain angles from SBES EKF state
     alpha = sim_data.x_est(2,:);  % Roll angle of terrain
     beta = sim_data.x_est(3,:);   % Pitch angle of terrain
     
@@ -228,4 +220,44 @@ function metrics = compute_performance_metrics(sim_data)
         end
     end
     
+    %% 11. EKF Position Filter Performance (NEW)
+    % RMSE between estimated and ground truth states
+    if isfield(sim_data, 'x_loc') && isfield(sim_data, 'eta_gt') && isfield(sim_data, 'nu_gt')
+        % Position errors
+        pos_err = sim_data.x_loc(1:3,:) - sim_data.eta_gt(1:3,:);
+        metrics.ekf_position.pos_rmse_x = rms(pos_err(1,:));
+        metrics.ekf_position.pos_rmse_y = rms(pos_err(2,:));
+        metrics.ekf_position.pos_rmse_z = rms(pos_err(3,:));
+        metrics.ekf_position.pos_rmse_total = norm([metrics.ekf_position.pos_rmse_x, ...
+                                                    metrics.ekf_position.pos_rmse_y, ...
+                                                    metrics.ekf_position.pos_rmse_z]);
+        
+        % Orientation errors (in degrees)
+        ang_err = sim_data.x_loc(4:6,:) - sim_data.eta_gt(4:6,:);
+        metrics.ekf_position.ang_rmse_roll = rad2deg(rms(ang_err(1,:)));
+        metrics.ekf_position.ang_rmse_pitch = rad2deg(rms(ang_err(2,:)));
+        metrics.ekf_position.ang_rmse_yaw = rad2deg(rms(ang_err(3,:)));
+        
+        % Linear velocity errors
+        vel_err = sim_data.x_loc(7:9,:) - sim_data.nu_gt(1:3,:);
+        metrics.ekf_position.vel_rmse_surge = rms(vel_err(1,:));
+        metrics.ekf_position.vel_rmse_sway = rms(vel_err(2,:));
+        metrics.ekf_position.vel_rmse_heave = rms(vel_err(3,:));
+        
+        % Angular velocity errors (in degrees/s)
+        rate_err = sim_data.x_loc(10:12,:) - sim_data.nu_gt(4:6,:);
+        metrics.ekf_position.rate_rmse_p = rad2deg(rms(rate_err(1,:)));
+        metrics.ekf_position.rate_rmse_q = rad2deg(rms(rate_err(2,:)));
+        metrics.ekf_position.rate_rmse_r = rad2deg(rms(rate_err(3,:)));
+        
+        % Max errors
+        metrics.ekf_position.pos_max_err = max(abs(pos_err(:)));
+        metrics.ekf_position.ang_max_err = rad2deg(max(abs(ang_err(:))));
+        metrics.ekf_position.vel_max_err = max(abs(vel_err(:)));
+        metrics.ekf_position.rate_max_err = rad2deg(max(abs(rate_err(:))));
+    else
+        metrics.ekf_position = struct();
+        warning('x_loc, eta_gt or nu_gt field not found in sim_data');
+    end
+
 end

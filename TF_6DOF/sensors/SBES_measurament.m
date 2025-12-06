@@ -1,5 +1,5 @@
 function [ymes, h_real, n_new, Rm, command, a_new, b_new] = SBES_measurament(planes, num_s, pr, wRr, ...
-                    t_idx, Rm, command, ite) 
+                    t_idx, Rm_in, command, ite) 
     %% Definition
     printDebug('       SBES Measurament:\n');
 
@@ -13,16 +13,13 @@ function [ymes, h_real, n_new, Rm, command, a_new, b_new] = SBES_measurament(pla
     y = zeros(1, num_s);
     command.sensor_fail = 0;
     
+    % Start with a fresh copy of R (don't accumulate from previous iterations)
+    Rm = Rm_in;
+    
     %% Search range - only check recently generated planes
-    % Search backwards from current index for efficiency
-    % search_range = 200;  % Number of planes to check
     max_planes = length(planes);
 
-    %% noise sensors
-    v_sbes = mvnrnd(zeros(num_s,1), Rm)'; 
-    
-    
-    %% Computation - for each sensor
+    %% Computation - for each sensor (find intersections FIRST)
     for j = 1:num_s
         t_star(j) = inf;  % Initialize with inf for minimum search
         
@@ -61,10 +58,15 @@ function [ymes, h_real, n_new, Rm, command, a_new, b_new] = SBES_measurament(pla
 
         %% Value check
         if isinf(t_star(j)) || t_star(j) <= 0
-            Rm(:,:) = Rm(:,:) * 150;
+            % Increase only this sensor's variance (diagonal element), not the whole matrix!
+            Rm(j,j) = Rm(j,j) * 100;  % Increase variance for failed sensor only
             printDebug('Error: No valid intersection for sensor %d at iteration %d\n', j, ite);
             command.contact(j) = false;
             command.sensor_fail = command.sensor_fail + 1;
+            % Set NEGATIVE value to indicate failure (plane_computation uses t > 0 to filter)
+            t_star(j) = -1;  % Mark as invalid for plane_computation
+            y(j) = 100;  % Large value for EKF (will be ignored due to high R)
+            p_int(:, j) = [NaN; NaN; NaN];  % Invalid point
         else
             command.contact(j) = true;
             % Calculate final intersection point and measurement
@@ -94,10 +96,23 @@ function [ymes, h_real, n_new, Rm, command, a_new, b_new] = SBES_measurament(pla
     %% Plane of the 4 measurements generation
     [n_new, gen_point, a_new, b_new] = plane_computation(t_star, p_int);
     if norm(n_new) ~= 1 && n_new(3) == 10
-        n_new = planes(plane_contact_idx(n_new(1))).n_w;  % Use normal of first contacted plane
-        gen_point = planes(plane_contact_idx(n_new(1))).point_w;
-        a_new = planes(plane_contact_idx(n_new(1))).alpha;
-        b_new = planes(plane_contact_idx(n_new(1))).beta;
+        % Fallback: n_new(1) contains the sensor index that was valid
+        % Use plane_contact_idx safely - get first valid contacted plane
+        sensor_idx = round(n_new(1));  % The valid sensor index
+        if sensor_idx >= 1 && sensor_idx <= length(plane_contact_idx) && plane_contact_idx(sensor_idx) > 0
+            plane_idx = plane_contact_idx(sensor_idx);
+        elseif ~isempty(plane_contact_idx) && any(plane_contact_idx > 0)
+            % Use first valid plane contact
+            valid_contacts = plane_contact_idx(plane_contact_idx > 0);
+            plane_idx = valid_contacts(1);
+        else
+            % No valid plane contact - use first plane as fallback
+            plane_idx = 1;
+        end
+        n_new = planes(plane_idx).n_w;
+        gen_point = planes(plane_idx).point_w;
+        a_new = planes(plane_idx).alpha;
+        b_new = planes(plane_idx).beta;
     end
 
     %% Plot visualization
@@ -106,10 +121,10 @@ function [ymes, h_real, n_new, Rm, command, a_new, b_new] = SBES_measurament(pla
     end
 
     %% Sending Info's
-    ymes = [y(1); y(2); y(3); y(4)];
-
-    %% Additive noise
-    y_mes = ymes + v_sbes;
+    % Generate noise AFTER determining sensor failures (so Rm reflects actual uncertainty)
+    v_sbes = mvnrnd(zeros(num_s,1), Rm)'; 
+    % Apply measurement noise to the measurements
+    ymes = [y(1); y(2); y(3); y(4)] + v_sbes;
     
     printDebug('h real: %.3f | y1: %.3f | y2: %.3f | y3: %.3f | y4: %.3f\n', ...
                h_real, y(1), y(2), y(3), y(4));

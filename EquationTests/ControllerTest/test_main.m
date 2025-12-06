@@ -82,7 +82,7 @@ end
 
 n0 = [0; 0; 1];  % seafloor normal (upward)
 wRs = zeros(d_dim, d_dim, N);
-wRs(:,:,1) = rotz(0) * roty(beta(1)) * rotx(alpha(1)) * rotx(pi);
+wRs(:,:,1) =  rotx(pi) * rotz(0) * roty(beta(1)) * rotx(alpha(1));
 w_n = wRs(:,:,1) * n0;
 h(1) = (w_n'*(eta(1:3,1) - p_seafloor_NED))/(norm(w_n));
 h_clean(1) = h(1);
@@ -101,7 +101,7 @@ pid = zeros(i_dim, N);
 i_err = zeros(i_dim, N);
 term_sum = zeros(i_dim, N);
 
-max_pid = 10.0;  % Base saturation
+max_pid = 4.0;  % Base saturation
 
 % PID Gains (tuned for stable nonlinear model with EKF noise)
 % Kp = zeros(i_dim, 1);
@@ -125,10 +125,10 @@ for k = 2:N
     
     %% Error computation with intelligent altitude control
     % Surge: maintain constant speed + altitude correction
-    err(1,k) = u_star - nu(1,k-1) + 0.3 * h_contribution(1);
+    err(1,k) = u_star - nu(1,k-1) + 0.5 * h_contribution(1);
     
     % Sway: keep zero lateral velocity + altitude correction
-    err(2,k) = v_star - nu(2,k-1) + 0.3 * h_contribution(2);
+    err(2,k) = v_star - nu(2,k-1) + 0.5 * h_contribution(2);
     
     % Heave: altitude correction is primary objective
     err(3,k) = h_contribution(3);
@@ -142,9 +142,9 @@ for k = 2:N
     %% Derivative of velocities (for all axes)
     for l = 1:i_dim
         % Gain scheduling every 50 steps
-        if (mod(k,50)) == 0
-            [Kp, Ki, Kd] = gainComputation(nu(:,k-1), 6);
-        end
+        % if (mod(k,50)) == 0
+        %     [Kp, Ki, Kd] = gainComputation(nu(:,k-1), 6);
+        % end
         % Restore delta implementation structure (per paper), with per-axis indexing fixes
         if l == 1 || l == 2
             % Horizontal axes: use delta form with anti-windup
@@ -185,7 +185,7 @@ for k = 2:N
     end
 
     %% Altitude
-    wRs(:,:,k) = rotz(0) * roty(beta(k)) * rotx(alpha(k)) * rotx(pi);
+    wRs(:,:,k) =  rotx(pi) * rotz(0) * roty(beta(k)) * rotx(alpha(k));
     w_n = wRs(:,:,k) * n0;
     w_n_norm = norm(w_n);
     if w_n_norm < 1e-10

@@ -1,6 +1,4 @@
 function [x_e, P_e, wRr_e] = ekf_position(x_old, tau, wRr, u_clean, eta_clean, P_e_old, Q_loc, Ts)
-    SURGE = 1; SWAY = 2; HEAVE = 3;
-    ROLL = 4; PITCH = 5; YAW = 6;
     
     %% INIT
     % dimensions
@@ -39,6 +37,9 @@ function [x_e, P_e, wRr_e] = ekf_position(x_old, tau, wRr, u_clean, eta_clean, P
         ni_loc(j) = wrapToPi(ni_loc(j));
     end
     x_e = x_p + K_loc * ni_loc;
+    for j = 4:6
+        x_e(j) = wrapToPi(x_e(j));
+    end
     P_e = (eye(dim_ekf) - K_loc * H_loc) * P_p;
     
     wRr_e = rotz(x_e(6)) * roty(x_e(5)) * rotx(x_e(4));

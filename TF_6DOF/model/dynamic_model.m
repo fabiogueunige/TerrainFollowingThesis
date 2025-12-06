@@ -101,16 +101,18 @@ function [s_dotdot, new_vel] = dynamic_model(tau, ang, v_old, Ts, i_dim, old_acc
     
     % Nonlinear damping at current velocity (for reference)
     dv = -tau_r - tau_d .* abs(v_old);
+
+    % Initialize acceleration vector
+    s_dotdot = zeros(i_dim,1);
     
+
+    
+    %% Linearized Dynamics - Compute Accelerations
     % Linearized damping around operating point sp0
     % dv_lin = -tau_r - 2 * tau_d .* abs(sp0);
     % 
     % % Velocity deviation from operating point
     % delta = v_old - sp0;
-    
-    %% Linearized Dynamics - Compute Accelerations
-    % Initialize acceleration vector
-    s_dotdot = zeros(i_dim,1);
     
     % for j = 1:i_dim
     %     s_dotdot(j) = (tau(j) - tau0(j) - dv_lin(j)*delta(j)) / mv(j);

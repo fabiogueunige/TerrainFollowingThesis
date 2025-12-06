@@ -15,12 +15,12 @@ function gg = goal_def(c_state, ang, x_ekf, step)
     theta_ref = x_ekf(BETA);  % Desired pitch angle from terrain estimate
     psi_ref = 0;  
 
-    %% AUV angles constraint
-    if abs(x_ekf(PHI)) > pi/4
-        phi_ref = pi/4 * (x_ekf(PHI)/abs(x_ekf(PHI)));
+    %% AUV angles constraint - limit terrain angles to safe ranges
+    if abs(phi_ref) > pi/4
+        phi_ref = pi/4 * sign(phi_ref);
     end
-    if (abs(x_ekf(THETA)) > deg2rad(80))
-        theta_ref = deg2rad(80) * (x_ekf(THETA)/abs(x_ekf(THETA)));
+    if abs(theta_ref) > deg2rad(80)
+        theta_ref = deg2rad(80) * sign(theta_ref);
     end
 
     %% Recovery parameters

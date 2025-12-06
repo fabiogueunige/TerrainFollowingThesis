@@ -33,20 +33,22 @@ function [F_d] = jacobianF_position(x_old, wRr_old, dim_f, Ts)
     %% position 
     % position 
     % F(1:3,4:6) = 0;
-    % orientation
-    F(1:3,4) = rotz(psi) * roty(theta) * d_rotx(phi) * nu(4:6);
-    F(1:3,5) = rotz(psi) * d_roty(theta) * rotx(phi) * nu(4:6);
-    F(1:3,6) = d_rotz(psi) * roty(theta) * rotx(phi) * nu(4:6);
+    % orientation: derivative of wRr*nu(1:3) w.r.t. angles
+    F(1:3,4) = rotz(psi) * roty(theta) * d_rotx(phi) * nu(1:3);
+    F(1:3,5) = rotz(psi) * d_roty(theta) * rotx(phi) * nu(1:3);
+    F(1:3,6) = d_rotz(psi) * roty(theta) * rotx(phi) * nu(1:3);
     % velocity
     F(1:3,7:9) = wRr_old;
     % bias = 0
 
     %% Orientation
     T = transformationT(eta(4:6));
+    bias_gyro = x_old(13:15);  % Gyroscope bias
+    omega_corrected = nu(4:6) - bias_gyro;  % Bias-corrected angular velocity
     % position = 0
     % orientation
-    F(4:6,4) = dT_dphi(phi, theta) * nu(1:3);
-    F(4:6,5) = dT_dtheta(phi, theta) * nu(4:6);
+    F(4:6,4) = dT_dphi(phi, theta) * omega_corrected;
+    F(4:6,5) = dT_dtheta(phi, theta) * omega_corrected;
     F(4:6,6) = zeros(3,1);
     % velocity
     F(4:6,10:12) = T;

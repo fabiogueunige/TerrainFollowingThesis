@@ -79,7 +79,9 @@ h_ref(:) = 3;
 %% AUV Parameters 
 % position & orientation 
 x_loc = zeros(dim_ekf, N);                  % EKF position state
-[Q_loc, P_loc] = stateLoc_init(dim_ekf);    % EKF covariance and process noise
+[Q_loc, P_loc_init] = stateLoc_init(dim_ekf);    % EKF covariance and process noise
+P_loc = zeros(dim_ekf, dim_ekf, N);         % 3D array for covariance history
+P_loc(:,:,1) = P_loc_init;                  % Initialize first slice
 
 eta = zeros(w_dim,N);                       % robot position & orientation
 eta_gt = zeros(w_dim,N);                    % NO Noise Position & Orientation for real state
@@ -90,8 +92,8 @@ nu_dot = zeros(i_dim,N);         % AUV accelerationte
 eta_dot_gt = zeros(w_dim,N);     % robot velocities & angular rates
 
 % robot rotations
-wRr = zeros(d_dim, d_dim, N);       % Robot in world rotation
-wRr_gt = zeros(d_dim, d_dim);  % Real robot rotation (ground truth)
+wRr = zeros(d_dim, d_dim, N);       % Robot in world rotation (from EKF)
+wRr_gt = zeros(d_dim, d_dim, N);    % Real robot rotation (ground truth)
 
 %% echosonar part SBES
 s = zeros(d_dim,s_dim);             % Robot echosonar
@@ -100,11 +102,14 @@ s = zeros(d_dim,s_dim);             % Robot echosonar
 
 %% Terrain Parameters
 max_planes = 300; % Circular buffer size
-step_length = 1.0; % Distance between consecutive planes
-angle_range = [-pi/6, pi/6];
-delta_limit = pi/3;
+step_length = 4.0; % Distance between consecutive planes
+angle_range = [-pi/10, pi/10];
+delta_limit = pi/4;
 rate_of_change = 3;
-pp_init_w = [-5; -5; 10];
+% Terrain must start BEHIND the robot and extend FORWARD
+% Robot starts at (0,0,0), terrain direction is [1,1,0] normalized
+% So terrain should start at negative X,Y to cover robot position
+pp_init_w = [-3; -3; 8];
 n0 = [0, 0, 1]';
 
 % terrain generation
@@ -126,7 +131,8 @@ z_meas = zeros(s_dim, N);                       % Measurements
 z_pred = zeros(s_dim, N);                       % Predicted output
 R = repmat(R_SBES, 1, 1, N);                      % Observation matrix
 x0 = [10, plane(1).alpha, plane(1).beta]';      % True initial state 
-x0_est = zeros(n_dim, 1);                       % Estimated initial state
+% Initialize estimate close to true state (realistic initial guess)
+x0_est = [30, plane(1).alpha, plane(1).beta]';  % Use reference altitude and initial terrain angles
 ni = zeros(s_dim, N);                           % Innovation
 S = zeros(s_dim, s_dim, N);                     % Covariance Innovation
      
@@ -151,6 +157,7 @@ x_est(:,1) = x0_est;
 
 % Rotations
 wRr(:,:,1) = eye(d_dim);
+wRr_gt(:,:,1) = eye(d_dim);  % Initialize ground truth rotation
 wRt(:,:,1) = eye(d_dim) * rotx(pi);
 wRt_pre(:,:,1) = wRt(:,:,1);
 
@@ -169,31 +176,38 @@ for k = 2:N
     % if mod(k, 5000) == 0
     %     [Kp, Ki, Kd] = gainComputation(nu(:,k-1), i_dim);
     % end
-    
+    % 
     %% EKF: Input Control Computation
     if k >= 3
         % PID Values with Saturation
         [pid(:,k), t_sum(:,k)] = input_control(goal(k), x_est(:,k-1), eta(4:6,k-1), pid(:,k-1), nu(:,k-1), nu_dot(:,k-1), ...
                                 t_sum(:,k-1), wRr(:,:,k-1), n_est(:,k-1), Ts, i_dim, Kp, Ki, Kd); 
     end
-    %% EKF: Dynamic and Kinematic Model
-    % Dynamic model  %% mettere i ground truth qui
+    %% EKF: Dynamic and Kinematic Model (Ground Truth)
+    % Dynamic model computes ground truth velocities
     [nu_dot(:,k), nu_gt(:,k)] = dynamic_model(pid(:,k), eta_gt(4:6, k-1), nu_gt(:,k-1), Ts, i_dim, nu_dot(:,k-1));
-    [eta_dot_gt(:,k), eta_gt(:,k)] = kinematic_model(eta_gt(:,k-1), nu_gt(:,k), wRr(:,:,k-1), eta_dot_gt(:,k-1), i_dim, Ts);
-    wRr_gt = rotz(eta_gt(YAW,k))*roty(eta_gt(PITCH,k))*rotx(eta_gt(ROLL,k));
+    % Kinematic model uses ground truth rotation wRr_gt
+    [eta_dot_gt(:,k), eta_gt(:,k)] = kinematic_model(eta_gt(:,k-1), nu_gt(:,k), wRr_gt(:,:,k-1), eta_dot_gt(:,k-1), i_dim, Ts);
+    % Update ground truth rotation matrix (stored in 3D array)
+    wRr_gt(:,:,k) = rotz(eta_gt(YAW,k))*roty(eta_gt(PITCH,k))*rotx(eta_gt(ROLL,k));
 
     %% EKF Position estimation
-    [x_loc(:,k), P_loc(:,:,k), wRr(:,:,k)] = ekf_position(x_loc(:,k-1), pid(:,k), wRr(:,:,k-1), nu_gt(:,k), eta_gt(:,k), P_loc(:,:,k-1), Q_loc, Ts);
-    eta(:,k) = x_loc(1:6,k);
-    nu(:,k) = x_loc(7:12,k);
+    % [x_loc(:,k), P_loc(:,:,k), wRr(:,:,k)] = ekf_position(x_loc(:,k-1), pid(:,k), wRr(:,:,k-1), nu_gt(:,k), eta_gt(:,k), P_loc(:,:,k-1), Q_loc, Ts);
+    % eta(:,k) = x_loc(1:6,k);
+    % nu(:,k) = x_loc(7:12,k);
+    %%%%%%%%%%% NO EKF %%%%%%%%%%%%%%%%%
+    eta(:,k) = eta_gt(:,k);
+    nu(:,k) = nu_gt(:,k);
+    wRr(:,:,k) = wRr_gt(:,:,k);
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    %% Terrain Dynamic Update
-    w_sp = wRr_gt * nu_gt(1:3,k);
+    %% Terrain Dynamic Update (uses ground truth)
+    w_sp = wRr_gt(:,:,k) * nu_gt(1:3,k);
     [plane, t_idx] = terrain_generator(plane, eta_gt(1:3,k), w_sp, t_idx, step_length, max_planes, ...
                         k, angle_range, rate_of_change, delta_limit);
     
     %% EKF: Real Measurement
-    [z_meas(:,k), hmes, n_mes(:,k), R(:,:,k), cmd, a_true, b_true] = SBES_measurament(plane, s_dim, eta_gt(1:3,k), wRr_gt, ...
+    [z_meas(:,k), hmes, n_mes(:,k), R(:,:,k), cmd, a_true, b_true] = SBES_measurament(plane, s_dim, eta_gt(1:3,k), wRr_gt(:,:,k), ...
                                             t_idx, R(:,:,k), cmd, k);
 
     %% EKF: True State update (based on state)
@@ -202,7 +216,7 @@ for k = 2:N
 
     %% EKF: Prediction
     % State prediction
-    [x_pred(:,k), wRt_pre(:,:,k)] = f(x_est(:,k-1), nu(:,k), Ts, wRr(:,:,k));
+    [x_pred(:,k), wRt_pre(:,:,k)] = f(x_est(:,k-1), nu(:,k), Ts, wRr(:,:,k),  wRt(:,:,k-1));
     
     % Dynamics Jacobian
     F = jacobian_f(x_est(:,k-1), nu(:,k), Ts, n_dim, wRr(:,:,k)); 
@@ -219,6 +233,9 @@ for k = 2:N
     end
    
     %% EKF: Gain and Prediction Update
+    % Measurament prediction
+    z_pred(:,k) = h(x_pred(:,k), s, s_dim, s_dim, n_pre(:,k));  
+
     % Observation Jacobian
     H = jacobian_h(x_pred(:,k), s, s_dim, n_dim, s_dim, n_pre(:,k), n0);
     if any(isnan(H(:)))
@@ -230,16 +247,18 @@ for k = 2:N
     K = P_pred * H' / S(:,:,k); % Kalman Gain
     if any(isnan(K(:)))
         error('Esecuzione interrotta: K contiene valori NaN. Istante %0.f', k);
-    end
-    
-    % Measurament prediction
-    z_pred(:,k) = h(x_pred(:,k), s, s_dim, s_dim, n_pre(:,k));      
+    end    
 
     %% EKF: State Update
     % State Innovation
     ni(:,k) = (z_meas(:,k) - z_pred(:,k));
+    
+    
     % State Estimated
     x_est(:,k) = x_pred(:,k) + K * ni(:,k); 
+    % Wrap estimated terrain angles to [-pi, pi]
+    x_est(ALPHA,k) = wrapToPi(x_est(ALPHA,k));
+    x_est(BETA,k) = wrapToPi(x_est(BETA,k));
     % Covariance
     P = (eye(n_dim) - K * H) * P_pred;
 
@@ -265,13 +284,15 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%% Plotting %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fprintf('\nGenerating plots and statistics...\n');
 plot_results(time, N, h_ref, x_true, x_est, eta(4:6,:), eta_gt(4:6,:), goal, nu, ...
-             n_est, n_mes, wRr, eta(1:3,:), n_dim, d_dim, i_dim);
+             n_est, n_mes, wRr, eta(1:3,:), n_dim, d_dim, i_dim, ...
+             x_loc, eta_gt, nu_gt, wRr_gt);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% Data Saving %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fprintf('\n===========================================\n');
 fprintf('SIMULATION COMPLETED SUCCESSFULLY!\n');
 fprintf('===========================================\n');
+
 
 % Prompt user for data saving
 fprintf('\nWould you like to save simulation data for future statistical analysis?\n');
@@ -291,8 +312,9 @@ if strcmpi(save_choice, 'Y') || strcmpi(save_choice, 'Yes') || strcmpi(save_choi
         z_meas, z_pred, n_mes, n_est, n_pre, eta(4:6,:), eta_gt(4:6,:), R, ...
         pid, nu, nu_dot, goal, integral_err, p_err, i_err, t_sum, ...
         eta(1:3,:), wRr, wRt, wRt_pre, state, ...
-        Q, R_SBES, R_AHRS, Kp, Ki, Kd, 0, speed0, tau0, x0, x0_est, ...
-        max_planes, step_length, angle_range, rate_of_change, delta_limit, pp_init_w, n0);
+        Q, R_SBES, Kp, Ki, Kd, speed0, x0, x0_est, ...
+        max_planes, step_length, angle_range, rate_of_change, delta_limit, pp_init_w, n0, ...
+        x_loc, eta_gt, nu_gt, wRr_gt);
     
     % Save to disk
     if isempty(run_name)
