@@ -101,7 +101,8 @@ pid = zeros(i_dim, N);
 i_err = zeros(i_dim, N);
 term_sum = zeros(i_dim, N);
 
-max_pid = 4.0;  % Base saturation
+% Differentiated saturation limits
+max_pid_vec = [4.0; 4.0; 2.5; 2.5; 2.5; 4.0]; % [surge,sway,heave,roll,pitch,yaw]
 
 % PID Gains (tuned for stable nonlinear model with EKF noise)
 % Kp = zeros(i_dim, 1);
@@ -159,7 +160,9 @@ for k = 2:N
         end
         term_sum(l,k) = i_err(l,k) - p_err - d_err;
         pid(l,k) = integrator(pid(l,k-1), term_sum(l,k), term_sum(l,k-1), Ts);
-        pid(l,k) = max(min(pid(l,k), max_pid), -max_pid);
+        
+        % Apply per-axis saturation limits
+        pid(l,k) = max(min(pid(l,k), max_pid_vec(l)), -max_pid_vec(l));
     end
     
     %% Dynamic Model
@@ -206,70 +209,117 @@ end
 
 % %% Plots
 % % Colors for academic use
-c_target = [1, 0, 0];       % Red
-c_est = [0, 0, 1];          % Blue
-c_clean = [0, 1, 1];        % Cyan (Azzurro acceso)
+c_target = [0.85, 0.33, 0.10]; % Red-Orange
+c_est = [0, 0.45, 0.74];       % Dark Blue
+c_clean = [0.47, 0.67, 0.19];  % Green
 
-figure('Name', 'Velocities and Altitude');
-subplot(3,1,1);
-plot(time, nu(1,:), 'Color', c_est, 'LineWidth', 1.5); hold on;
-yline(u_star, '--', 'Color', c_target, 'LineWidth', 1.5);
-ylabel('Surge [m/s]'); title('Velocities'); legend('Actual', 'Target');
+% Common plot settings
+lw = 1.5;       % LineWidth
+fs = 12;        % FontSize
+fn = 'Times New Roman'; % FontName
+
+% 1. Surge Velocity
+figure('Name', 'Surge Velocity');
+plot(time, nu(1,:), 'Color', c_est, 'LineWidth', lw); hold on;
+yline(u_star, '--', 'Color', c_target, 'LineWidth', lw);
+ylabel('Surge [m/s]', 'FontSize', fs, 'FontName', fn);
+xlabel('Time [s]', 'FontSize', fs, 'FontName', fn);
+title('Surge Velocity', 'FontSize', fs, 'FontName', fn);
+legend({'Actual', 'Target'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best');
 grid on;
+set(gca, 'FontSize', fs, 'FontName', fn);
 
-subplot(3,1,2);
-plot(time, nu(2,:), 'Color', c_est, 'LineWidth', 1.5); hold on;
-yline(v_star, '--', 'Color', c_target, 'LineWidth', 1.5);
-ylabel('Sway [m/s]'); legend('Actual', 'Target');
+% 2. Sway Velocity
+figure('Name', 'Sway Velocity');
+plot(time, nu(2,:), 'Color', c_est, 'LineWidth', lw); hold on;
+yline(v_star, '--', 'Color', c_target, 'LineWidth', lw);
+ylabel('Sway [m/s]', 'FontSize', fs, 'FontName', fn);
+xlabel('Time [s]', 'FontSize', fs, 'FontName', fn);
+title('Sway Velocity', 'FontSize', fs, 'FontName', fn);
+legend({'Actual', 'Target'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best');
 grid on;
+set(gca, 'FontSize', fs, 'FontName', fn);
 
-subplot(3,1,3);
+% 3. Altitude
+figure('Name', 'Altitude');
 plot(time, h_clean, 'Color', c_clean, 'LineWidth', 2); hold on;
-plot(time, h, '--', 'Color', c_est, 'LineWidth', 1.5);
-yline(h_star, '--', 'Color', c_target, 'LineWidth', 1.5);
-ylabel('Altitude [m]'); xlabel('Time [s]'); legend('Clean', 'EKF', 'Target');
+plot(time, h, '--', 'Color', c_est, 'LineWidth', lw);
+yline(h_star, '--', 'Color', c_target, 'LineWidth', lw);
+ylabel('Altitude [m]', 'FontSize', fs, 'FontName', fn);
+xlabel('Time [s]', 'FontSize', fs, 'FontName', fn);
+title('Altitude Tracking', 'FontSize', fs, 'FontName', fn);
+legend({'Clean', 'EKF', 'Target'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best');
 grid on;
+set(gca, 'FontSize', fs, 'FontName', fn);
 
-figure('Name', 'Euler Angles - Clean vs EKF');
-subplot(3,1,1);
+% 4. Roll Angle
+figure('Name', 'Roll Angle');
 plot(time, rad2deg(pos(4,:)), 'Color', c_clean, 'LineWidth', 2); hold on;
-plot(time, rad2deg(eta(4,:)), '--', 'Color', c_est, 'LineWidth', 1.5);
-plot(time, rad2deg(alpha), '--', 'Color', c_target, 'LineWidth', 1.5);
-ylabel('Roll [deg]'); title('Angles: Clean vs EKF'); legend('Clean', 'EKF', 'Target');
+plot(time, rad2deg(eta(4,:)), '--', 'Color', c_est, 'LineWidth', lw);
+plot(time, rad2deg(alpha), '--', 'Color', c_target, 'LineWidth', lw);
+ylabel('Roll [deg]', 'FontSize', fs, 'FontName', fn);
+xlabel('Time [s]', 'FontSize', fs, 'FontName', fn);
+title('Roll Angle', 'FontSize', fs, 'FontName', fn);
+legend({'Clean', 'EKF', 'Target'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best');
 grid on;
+set(gca, 'FontSize', fs, 'FontName', fn);
 
-subplot(3,1,2);
+% 5. Pitch Angle
+figure('Name', 'Pitch Angle');
 plot(time, rad2deg(pos(5,:)), 'Color', c_clean, 'LineWidth', 2); hold on;
-plot(time, rad2deg(eta(5,:)), '--', 'Color', c_est, 'LineWidth', 1.5);
-plot(time, rad2deg(beta), '--', 'Color', c_target, 'LineWidth', 1.5);
-ylabel('Pitch [deg]'); legend('Clean', 'EKF', 'Target');
+plot(time, rad2deg(eta(5,:)), '--', 'Color', c_est, 'LineWidth', lw);
+plot(time, rad2deg(beta), '--', 'Color', c_target, 'LineWidth', lw);
+ylabel('Pitch [deg]', 'FontSize', fs, 'FontName', fn);
+xlabel('Time [s]', 'FontSize', fs, 'FontName', fn);
+title('Pitch Angle', 'FontSize', fs, 'FontName', fn);
+legend({'Clean', 'EKF', 'Target'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best');
 grid on;
+set(gca, 'FontSize', fs, 'FontName', fn);
 
-subplot(3,1,3);
+% 6. Yaw Angle
+figure('Name', 'Yaw Angle');
 plot(time, rad2deg(pos(6,:)), 'Color', c_clean, 'LineWidth', 2); hold on;
-plot(time, rad2deg(eta(6,:)), '--', 'Color', c_est, 'LineWidth', 1.5);
-yline(0, '--', 'Color', c_target, 'LineWidth', 1.5);
-ylabel('Yaw [deg]'); xlabel('Time [s]'); legend('Clean', 'EKF', 'Target');
+plot(time, rad2deg(eta(6,:)), '--', 'Color', c_est, 'LineWidth', lw);
+yline(0, '--', 'Color', c_target, 'LineWidth', lw);
+ylabel('Yaw [deg]', 'FontSize', fs, 'FontName', fn);
+xlabel('Time [s]', 'FontSize', fs, 'FontName', fn);
+title('Yaw Angle', 'FontSize', fs, 'FontName', fn);
+legend({'Clean', 'EKF', 'Target'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best');
 grid on;
+set(gca, 'FontSize', fs, 'FontName', fn);
 
-figure('Name', 'Position - Clean vs EKF');
-subplot(3,1,1);
+% 7. Position X
+figure('Name', 'Position X');
 plot(time, pos(1,:), 'Color', c_clean, 'LineWidth', 2); hold on;
-plot(time, eta(1,:), '--', 'Color', c_est, 'LineWidth', 1.5);
-ylabel('X [m]'); title('Position: Clean vs EKF'); legend('Clean', 'EKF');
+plot(time, eta(1,:), '--', 'Color', c_est, 'LineWidth', lw);
+ylabel('X [m]', 'FontSize', fs, 'FontName', fn);
+xlabel('Time [s]', 'FontSize', fs, 'FontName', fn);
+title('Position X', 'FontSize', fs, 'FontName', fn);
+legend({'Clean', 'EKF'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best');
 grid on;
+set(gca, 'FontSize', fs, 'FontName', fn);
 
-subplot(3,1,2);
+% 8. Position Y
+figure('Name', 'Position Y');
 plot(time, pos(2,:), 'Color', c_clean, 'LineWidth', 2); hold on;
-plot(time, eta(2,:), '--', 'Color', c_est, 'LineWidth', 1.5);
-ylabel('Y [m]'); legend('Clean', 'EKF');
+plot(time, eta(2,:), '--', 'Color', c_est, 'LineWidth', lw);
+ylabel('Y [m]', 'FontSize', fs, 'FontName', fn);
+xlabel('Time [s]', 'FontSize', fs, 'FontName', fn);
+title('Position Y', 'FontSize', fs, 'FontName', fn);
+legend({'Clean', 'EKF'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best');
 grid on;
+set(gca, 'FontSize', fs, 'FontName', fn);
 
-subplot(3,1,3);
+% 9. Position Z
+figure('Name', 'Position Z');
 plot(time, pos(3,:), 'Color', c_clean, 'LineWidth', 2); hold on;
-plot(time, eta(3,:), '--', 'Color', c_est, 'LineWidth', 1.5);
-ylabel('Z [m]'); xlabel('Time [s]'); legend('Clean', 'EKF');
+plot(time, eta(3,:), '--', 'Color', c_est, 'LineWidth', lw);
+ylabel('Z [m]', 'FontSize', fs, 'FontName', fn);
+xlabel('Time [s]', 'FontSize', fs, 'FontName', fn);
+title('Position Z', 'FontSize', fs, 'FontName', fn);
+legend({'Clean', 'EKF'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best');
 grid on;
+set(gca, 'FontSize', fs, 'FontName', fn);
 
 fprintf('\n=== FINAL RESULTS ===\n');
 fprintf('Surge: %.3f m/s (target %.3f)\n', nu(1,end), u_star);

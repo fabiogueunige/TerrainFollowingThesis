@@ -24,7 +24,7 @@ ROLL = 4;   PITCH = 5;  YAW = 6;
 
 %% Simulation Parameters
 Ts = 0.001;         % Sampling time [s]
-Tf = 50;            % Final time [s]
+Tf = 40;            % Final time [s]
 time = 0:Ts:Tf;     % Time vector
 N = length(time);   % Number of iterations
 global DEBUG;
@@ -103,7 +103,7 @@ s = zeros(d_dim,s_dim);             % Robot echosonar
 %% Terrain Parameters
 max_planes = 300; % Circular buffer size
 step_length = 4.0; % Distance between consecutive planes
-angle_range = [-pi/10, pi/10];
+angle_range = [-pi/4, pi/4];
 delta_limit = pi/4;
 rate_of_change = 3;
 % Terrain must start BEHIND the robot and extend FORWARD
@@ -144,7 +144,7 @@ i_err = zeros(i_dim, N);            % integral error
 t_sum = zeros(i_dim,N);
 
 % initial controller
-speed0 = [0.2; 0; 0; 0; 0; 0];
+speed0 = [0.3; 0; 0; 0; 0; 0];
 [Kp, Ki, Kd] = gainComputation(speed0, i_dim);
 
 %% EKF Start
@@ -192,13 +192,13 @@ for k = 2:N
     wRr_gt(:,:,k) = rotz(eta_gt(YAW,k))*roty(eta_gt(PITCH,k))*rotx(eta_gt(ROLL,k));
 
     %% EKF Position estimation
-    % [x_loc(:,k), P_loc(:,:,k), wRr(:,:,k)] = ekf_position(x_loc(:,k-1), pid(:,k), wRr(:,:,k-1), nu_gt(:,k), eta_gt(:,k), P_loc(:,:,k-1), Q_loc, Ts);
-    % eta(:,k) = x_loc(1:6,k);
-    % nu(:,k) = x_loc(7:12,k);
+    [x_loc(:,k), P_loc(:,:,k), wRr(:,:,k)] = ekf_position(x_loc(:,k-1), pid(:,k), wRr(:,:,k-1), nu_gt(:,k), eta_gt(:,k), P_loc(:,:,k-1), Q_loc, Ts);
+    eta(:,k) = x_loc(1:6,k);
+    nu(:,k) = x_loc(7:12,k);
     %%%%%%%%%%% NO EKF %%%%%%%%%%%%%%%%%
-    eta(:,k) = eta_gt(:,k);
-    nu(:,k) = nu_gt(:,k);
-    wRr(:,:,k) = wRr_gt(:,:,k);
+    % eta(:,k) = eta_gt(:,k);
+    % nu(:,k) = nu_gt(:,k);
+    % wRr(:,:,k) = wRr_gt(:,:,k);
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     %% Terrain Dynamic Update (uses ground truth)

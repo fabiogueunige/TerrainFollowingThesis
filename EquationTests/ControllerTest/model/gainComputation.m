@@ -5,9 +5,14 @@ function [kp, ki, kd] = gainComputation(speed0, dim_i)
     
     %% Control Design Parameters
     % Natural frequency and damping for pole placement
+    % =========================================================
+    % TUNING NOTES:
+    % For terrain following, we need well-damped response
+    % to prevent oscillations and overshoot near seafloor
+    % =========================================================
     wn = 0.4;       % Natural frequency [rad/s]
-    damp = 0.6;     % Damping ratio (0.6 = slightly underdamped)
-    p = 10;         % Additional pole for PID controller
+    damp = 0.85;    % Increased damping (was 0.6, now 0.85 for less overshoot)
+    p = 8;          % Additional pole (reduced from 10 for smoother response)
     
     % Initialize gain vectors
     kp = zeros(dim_i, 1);

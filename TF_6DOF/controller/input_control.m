@@ -9,7 +9,8 @@ function [pid, term_sum] = input_control(ggg, x, angles, old_pid, speed, ...
     printDebug('       Input Control\n');
 
     %% Initialize Control Variables
-    max_pid = ones(dim_i, 1) * 2;  % Saturation limits for all DOFs
+    % Differentiated saturation limits
+    max_pid = [4.0; 4.0; 2.5; 2.5; 2.5; 4.0]; % [surge,sway,heave,roll,pitch,yaw]
     term_sum = zeros(dim_i, 1);
     pid = zeros(dim_i, 1);
     err = zeros(dim_i, 1);
