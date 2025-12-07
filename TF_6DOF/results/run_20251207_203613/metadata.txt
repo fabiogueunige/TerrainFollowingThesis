@@ -1,0 +1,52 @@
+=== SIMULATION RUN METADATA ===
+Data Version: 2.0
+Run name: run_20251207_203613
+Date: 07-Dec-2025 20:36:15
+
+--- SIMULATION PARAMETERS ---
+Sampling time: 0.0010 s
+Final time: 30.0 s
+Iterations: 30001
+Reference altitude: 3.00 m
+
+--- INITIAL CONDITIONS ---
+Initial true state: [10.00, 0.0000, 0.0000]
+Initial estimated state: [30.00, 0.0000, 0.0000]
+Operating point velocity: [0.30, 0.00, 0.00, 0.00, 0.00, 0.00]
+
+--- EKF SBES PARAMETERS ---
+Process noise Q (SBES):
+  0.010000  0.000000  0.000000
+  0.000000  0.001218  0.000000
+  0.000000  0.000000  0.001218
+Initial covariance P0:
+  4.000000  0.000000  0.000000
+  0.000000  0.500000  0.000000
+  0.000000  0.000000  0.500000
+
+--- CONTROLLER GAINS ---
+Kp: [11.7731, 24.2942, 231.8854, 6.7760, 6.9720, 6.9720]
+Ki: [6.1728, 5.9923, 53.0024, 1.5488, 1.5936, 1.5936]
+Kd: [0.0000, 0.0000, 358.3093, 10.0028, 10.3066, 10.3066]
+
+--- TERRAIN PARAMETERS ---
+Max planes (buffer): 300
+Step length: 4.00 m
+Angle range: [-36.00, 36.00] deg ([-0.6283, 0.6283] rad)
+Rate of change: 3.00
+Delta limit: 45.00 deg (0.7854 rad)
+Initial plane position: [-3.00, -3.00, 8.00]
+Reference normal: [0.00, 0.00, 1.00]
+
+--- FINAL RESULTS ---
+Final altitude error: 1.1913 m
+Mean altitude error: -2.5353 m
+RMS altitude error: 3.1116 m
+
+--- PRE-COMPUTED STATISTICS ---
+Sensor failure rate: 0.00%
+Position RMSE: [0.0022, 0.0010, 0.0100] m
+
+--- STATE MACHINE ---
+Total state transitions: 3
+Transitions per minute: 6.00

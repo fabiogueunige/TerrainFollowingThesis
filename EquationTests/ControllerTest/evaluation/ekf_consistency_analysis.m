@@ -57,9 +57,14 @@ function ekf_consistency_analysis()
     
     % NEES storage (for position states 1:3)
     nees_pos = zeros(1, N);
+    nees_vel = zeros(1, N);  % For velocity states
     
     % Innovation storage (we'll compute it from estimation error)
     innovation = zeros(6, N);
+    innovation_vel = zeros(6, N);  % For velocities
+    
+    % Velocity ground truth storage
+    nu_true = zeros(i_dim, N);
     
     % Covariance trace storage
     trace_P_pos = zeros(1, N);
@@ -108,8 +113,8 @@ function ekf_consistency_analysis()
         r_n = r_n / norm(r_n);
         h_contribution = h_err * r_n;
         
-        err(1,k) = u_star - nu(1,k-1) + 0.5 * h_contribution(1);
-        err(2,k) = v_star - nu(2,k-1) + 0.5 * h_contribution(2);
+        err(1,k) = u_star - nu(1,k-1) + 0.3 * h_contribution(1);
+        err(2,k) = v_star - nu(2,k-1) + 0.3 * h_contribution(2);
         err(3,k) = h_contribution(3);
         err(4,k) = alpha(k) - eta(4,k-1);
         err(5,k) = beta(k) - eta(5,k-1);
@@ -159,6 +164,21 @@ function ekf_consistency_analysis()
         %% Store Innovation (estimation error)
         innovation(1:3, k) = pos_error;
         innovation(4:6, k) = atan2(sin(eta(4:6,k) - pos_true(4:6,k)), cos(eta(4:6,k) - pos_true(4:6,k)));
+        
+        %% Velocity ground truth (u is body-frame velocity from dynamic model)
+        nu_true(:,k) = u(:,k);
+        
+        %% Compute NEES for velocity (states 7:12)
+        vel_error = nu(:,k) - nu_true(:,k);
+        P_vel = P_loc(7:12, 7:12, k);
+        if rcond(P_vel) > 1e-10
+            nees_vel(k) = vel_error' * (P_vel \ vel_error);
+        else
+            nees_vel(k) = NaN;
+        end
+        
+        %% Store velocity innovation
+        innovation_vel(:, k) = vel_error;
         
         %% Store Covariance Trace
         trace_P_pos(k) = trace(P_loc(1:3, 1:3, k));
@@ -246,6 +266,39 @@ function ekf_consistency_analysis()
     fprintf('Average NEES (observable): %.4f (should be ~%.1f)\n', avg_nees_obs, dof_obs);
     fprintf('Percentage within 95%% bounds: %.1f%%\n', pct_in_bounds_obs);
     
+    %% NEES for Velocities (all 6 DOF - all observable via DVL/Gyro)
+    fprintf('\n--- NEES ANALYSIS (Velocity States: u,v,w,p,q,r) ---\n');
+    dof_vel = 6; % 6 velocity states
+    chi2_lower_vel = chi2inv(alpha_conf/2, dof_vel);
+    chi2_upper_vel = chi2inv(1 - alpha_conf/2, dof_vel);
+    valid_nees_vel = nees_vel(~isnan(nees_vel) & nees_vel < 1e6);
+    avg_nees_vel = mean(valid_nees_vel(1000:end));
+    in_bounds_vel = sum(valid_nees_vel(1000:end) >= chi2_lower_vel & valid_nees_vel(1000:end) <= chi2_upper_vel);
+    pct_in_bounds_vel = 100 * in_bounds_vel / length(valid_nees_vel(1000:end));
+    
+    fprintf('Degrees of Freedom: %d (u + v + w + p + q + r)\n', dof_vel);
+    fprintf('95%% Chi-squared bounds: [%.2f, %.2f]\n', chi2_lower_vel, chi2_upper_vel);
+    fprintf('Average NEES (velocity): %.4f (should be ~%.1f)\n', avg_nees_vel, dof_vel);
+    fprintf('Percentage within 95%% bounds: %.1f%%\n', pct_in_bounds_vel);
+    
+    %% Velocity Innovation Analysis
+    fprintf('\n--- VELOCITY INNOVATION ANALYSIS ---\n');
+    vel_labels = {'u (surge)', 'v (sway)', 'w (heave)', 'p (roll rate)', 'q (pitch rate)', 'r (yaw rate)'};
+    vel_units = {'m/s', 'm/s', 'm/s', 'rad/s', 'rad/s', 'rad/s'};
+    
+    for i = 1:6
+        innov_i = innovation_vel(i, 1000:end);
+        mean_innov = mean(innov_i);
+        std_innov = std(innov_i);
+        if length(innov_i) > 1
+            autocorr_1 = corr(innov_i(1:end-1)', innov_i(2:end)');
+        else
+            autocorr_1 = NaN;
+        end
+        fprintf('%s: Mean=%.2e %s, Std=%.2e %s, Autocorr(1)=%.3f\n', ...
+            vel_labels{i}, mean_innov, vel_units{i}, std_innov, vel_units{i}, autocorr_1);
+    end
+    
     %% Consistency Verdict
     fprintf('\n--- CONSISTENCY VERDICT ---\n');
     if avg_nees < chi2_lower
@@ -281,6 +334,7 @@ function ekf_consistency_analysis()
         'FontSize', fs, 'FontName', fn, 'Location', 'best');
     grid on;
     set(gca, 'FontSize', fs, 'FontName', fn);
+    exportgraphics(gcf, 'NEES_Analysis.png', 'Resolution', 300);
     
     % Plot 2: Covariance Trace Evolution
     figure('Name', 'Covariance Evolution');
@@ -294,7 +348,8 @@ function ekf_consistency_analysis()
     legend({'Position', 'Velocity', 'Angles'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best');
     grid on;
     set(gca, 'FontSize', fs, 'FontName', fn);
-    
+    exportgraphics(gcf, 'covariance_evolution.png', 'Resolution', 300);
+
     % Plot 3: Innovation Histogram (Position Z)
     figure('Name', 'Innovation Distribution (Z)');
     histogram(innovation(3, 1000:end), 50, 'Normalization', 'pdf');
@@ -309,7 +364,8 @@ function ekf_consistency_analysis()
     legend({'Histogram', 'Gaussian Fit'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best');
     grid on;
     set(gca, 'FontSize', fs, 'FontName', fn);
-    
+    exportgraphics(gcf, 'innovation_histogram_z.png', 'Resolution', 300);
+
     % Plot 4: Innovation Autocorrelation
     figure('Name', 'Innovation Autocorrelation');
     [acf, lags] = xcorr(innovation(3, 1000:end) - mean(innovation(3, 1000:end)), 100, 'normalized');
@@ -325,7 +381,8 @@ function ekf_consistency_analysis()
     legend({'ACF', '95% Confidence'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best');
     grid on;
     set(gca, 'FontSize', fs, 'FontName', fn);
-    
+    exportgraphics(gcf, 'innovation_autocorr.png', 'Resolution', 300);
+
     fprintf('\n=================================================================\n');
     fprintf('Analysis Complete.\n');
 end

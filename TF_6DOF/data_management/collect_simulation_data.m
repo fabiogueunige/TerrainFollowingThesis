@@ -8,31 +8,31 @@
 %       x_true, x_est, x_pred, ni, S, P, P0, ...
 %       z_meas, z_pred, n_mes, n_est, n_pre, rob_rot, clean_rot, R, ...
 %       pid, u, u_dot, goal, integral_err, p_err, i_err, t_sum, ...
-%       prob, wRr, wRt, wRt_pre, state, cmd_history, ...
+%       prob, wRr, wRt, wRt_pre, state, ...
 %       Q, R_SBES, Kp, Ki, Kd, speed0, x0, x0_est, ...
 %       max_planes, step_length, angle_range, rate_of_change, delta_limit, pp_init_w, n0, ...
-%       x_loc, eta_gt, nu_gt, wRr_gt, P_loc, P_loc_init, Q_loc)
+%       x_loc, eta_gt, nu_gt, wRr_gt, P_sbes, P_loc, P_loc_init, Q_loc)
 %
 % INPUTS:
 %   All simulation variables (see main_6DOF_3D.m for definitions)
+%   P_sbes - EKF SBES covariance history [3 x 3 x N] (optional, for NEES analysis)
 %
 % OUTPUTS:
 %   sim_data - Structure containing all simulation data organized by category:
 %              .time, .Ts, .Tf, .N              - Time parameters
 %              .x_true, .x_est, .x_pred, .h_ref - EKF SBES states
-%              .ni, .S, .P_final, .P0           - EKF SBES covariance
+%              .ni, .S, .P_sbes, .P_final, .P0  - EKF SBES covariance
 %              .z_meas, .z_pred, .n_mes, ...    - Sensor data
 %              .pid, .u, .u_dot, .goal, ...     - Control data
 %              .prob, .wRr, .wRt, .state        - Trajectory data
 %              .Q, .R_SBES, .Kp, ...            - Parameters
 %              .x_loc, .P_loc, .Q_loc           - EKF Position filter data
 %              .eta_gt, .nu_gt, .wRr_gt         - Ground truth data
-%              .cmd_history                     - State machine commands history
 %
 % EXAMPLE:
 %   % At end of simulation
 %   sim_data = collect_simulation_data(time, Ts, Tf, N, h_ref, ...
-%       x_true, x_est, x_pred, ni, S, P, P0, ...);
+%       x_true, x_est, x_pred, ni, S, P, P0, ..., P_sbes, P_loc, P_loc_init, Q_loc);
 %   save_simulation_data(sim_data);
 %
 % See also: save_simulation_data, load_simulation_data
@@ -49,16 +49,16 @@ function sim_data = collect_simulation_data(time, Ts, Tf, N, h_ref, ...
     fprintf('\n=== COLLECTING SIMULATION DATA ===\n');
     
     %% Parse optional arguments for backward compatibility
+    P_sbes = [];
     P_loc = [];
     P_loc_init = [];
     Q_loc = [];
-    cmd_history = [];
     
     if nargin >= 48 && ~isempty(varargin)
-        if length(varargin) >= 1, P_loc = varargin{1}; end
-        if length(varargin) >= 2, P_loc_init = varargin{2}; end
-        if length(varargin) >= 3, Q_loc = varargin{3}; end
-        if length(varargin) >= 4, cmd_history = varargin{4}; end
+        if length(varargin) >= 1, P_sbes = varargin{1}; end      % EKF SBES covariance history
+        if length(varargin) >= 2, P_loc = varargin{2}; end       % EKF Position covariance history
+        if length(varargin) >= 3, P_loc_init = varargin{3}; end  % EKF Position initial covariance
+        if length(varargin) >= 4, Q_loc = varargin{4}; end       % EKF Position process noise
     end
     
     %% Data Version (for backward compatibility)
@@ -87,6 +87,12 @@ function sim_data = collect_simulation_data(time, Ts, Tf, N, h_ref, ...
     sim_data.P_final = P;               % Final state covariance
     sim_data.P0 = P0;                   % Initial state covariance
     sim_data.Q_sbes = Q;                % Process noise covariance (EKF SBES)
+    
+    % EKF SBES covariance history for NEES analysis
+    if ~isempty(P_sbes)
+        sim_data.P_sbes = P_sbes;       % Full covariance history [3 x 3 x N]
+        fprintf('  - P_sbes covariance history saved [3x3x%d]\n', size(P_sbes, 3));
+    end
     
     %% ========================================================================
     %% Sensor Data
@@ -182,10 +188,8 @@ function sim_data = collect_simulation_data(time, Ts, Tf, N, h_ref, ...
     sim_data.state_time = state_time;
     sim_data.state_percentage = state_time / Tf * 100;
     
-    % Store command history if available
-    if ~isempty(cmd_history)
-        sim_data.cmd_history = cmd_history;
-    end
+    % Note: cmd_history is not currently collected from main_6DOF_3D.m
+    % This field is reserved for future implementation of command history logging
     
     %% ========================================================================
     %% EKF Position Filter Data

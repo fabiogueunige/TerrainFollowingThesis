@@ -214,7 +214,7 @@ function m_visualization(pr, pplane, n, num_s, p_int, wRr, j, planes, plane_cont
     if nargin < 9, plane_contact_idx = []; end
     if nargin < 8, planes = []; end
 
-    figure('Name', sprintf('AUV Situation iteration %d', j)); 
+    figure('Name', sprintf('AUV Situation iteration %d', j), 'Tag', sprintf('auv_situation_%d', j), 'NumberTitle', 'off'); 
     hold on; grid on; box on;
     colors = lines(max(num_s, 6));
 

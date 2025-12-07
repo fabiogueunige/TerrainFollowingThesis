@@ -494,7 +494,7 @@ function generate_batch_plots(stats, data_matrix)
     num_metrics = length(names);
     
     %% Figure 1: Bar chart of means with error bars
-    figure('Name', 'Batch Analysis: Metric Means', 'NumberTitle', 'off');
+    fig1 = figure('Name', 'Batch Analysis: Metric Means', 'Tag', 'batch_metric_means', 'NumberTitle', 'off');
     
     means = zeros(1, num_metrics);
     stds = zeros(1, num_metrics);
@@ -523,7 +523,7 @@ function generate_batch_plots(stats, data_matrix)
     hold off;
     
     %% Figure 2: Box plots of key metrics
-    figure('Name', 'Batch Analysis: Distribution Box Plots', 'NumberTitle', 'off');
+    fig2 = figure('Name', 'Batch Analysis: Distribution Box Plots', 'Tag', 'batch_boxplots', 'NumberTitle', 'off');
     
     key_metrics = [1, 2, 3, 7, 9, 13];  % altitude, phi-alpha, theta-beta, failure, following, score
     subplot_data = data_matrix(:, key_metrics);
@@ -542,7 +542,7 @@ function generate_batch_plots(stats, data_matrix)
     
     %% Figure 3: Correlation heatmap
     if ~isempty(stats.correlation) && isfield(stats.correlation, 'matrix')
-        figure('Name', 'Batch Analysis: Correlation Matrix', 'NumberTitle', 'off');
+        fig3 = figure('Name', 'Batch Analysis: Correlation Matrix', 'Tag', 'batch_correlation', 'NumberTitle', 'off');
         
         corr_mat = stats.correlation.matrix;
         corr_names = stats.correlation.metric_names;
@@ -574,7 +574,7 @@ function generate_batch_plots(stats, data_matrix)
     end
     
     %% Figure 4: Overall score distribution
-    figure('Name', 'Batch Analysis: Overall Score Distribution', 'NumberTitle', 'off');
+    fig4 = figure('Name', 'Batch Analysis: Overall Score Distribution', 'Tag', 'batch_score_dist', 'NumberTitle', 'off');
     
     scores = data_matrix(:, end);  % Overall score is last column
     valid_scores = scores(~isnan(scores));

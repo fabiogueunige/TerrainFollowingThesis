@@ -5,7 +5,8 @@ function [Q_s, P0] = stateSbes_init()
     % Note: Removed random component that was corrupting the matrix
 
     % Process noise (model uncertainty)
-    sigma_altitude = 0.1;          % Altitude noise [m]
+    % Tuning: Higher Q = more trust in measurements, lower Q = more trust in model
+    sigma_altitude = 0.15;         % Altitude noise [m]
     sigma_alpha    = deg2rad(2);   % Roll angle noise [rad]  
     sigma_beta     = deg2rad(2);   % Pitch angle noise [rad]
 

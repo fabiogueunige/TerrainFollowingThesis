@@ -10,9 +10,9 @@ function [kp, ki, kd] = gainComputation(speed0, dim_i)
     % For terrain following, we need well-damped response
     % to prevent oscillations and overshoot near seafloor
     % =========================================================
-    wn = 0.4;       % Natural frequency [rad/s]
-    damp = 0.85;    % Increased damping (was 0.6, now 0.85 for less overshoot)
-    p = 8;          % Additional pole (reduced from 10 for smoother response)
+    wn =   [0.4; 0.4; 0.4;  0.4; 0.4; 0.4];
+    damp = [0.6; 0.7; 0.85; 0.9; 0.6; 0.85];
+    p = 10;          % Additional pole (reduced from 10 for smoother response)
     
     % Initialize gain vectors
     kp = zeros(dim_i, 1);
@@ -46,15 +46,15 @@ function [kp, ki, kd] = gainComputation(speed0, dim_i)
         if l == 1 || l == 2
             % PI control for surge and sway (horizontal motion)
             % No derivative action needed for stable horizontal dynamics
-            kp(l) = 2*damp*wn*mv(l) - dv_lin(l);
-            ki(l) = wn^2 * mv(l);
+            kp(l) = 2*damp(l)*wn(l)*mv(l) - dv_lin(l);
+            ki(l) = wn(l)^2 * mv(l);
             kd(l) = 0;
         else
             % PID control for heave, roll, pitch, yaw
             % Derivative action helps with stability and faster response
-            kp(l) = mv(l)*((wn^2) + 2*damp*p*wn);
-            ki(l) = p*(wn^2)*mv(l);
-            kd(l) = (p + 2*damp*wn)*mv(l) - dv_lin(l);
+            kp(l) = mv(l)*((wn(l)^2) + 2*damp(l)*p*wn(l));
+            ki(l) = p*(wn(l)^2)*mv(l);
+            kd(l) = (p + 2*damp(l)*wn(l))*mv(l) - dv_lin(l);
         end
     end
 end

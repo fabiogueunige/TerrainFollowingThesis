@@ -22,7 +22,7 @@ function controller_step_response_analysis()
 
     %% Configuration
     Ts = 0.001; 
-    Tf = 30;  % Shorter simulation for step response
+    Tf = 60;  % Shorter simulation for step response
     time = 0:Ts:Tf; 
     N = length(time);
     
@@ -30,24 +30,25 @@ function controller_step_response_analysis()
     step_time = 5;  % Time when step is applied [s]
     step_idx = find(time >= step_time, 1);
     
-    %% Test 1: Altitude Step Response
+    %% Test 1: Altitude Step Response (longer simulation needed)
+    Tf_alt = 60;  % Altitude controller is slower by design
     fprintf('--- TEST 1: ALTITUDE STEP RESPONSE (h: 3m -> 5m) ---\n');
-    [data_alt, metrics_alt] = run_altitude_step(Ts, Tf, step_time, 3, 5);
+    [data_alt, metrics_alt] = run_altitude_step(Ts, Tf_alt, step_time, 3, 5);
     print_step_metrics('Altitude', metrics_alt, 'm');
     
-    %% Test 2: Roll Step Response
-    fprintf('\n--- TEST 2: ROLL STEP RESPONSE (0 -> 30 deg) ---\n');
-    [data_roll, metrics_roll] = run_angle_step(Ts, Tf, step_time, 0, deg2rad(30), 'roll');
+    %% Test 2: Roll Step Response (reduced to 20° - same as test_main.m)
+    fprintf('\n--- TEST 2: ROLL STEP RESPONSE (0 -> 20 deg) ---\n');
+    [data_roll, metrics_roll] = run_angle_step(Ts, Tf, step_time, 0, deg2rad(20), 'roll');
     print_step_metrics('Roll', metrics_roll, 'deg');
     
     %% Test 3: Pitch Step Response
-    fprintf('\n--- TEST 3: PITCH STEP RESPONSE (0 -> 30 deg) ---\n');
-    [data_pitch, metrics_pitch] = run_angle_step(Ts, Tf, step_time, 0, deg2rad(30), 'pitch');
+    fprintf('\n--- TEST 3: PITCH STEP RESPONSE (0 -> 20 deg) ---\n');
+    [data_pitch, metrics_pitch] = run_angle_step(Ts, Tf, step_time, 0, deg2rad(20), 'pitch');
     print_step_metrics('Pitch', metrics_pitch, 'deg');
     
     %% Test 4: Surge Velocity Step Response
     fprintf('\n--- TEST 4: SURGE VELOCITY STEP RESPONSE (0.2 -> 0.5 m/s) ---\n');
-    [data_surge, metrics_surge] = run_velocity_step(Ts, Tf, step_time, 0.2, 0.5);
+    [data_surge, metrics_surge] = run_velocity_step(Ts, Tf, step_time, 0.1, 0.4);
     print_step_metrics('Surge', metrics_surge, 'm/s');
     
     %% Generate Summary Table
@@ -142,9 +143,10 @@ function [data, metrics] = run_altitude_step(Ts, Tf, step_time, h_init, h_final)
     % For flat terrain (w_n = [0;0;1]): pos(3,1) = p_seafloor(3) - h_init
     pos(3,1) = p_seafloor_NED(3) - h_init;
     eta(:,1) = pos(:,1);
+    x_loc(1:6,1) = pos(:,1);  % Initialize EKF state with initial position
     h(1) = h_init;
     
-    % Step target
+    % Step target (instant step)
     h_star = zeros(1, N);
     h_star(1:step_idx-1) = h_init;
     h_star(step_idx:end) = h_final;
@@ -158,7 +160,7 @@ function [data, metrics] = run_altitude_step(Ts, Tf, step_time, h_init, h_final)
     term_sum = zeros(i_dim, N);
     
     % Differentiated saturation limits
-    max_pid_vec = [4.0; 4.0; 2.5; 2.5; 2.5; 4.0]; % [surge,sway,heave,roll,pitch,yaw]
+    max_pid_vec = [4.0; 4.0; 4.0; 2.5; 2.5; 4.0]; % [surge,sway,heave,roll,pitch,yaw]
     
     [Kp, Ki, Kd] = gainComputation(speed0, i_dim);
     
@@ -168,8 +170,8 @@ function [data, metrics] = run_altitude_step(Ts, Tf, step_time, h_init, h_final)
         r_n = r_n / norm(r_n);
         h_contribution = h_err * r_n;
         
-        err(1,k) = u_star - nu(1,k-1) + 0.5 * h_contribution(1);
-        err(2,k) = v_star - nu(2,k-1) + 0.5 * h_contribution(2);
+        err(1,k) = u_star - nu(1,k-1) + 0.3 * h_contribution(1);
+        err(2,k) = v_star - nu(2,k-1) + 0.3 * h_contribution(2);
         err(3,k) = h_contribution(3);
         err(4,k) = 0 - eta(4,k-1);
         err(5,k) = 0 - eta(5,k-1);
@@ -202,7 +204,9 @@ function [data, metrics] = run_altitude_step(Ts, Tf, step_time, h_init, h_final)
         eta(:,k) = x_loc(1:6,k);
         nu(:,k) = x_loc(7:12,k);
         
-        h(k) = abs((w_n'*(pos(1:3,k) - p_seafloor_NED))/norm(w_n));
+        % Altitude = distance from seafloor (always positive)
+        % In NED: seafloor is at larger Z, robot at smaller Z
+        h(k) = max(0.01, abs((w_n'*(pos(1:3,k) - p_seafloor_NED))/norm(w_n)));
     end
     
     data.time = time;
@@ -238,10 +242,14 @@ function [data, metrics] = run_angle_step(Ts, Tf, step_time, angle_init, angle_f
     
     p_seafloor_NED = [-3; 0; 5];
     
-    % Target angles (step)
+    speed0 = [0.2; 0; 0; 0; 0; 0];
+    u_star = 0.3; v_star = 0; h_star = 3;
+    
+    % Target angles (step with smooth transition to avoid discontinuity)
     alpha = zeros(1,N); % roll target
     beta = zeros(1,N);  % pitch target
     
+    % Step target (instant step)
     if strcmp(angle_type, 'roll')
         alpha(1:step_idx-1) = angle_init;
         alpha(step_idx:end) = angle_final;
@@ -255,10 +263,12 @@ function [data, metrics] = run_angle_step(Ts, Tf, step_time, angle_init, angle_f
     n0 = [0; 0; 1];
     wRs = rotx(pi) * rotz(0) * roty(beta(1)) * rotx(alpha(1));
     w_n = wRs * n0;
-    h(1) = 3; % Start at target altitude
     
-    speed0 = [0.2; 0; 0; 0; 0; 0];
-    u_star = 0.3; v_star = 0; h_star = 3;
+    % Initialize position to be at correct altitude
+    % For flat terrain: pos(3) = p_seafloor(3) - h_star
+    pos(3,1) = p_seafloor_NED(3) - h_star;
+    eta(:,1) = pos(:,1);
+    h(1) = h_star; % Start at target altitude
     
     err = zeros(i_dim, N);
     pid = zeros(i_dim, N);
@@ -274,14 +284,13 @@ function [data, metrics] = run_angle_step(Ts, Tf, step_time, angle_init, angle_f
         wRs = rotx(pi) * rotz(0) * roty(beta(k)) * rotx(alpha(k));
         w_n = wRs * n0;
         
-        h_err = (h_star - h(k-1)); 
-        r_n = wRr(:,:,k-1)' * w_n;
-        r_n = r_n / norm(r_n);
-        h_contribution = h_err * r_n;
+        % Disable altitude coupling for pure angle test
+        % This isolates the roll/pitch controller from altitude dynamics
+        h_contribution = [0; 0; 0];
         
-        err(1,k) = u_star - nu(1,k-1) + 0.5 * h_contribution(1);
-        err(2,k) = v_star - nu(2,k-1) + 0.5 * h_contribution(2);
-        err(3,k) = h_contribution(3);
+        err(1,k) = u_star - nu(1,k-1);
+        err(2,k) = v_star - nu(2,k-1);
+        err(3,k) = 0;  % No heave control in this test
         err(4,k) = alpha(k) - eta(4,k-1);
         err(5,k) = beta(k) - eta(5,k-1);
         err(6,k) = 0 - eta(6,k-1);
@@ -373,7 +382,7 @@ function [data, metrics] = run_velocity_step(Ts, Tf, step_time, u_init, u_final)
     term_sum = zeros(i_dim, N);
     
     % Differentiated saturation limits
-    max_pid_vec = [4.0; 4.0; 2.5; 2.5; 2.5; 4.0]; % [surge,sway,heave,roll,pitch,yaw]
+    max_pid_vec = [4.0; 4.0; 4.0; 2.5; 2.5; 4.0]; % [surge,sway,heave,roll,pitch,yaw]
     
     [Kp, Ki, Kd] = gainComputation(speed0, i_dim);
     
@@ -383,8 +392,8 @@ function [data, metrics] = run_velocity_step(Ts, Tf, step_time, u_init, u_final)
         r_n = r_n / norm(r_n);
         h_contribution = h_err * r_n;
         
-        err(1,k) = u_star(k) - nu(1,k-1) + 0.5 * h_contribution(1);
-        err(2,k) = v_star - nu(2,k-1) + 0.5 * h_contribution(2);
+        err(1,k) = u_star(k) - nu(1,k-1) + 0.3 * h_contribution(1);
+        err(2,k) = v_star - nu(2,k-1) + 0.3 * h_contribution(2);
         err(3,k) = h_contribution(3);
         err(4,k) = 0 - eta(4,k-1);
         err(5,k) = 0 - eta(5,k-1);
@@ -478,11 +487,11 @@ function plot_step_responses(data_alt, data_roll, data_pitch, data_surge, step_t
     figure('Name', 'Step Response: Altitude');
     plot(data_alt.time, data_alt.target, 'r--', 'LineWidth', lw); hold on;
     plot(data_alt.time, data_alt.response, 'b-', 'LineWidth', lw);
-    xline(step_time, 'k:', 'Step', 'LineWidth', 1);
+    xline(step_time, 'k:', 'LineWidth', 1);
     xlabel('Time [s]', 'FontSize', fs, 'FontName', fn);
     ylabel('Altitude [m]', 'FontSize', fs, 'FontName', fn);
     title('Altitude Step Response (3m \rightarrow 5m)', 'FontSize', fs, 'FontName', fn);
-    legend({'Target', 'Response'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best');
+    legend({'Step target', 'Response'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best');
     grid on;
     set(gca, 'FontSize', fs, 'FontName', fn);
     
@@ -490,11 +499,11 @@ function plot_step_responses(data_alt, data_roll, data_pitch, data_surge, step_t
     figure('Name', 'Step Response: Roll');
     plot(data_roll.time, data_roll.target, 'r--', 'LineWidth', lw); hold on;
     plot(data_roll.time, data_roll.response, 'b-', 'LineWidth', lw);
-    xline(step_time, 'k:', 'Step', 'LineWidth', 1);
+    xline(step_time, 'k:', 'LineWidth', 1);
     xlabel('Time [s]', 'FontSize', fs, 'FontName', fn);
     ylabel('Roll [deg]', 'FontSize', fs, 'FontName', fn);
-    title('Roll Step Response (0 \rightarrow 30 deg)', 'FontSize', fs, 'FontName', fn);
-    legend({'Target', 'Response'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best');
+    title('Roll Step Response (0 \rightarrow 20 deg)', 'FontSize', fs, 'FontName', fn);
+    legend({'Step target', 'Response'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best');
     grid on;
     set(gca, 'FontSize', fs, 'FontName', fn);
     
@@ -502,11 +511,11 @@ function plot_step_responses(data_alt, data_roll, data_pitch, data_surge, step_t
     figure('Name', 'Step Response: Pitch');
     plot(data_pitch.time, data_pitch.target, 'r--', 'LineWidth', lw); hold on;
     plot(data_pitch.time, data_pitch.response, 'b-', 'LineWidth', lw);
-    xline(step_time, 'k:', 'Step', 'LineWidth', 1);
+    xline(step_time, 'k:', 'LineWidth', 1);
     xlabel('Time [s]', 'FontSize', fs, 'FontName', fn);
     ylabel('Pitch [deg]', 'FontSize', fs, 'FontName', fn);
-    title('Pitch Step Response (0 \rightarrow 30 deg)', 'FontSize', fs, 'FontName', fn);
-    legend({'Target', 'Response'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best');
+    title('Pitch Step Response (0 \rightarrow 20 deg)', 'FontSize', fs, 'FontName', fn);
+    legend({'Step target', 'Response'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best');
     grid on;
     set(gca, 'FontSize', fs, 'FontName', fn);
     
@@ -514,11 +523,11 @@ function plot_step_responses(data_alt, data_roll, data_pitch, data_surge, step_t
     figure('Name', 'Step Response: Surge Velocity');
     plot(data_surge.time, data_surge.target, 'r--', 'LineWidth', lw); hold on;
     plot(data_surge.time, data_surge.response, 'b-', 'LineWidth', lw);
-    xline(step_time, 'k:', 'Step', 'LineWidth', 1);
+    xline(step_time, 'k:', 'LineWidth', 1);
     xlabel('Time [s]', 'FontSize', fs, 'FontName', fn);
     ylabel('Surge Velocity [m/s]', 'FontSize', fs, 'FontName', fn);
-    title('Surge Velocity Step Response (0.2 \rightarrow 0.5 m/s)', 'FontSize', fs, 'FontName', fn);
-    legend({'Target', 'Response'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best');
+    title('Surge Velocity Step Response (0.1 \rightarrow 0.4 m/s)', 'FontSize', fs, 'FontName', fn);
+    legend({'Step target', 'Response'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best');
     grid on;
     set(gca, 'FontSize', fs, 'FontName', fn);
     
@@ -532,6 +541,7 @@ function plot_step_responses(data_alt, data_roll, data_pitch, data_surge, step_t
     xlabel('Time [s]', 'FontSize', fs-2, 'FontName', fn);
     ylabel('Altitude [m]', 'FontSize', fs-2, 'FontName', fn);
     title('Altitude', 'FontSize', fs-2, 'FontName', fn);
+    legend({'Step target', 'Response'}, 'FontSize', fs-4, 'FontName', fn, 'Location', 'best');
     grid on;
     set(gca, 'FontSize', fs-2, 'FontName', fn);
     
@@ -542,6 +552,7 @@ function plot_step_responses(data_alt, data_roll, data_pitch, data_surge, step_t
     xlabel('Time [s]', 'FontSize', fs-2, 'FontName', fn);
     ylabel('Roll [deg]', 'FontSize', fs-2, 'FontName', fn);
     title('Roll', 'FontSize', fs-2, 'FontName', fn);
+    legend({'Step target', 'Response'}, 'FontSize', fs-4, 'FontName', fn, 'Location', 'best');
     grid on;
     set(gca, 'FontSize', fs-2, 'FontName', fn);
     
@@ -552,6 +563,7 @@ function plot_step_responses(data_alt, data_roll, data_pitch, data_surge, step_t
     xlabel('Time [s]', 'FontSize', fs-2, 'FontName', fn);
     ylabel('Pitch [deg]', 'FontSize', fs-2, 'FontName', fn);
     title('Pitch', 'FontSize', fs-2, 'FontName', fn);
+    legend({'Step target', 'Response'}, 'FontSize', fs-4, 'FontName', fn, 'Location', 'best');
     grid on;
     set(gca, 'FontSize', fs-2, 'FontName', fn);
     
@@ -562,6 +574,7 @@ function plot_step_responses(data_alt, data_roll, data_pitch, data_surge, step_t
     xlabel('Time [s]', 'FontSize', fs-2, 'FontName', fn);
     ylabel('Surge [m/s]', 'FontSize', fs-2, 'FontName', fn);
     title('Surge Velocity', 'FontSize', fs-2, 'FontName', fn);
+    legend({'Step target', 'Response'}, 'FontSize', fs-4, 'FontName', fn, 'Location', 'best');
     grid on;
     set(gca, 'FontSize', fs-2, 'FontName', fn);
 end

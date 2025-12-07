@@ -88,10 +88,10 @@ function ekf_performance_analysis()
         
         %% Error computation with intelligent altitude control
         % Surge: maintain constant speed + altitude correction
-        err(1,k) = u_star - nu(1,k-1) + 0.5 * h_contribution(1);
+        err(1,k) = u_star - nu(1,k-1) + 0.3 * h_contribution(1);
         
         % Sway: keep zero lateral velocity + altitude correction
-        err(2,k) = v_star - nu(2,k-1) + 0.5 * h_contribution(2);
+        err(2,k) = v_star - nu(2,k-1) + 0.3 * h_contribution(2);
         
         % Heave: altitude correction is primary objective
         err(3,k) = h_contribution(3);
@@ -182,6 +182,7 @@ function ekf_performance_analysis()
     legend({'EKF Estimate', 'Ground Truth'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best'); 
     grid on; title('Position X Estimation', 'FontSize', fs, 'FontName', fn);
     set(gca, 'FontSize', fs, 'FontName', fn);
+    exportgraphics(gcf, 'ekf_position_x.png', 'Resolution', 300);
     
     % Plot 2: Position Y
     figure('Name', 'EKF Performance: Position Y');
@@ -192,6 +193,7 @@ function ekf_performance_analysis()
     legend({'EKF Estimate', 'Ground Truth'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best'); 
     grid on; title('Position Y Estimation', 'FontSize', fs, 'FontName', fn);
     set(gca, 'FontSize', fs, 'FontName', fn);
+    exportgraphics(gcf, 'ekf_position_y.png', 'Resolution', 300);
     
     % Plot 3: Position Z
     figure('Name', 'EKF Performance: Position Z');
@@ -202,6 +204,7 @@ function ekf_performance_analysis()
     legend({'EKF Estimate', 'Ground Truth'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best'); 
     grid on; title('Position Z Estimation', 'FontSize', fs, 'FontName', fn);
     set(gca, 'FontSize', fs, 'FontName', fn);
+    exportgraphics(gcf, 'ekf_position_z.png', 'Resolution', 300);
     
     % Plot 4: Roll
     figure('Name', 'EKF Performance: Roll');
@@ -212,6 +215,7 @@ function ekf_performance_analysis()
     legend({'EKF Estimate', 'Ground Truth'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best'); 
     grid on; title('Roll Estimation', 'FontSize', fs, 'FontName', fn);
     set(gca, 'FontSize', fs, 'FontName', fn);
+    exportgraphics(gcf, 'ekf_roll.png', 'Resolution', 300);
     
     % Plot 5: Pitch
     figure('Name', 'EKF Performance: Pitch');
@@ -222,6 +226,7 @@ function ekf_performance_analysis()
     legend({'EKF Estimate', 'Ground Truth'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best'); 
     grid on; title('Pitch Estimation', 'FontSize', fs, 'FontName', fn);
     set(gca, 'FontSize', fs, 'FontName', fn);
+    exportgraphics(gcf, 'ekf_pitch.png', 'Resolution', 300);
     
     % Plot 6: Yaw
     figure('Name', 'EKF Performance: Yaw');
@@ -232,6 +237,7 @@ function ekf_performance_analysis()
     legend({'EKF Estimate', 'Ground Truth'}, 'FontSize', fs, 'FontName', fn, 'Location', 'best'); 
     grid on; title('Yaw Estimation', 'FontSize', fs, 'FontName', fn);
     set(gca, 'FontSize', fs, 'FontName', fn);
+    exportgraphics(gcf, 'ekf_yaw.png', 'Resolution', 300);
     
     % Plot 7: Estimation Errors (Single Figures)
     titles = {'Error X', 'Error Y', 'Error Z', 'Error Roll', 'Error Pitch', 'Error Yaw'};
@@ -251,5 +257,9 @@ function ekf_performance_analysis()
         title(titles{i}, 'FontSize', fs, 'FontName', fn);
         grid on;
         set(gca, 'FontSize', fs, 'FontName', fn);
+        % Export error plots
+        error_filenames = {'ekf_error_x.png', 'ekf_error_y.png', 'ekf_error_z.png', ...
+                          'ekf_error_roll.png', 'ekf_error_pitch.png', 'ekf_error_yaw.png'};
+        exportgraphics(gcf, error_filenames{i}, 'Resolution', 300);
     end
 end

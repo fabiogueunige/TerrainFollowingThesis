@@ -80,6 +80,10 @@ function save_simulation_data(sim_data, run_name)
     ekf_sbes_cov.S = sim_data.S;                     % Innovation covariance [4 x 4 x N]
     ekf_sbes_cov.P_final = sim_data.P_final;         % Final covariance matrix
     ekf_sbes_cov.P0 = sim_data.P0;                   % Initial covariance
+    if isfield(sim_data, 'P_sbes')
+        ekf_sbes_cov.P_sbes = sim_data.P_sbes;       % Full covariance history [3 x 3 x N] for NEES
+        fprintf('  - P_sbes saved [3x3x%d] for NEES analysis\n', size(sim_data.P_sbes, 3));
+    end
     if isfield(sim_data, 'Q_sbes')
         ekf_sbes_cov.Q = sim_data.Q_sbes;            % Process noise
     elseif isfield(sim_data, 'Q')

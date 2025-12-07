@@ -122,7 +122,7 @@ theta_eff_current = effective_slope_current + beamwidth/2;
 gamma_max_current = pi/2 - effective_slope_current - beamwidth/2;
 
 % CHOOSE CONSTRAINT APPROACH
-SCENARIO = 2;  % 1=Perfect, 2=Tracking, 3=Fixed horizontal, 4=Current orientation
+SCENARIO = 4;  % 1=Perfect, 2=Tracking, 3=Fixed horizontal, 4=Current orientation
 
 switch SCENARIO
     case 1
@@ -419,83 +419,94 @@ for i = 1:length(gamma_plot)
     f4_plot(i) = tanh(max(denom_plot, denom_min_safe) / scale_uncertainty);
 end
 
-% Create figure with subplots
-figure('Name', 'SBES Angle Optimization Analysis', 'NumberTitle', 'off', ...
-       'Position', [100 100 1200 800]);
-
-% Subplot 1: Overall objective function
-subplot(2, 3, 1);
+% FIGURE 1: Overall objective function
+fig_objective = figure('Name', 'SBES Overall Objective Function', 'NumberTitle', 'off', ...
+       'Position', [100 100 800 600], 'Tag', 'fig_objective_function');
 plot(gamma_plot*180/pi, J_plot, 'b-', 'LineWidth', 2);
 hold on;
 plot(rad2deg(gamma_opt), J_opt, 'r*', 'MarkerSize', 15, 'LineWidth', 2);
-xlabel('Angle γ [degrees]');
-ylabel('Objective J(γ)');
-title('Overall Objective Function');
+xlabel('Angle γ [degrees]', 'FontSize', 12);
+ylabel('Objective J(γ)', 'FontSize', 12);
+title('Overall Objective Function J(γ)', 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
 legend('J(γ)', sprintf('Optimum: γ*=%.2f°', rad2deg(gamma_opt)), 'Location', 'best');
+% exportgraphics(fig_objective, 'fig_objective_function.png', 'Resolution', 300);
 
-% Subplot 2-5: Individual components
-subplot(2, 3, 2);
+% FIGURE 2: Resolution component
+fig_resolution = figure('Name', 'SBES Resolution Component', 'NumberTitle', 'off', ...
+       'Position', [120 120 800 600], 'Tag', 'fig_resolution_component');
 plot(rad2deg(gamma_plot), f1_plot, 'LineWidth', 2);
 hold on;
 plot(rad2deg(gamma_opt), f_res_opt, 'r*', 'MarkerSize', 12);
-xlabel('Angle γ [degrees]');
-ylabel('f_resolution');
-title(sprintf('Component 1: Resolution (w₁=%.2f)', w1));
+xlabel('Angle γ [degrees]', 'FontSize', 12);
+ylabel('f_{resolution}', 'FontSize', 12);
+title(sprintf('Component 1: Resolution (w_1=%.2f)', w1), 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
+legend('f_{res}(γ)', sprintf('Optimum: f_{res}=%.4f', f_res_opt), 'Location', 'best');
+% exportgraphics(fig_resolution, 'fig_resolution_component.png', 'Resolution', 300);
 
-subplot(2, 3, 3);
+% FIGURE 3: Coverage component
+fig_coverage = figure('Name', 'SBES Coverage Component', 'NumberTitle', 'off', ...
+       'Position', [140 140 800 600], 'Tag', 'fig_coverage_component');
 plot(rad2deg(gamma_plot), f2_plot, 'LineWidth', 2);
 hold on;
 plot(rad2deg(gamma_opt), f_cov_opt, 'r*', 'MarkerSize', 12);
-xlabel('Angle γ [degrees]');
-ylabel('f_coverage');
-title(sprintf('Component 2: Coverage (w₂=%.2f)', w2));
+xlabel('Angle γ [degrees]', 'FontSize', 12);
+ylabel('f_{coverage}', 'FontSize', 12);
+title(sprintf('Component 2: Coverage (w_2=%.2f)', w2), 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
+legend('f_{cov}(γ)', sprintf('Optimum: f_{cov}=%.4f', f_cov_opt), 'Location', 'best');
+% exportgraphics(fig_coverage, 'fig_coverage_component.png', 'Resolution', 300);
 
-subplot(2, 3, 4);
+% FIGURE 4: Robustness component
+fig_robustness = figure('Name', 'SBES Robustness Component', 'NumberTitle', 'off', ...
+       'Position', [160 160 800 600], 'Tag', 'fig_robustness_component');
 plot(rad2deg(gamma_plot), f3_plot, 'LineWidth', 2);
 hold on;
 plot(rad2deg(gamma_opt), f_rob_opt, 'r*', 'MarkerSize', 12);
-xlabel('Angle γ [degrees]');
-ylabel('f_robustness');
-title(sprintf('Component 3: Robustness (w₃=%.2f)', w3));
+xlabel('Angle γ [degrees]', 'FontSize', 12);
+ylabel('f_{robustness}', 'FontSize', 12);
+title(sprintf('Component 3: Robustness (w_3=%.2f)', w3), 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
+legend('f_{rob}(γ)', sprintf('Optimum: f_{rob}=%.4f', f_rob_opt), 'Location', 'best');
+% exportgraphics(fig_robustness, 'fig_robustness_component.png', 'Resolution', 300);
 
-subplot(2, 3, 5);
+% FIGURE 5: Uncertainty component
+fig_uncertainty = figure('Name', 'SBES Uncertainty Component', 'NumberTitle', 'off', ...
+       'Position', [180 180 800 600], 'Tag', 'fig_uncertainty_component');
 plot(rad2deg(gamma_plot), f4_plot, 'LineWidth', 2);
 hold on;
 plot(rad2deg(gamma_opt), f_unc_opt, 'r*', 'MarkerSize', 12);
-xlabel('Angle γ [degrees]');
-ylabel('f_uncertainty');
-title(sprintf('Component 4: Uncertainty (w₄=%.2f)', w4));
+xlabel('Angle γ [degrees]', 'FontSize', 12);
+ylabel('f_{uncertainty}', 'FontSize', 12);
+title(sprintf('Component 4: Uncertainty (w_4=%.2f)', w4), 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
+legend('f_{unc}(γ)', sprintf('Optimum: f_{unc}=%.4f', f_unc_opt), 'Location', 'best');
+% exportgraphics(fig_uncertainty, 'fig_uncertainty_component.png', 'Resolution', 300);
 
-% Subplot 6: Weighted components
-subplot(2, 3, 6);
-plot(rad2deg(gamma_plot), w1*f1_plot, 'LineWidth', 1.5, 'DisplayName', sprintf('w₁·f₁ (%.2f)', w1));
+% FIGURE 6: Weighted components comparison
+fig_weighted = figure('Name', 'SBES Weighted Components', 'NumberTitle', 'off', ...
+       'Position', [200 200 800 600], 'Tag', 'fig_weighted_components');
+plot(rad2deg(gamma_plot), w1*f1_plot, 'LineWidth', 1.5, 'DisplayName', sprintf('w_1·f_1 (%.2f)', w1));
 hold on;
-plot(rad2deg(gamma_plot), w2*f2_plot, 'LineWidth', 1.5, 'DisplayName', sprintf('w₂·f₂ (%.2f)', w2));
-plot(rad2deg(gamma_plot), w3*f3_plot, 'LineWidth', 1.5, 'DisplayName', sprintf('w₃·f₃ (%.2f)', w3));
-plot(rad2deg(gamma_plot), w4*f4_plot, 'LineWidth', 1.5, 'DisplayName', sprintf('w₄·f₄ (%.2f)', w4));
+plot(rad2deg(gamma_plot), w2*f2_plot, 'LineWidth', 1.5, 'DisplayName', sprintf('w_2·f_2 (%.2f)', w2));
+plot(rad2deg(gamma_plot), w3*f3_plot, 'LineWidth', 1.5, 'DisplayName', sprintf('w_3·f_3 (%.2f)', w3));
+plot(rad2deg(gamma_plot), w4*f4_plot, 'LineWidth', 1.5, 'DisplayName', sprintf('w_4·f_4 (%.2f)', w4));
 plot(rad2deg(gamma_opt), J_opt, 'r*', 'MarkerSize', 15, 'DisplayName', 'Optimum');
-ylabel('Weighted Components');
-title('Weighted Contributions');
+xlabel('Angle γ [degrees]', 'FontSize', 12);
+ylabel('Weighted Components', 'FontSize', 12);
+title('Weighted Contributions to Objective Function', 'FontSize', 14, 'FontWeight', 'bold');
 legend('Location', 'best');
 grid on;
-
-sgtitle('SBES Angle Optimization: Multi-Objective Analysis', 'FontSize', 14, 'FontWeight', 'bold');
-
-% Save figure
-% saveas(gcf, 'sbes_sensitivity_analysis.png');
-% fprintf('✓ Figure saved: sbes_sensitivity_analysis.png\n');
+% exportgraphics(fig_weighted, 'fig_weighted_components.png', 'Resolution', 300);
 
 %% ============================================================================
 % 10. GEOMETRIC CONSTRAINT VISUALIZATION
 %% ============================================================================
 
-figure('Name', 'SBES Geometric Constraints', 'NumberTitle', 'off', ...
-       'Position', [150 150 800 600]);
+% FIGURE 7: Feasibility regions
+fig_feasibility = figure('Name', 'SBES Feasibility Regions', 'NumberTitle', 'off', ...
+       'Position', [220 100 900 600], 'Tag', 'fig_feasibility_regions');
 
 % Create angle range for visualization
 gamma_viz = linspace(0, pi/2, 100);
@@ -506,7 +517,6 @@ feasible_tracking = gamma_viz <= gamma_max_tracking;
 feasible_fixed = gamma_viz <= gamma_max_fixed;
 
 % Plot feasibility regions
-subplot(2,1,1);
 hold on;
 area(rad2deg(gamma_viz), feasible_perfect, 'FaceColor', [0.7 1 0.7], 'FaceAlpha', 0.3, ...
      'DisplayName', 'Perfect (terrain-following)');
@@ -517,31 +527,34 @@ area(rad2deg(gamma_viz), feasible_fixed, 'FaceColor', [1 0.7 0.7], 'FaceAlpha', 
 
 % Mark constraint boundaries
 plot([rad2deg(gamma_min) rad2deg(gamma_min)], [0 1], 'b--', 'LineWidth', 2, ...
-     'DisplayName', sprintf('γ_min = %.2f° (resolution)', rad2deg(gamma_min)));
+     'DisplayName', sprintf('γ_{min} = %.2f° (resolution)', rad2deg(gamma_min)));
 plot([rad2deg(gamma_max_perfect) rad2deg(gamma_max_perfect)], [0 1], 'g--', 'LineWidth', 2, ...
-     'DisplayName', sprintf('γ_max (perfect) = %.2f°', rad2deg(gamma_max_perfect)));
+     'DisplayName', sprintf('γ_{max} (perfect) = %.2f°', rad2deg(gamma_max_perfect)));
 plot([rad2deg(gamma_max_fixed) rad2deg(gamma_max_fixed)], [0 1], 'r--', 'LineWidth', 2, ...
-     'DisplayName', sprintf('γ_max (fixed) = %.2f°', rad2deg(gamma_max_fixed)));
+     'DisplayName', sprintf('γ_{max} (fixed) = %.2f°', rad2deg(gamma_max_fixed)));
 
 % Mark optimal angle
 plot([rad2deg(gamma_opt) rad2deg(gamma_opt)], [0 1], 'k-', 'LineWidth', 3, ...
      'DisplayName', sprintf('γ* = %.2f° (optimal)', rad2deg(gamma_opt)));
 
-xlabel('SBES Angle γ [degrees]');
-ylabel('Feasibility');
-title('Geometric Constraints and Feasibility Regions');
+xlabel('SBES Angle γ [degrees]', 'FontSize', 12);
+ylabel('Feasibility', 'FontSize', 12);
+title('Geometric Constraints and Feasibility Regions', 'FontSize', 14, 'FontWeight', 'bold');
 legend('Location', 'best');
 grid on;
 xlim([0 90]);
 ylim([0 1.2]);
+% exportgraphics(fig_feasibility, 'fig_feasibility_regions.png', 'Resolution', 300);
 
-% Subplot 2: Effective ray angle vs terrain slope
-subplot(2,1,2);
+% FIGURE 8: Ray-terrain angle vs terrain slope
+fig_ray_terrain = figure('Name', 'Ray-Terrain Angle Analysis', 'NumberTitle', 'off', ...
+       'Position', [240 120 900 600], 'Tag', 'fig_ray_terrain_angle');
+
 beta_range = linspace(0, beta_terrain_max, 50);
 gamma_test = [gamma_min, gamma_opt, gamma_max_perfect];
-gamma_labels = {sprintf('γ_min=%.1f°', rad2deg(gamma_min)), ...
+gamma_labels = {sprintf('γ_{min}=%.1f°', rad2deg(gamma_min)), ...
                 sprintf('γ*=%.1f°', rad2deg(gamma_opt)), ...
-                sprintf('γ_max=%.1f°', rad2deg(gamma_max_perfect))};
+                sprintf('γ_{max}=%.1f°', rad2deg(gamma_max_perfect))};
 colors = {'b', 'k', 'r'};
 
 hold on;
@@ -562,32 +575,26 @@ end
 % Mark 90° limit
 plot([0 rad2deg(beta_terrain_max)], [90 90], 'r:', 'LineWidth', 2, 'DisplayName', '90° limit');
 
-xlabel('Terrain Slope β [degrees]');
-ylabel('Effective Ray Angle θ_{eff} [degrees]');
-title('Ray-Terrain Angle vs Terrain Slope');
+xlabel('Terrain Slope β [degrees]', 'FontSize', 12);
+ylabel('Effective Ray Angle θ_{eff} [degrees]', 'FontSize', 12);
+title('Ray-Terrain Angle vs Terrain Slope', 'FontSize', 14, 'FontWeight', 'bold');
 legend('Location', 'northwest');
 grid on;
 xlim([0 rad2deg(beta_terrain_max)]);
 ylim([0 100]);
-
-sgtitle('SBES Geometric Constraints Analysis', 'FontSize', 14, 'FontWeight', 'bold');
-
-% Save figure
-% saveas(gcf, 'sbes_geometric_constraints.png');
-% fprintf('✓ Figure saved: sbes_geometric_constraints.png\n');
+% exportgraphics(fig_ray_terrain, 'fig_ray_terrain_angle.png', 'Resolution', 300);
 
 %% ============================================================================
 % 11. PITCH SENSITIVITY ANALYSIS
 %% ============================================================================
 
-figure('Name', 'Pitch Impact Analysis', 'NumberTitle', 'off', ...
-       'Position', [200 100 1000 700]);
+% FIGURE 9: gamma_max vs pitch
+fig_gamma_max_pitch = figure('Name', 'Max Feasible Angle vs Pitch', 'NumberTitle', 'off', ...
+       'Position', [260 100 800 600], 'Tag', 'fig_gamma_max_vs_pitch');
 
 % Test range for robot pitch
 pitch_range = linspace(-deg2rad(30), deg2rad(30), 50);
 
-% Subplot 1: gamma_max vs pitch
-subplot(2,2,1);
 gamma_max_vs_pitch = zeros(size(pitch_range));
 for i = 1:length(pitch_range)
     eff_slope_i = abs(pitch_range(i)) + beta_terrain_max + tracking_error;
@@ -598,27 +605,33 @@ plot(rad2deg(pitch_range), rad2deg(gamma_max_vs_pitch), 'b-', 'LineWidth', 2);
 hold on;
 plot(rad2deg(robot_pitch), rad2deg(gamma_max), 'r*', 'MarkerSize', 15, 'LineWidth', 2);
 plot([rad2deg(pitch_range(1)), rad2deg(pitch_range(end))], [0 0], 'k--', 'LineWidth', 1);
-xlabel('Robot Pitch θ [degrees]');
-ylabel('γ_{max} [degrees]');
-title('Maximum Feasible SBES Angle vs Robot Pitch');
+xlabel('Robot Pitch θ [degrees]', 'FontSize', 12);
+ylabel('γ_{max} [degrees]', 'FontSize', 12);
+title('Maximum Feasible SBES Angle vs Robot Pitch', 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
 legend('γ_{max}(θ)', 'Current', 'Zero line', 'Location', 'best');
+% exportgraphics(fig_gamma_max_pitch, 'fig_gamma_max_vs_pitch.png', 'Resolution', 300);
 
-% Subplot 2: Effective baseline vs pitch
-subplot(2,2,2);
+% FIGURE 10: Effective baseline vs pitch
+fig_baseline_pitch = figure('Name', 'Effective Baseline vs Pitch', 'NumberTitle', 'off', ...
+       'Position', [280 120 800 600], 'Tag', 'fig_baseline_vs_pitch');
+
 baseline_vs_pitch = 2 * h * tan(gamma_opt) .* cos(abs(pitch_range));
 
 plot(rad2deg(pitch_range), baseline_vs_pitch, 'r-', 'LineWidth', 2);
 hold on;
 plot(rad2deg(robot_pitch), baseline_effective, 'r*', 'MarkerSize', 15, 'LineWidth', 2);
-xlabel('Robot Pitch θ [degrees]');
-ylabel('Effective Baseline [m]');
-title('Effective Baseline vs Robot Pitch');
+xlabel('Robot Pitch θ [degrees]', 'FontSize', 12);
+ylabel('Effective Baseline [m]', 'FontSize', 12);
+title('Effective Baseline vs Robot Pitch', 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
 legend('Baseline_{eff}(θ)', 'Current', 'Location', 'best');
+% exportgraphics(fig_baseline_pitch, 'fig_baseline_vs_pitch.png', 'Resolution', 300);
 
-% Subplot 3: Ray-terrain angle vs pitch
-subplot(2,2,3);
+% FIGURE 11: Ray-terrain angle vs pitch
+fig_ray_angle_pitch = figure('Name', 'Ray-Terrain Angle vs Pitch', 'NumberTitle', 'off', ...
+       'Position', [300 140 800 600], 'Tag', 'fig_ray_angle_vs_pitch');
+
 theta_ray_vs_pitch = zeros(size(pitch_range));
 for i = 1:length(pitch_range)
     eff_slope_i = abs(pitch_range(i)) + beta_terrain_max + tracking_error;
@@ -629,56 +642,51 @@ plot(rad2deg(pitch_range), rad2deg(theta_ray_vs_pitch), 'g-', 'LineWidth', 2);
 hold on;
 plot(rad2deg(robot_pitch), rad2deg(theta_ray_terrain_opt), 'g*', 'MarkerSize', 15, 'LineWidth', 2);
 plot([rad2deg(pitch_range(1)), rad2deg(pitch_range(end))], [90 90], 'r--', 'LineWidth', 2);
-xlabel('Robot Pitch θ [degrees]');
-ylabel('Ray-Terrain Angle [degrees]');
-title('Ray-Terrain Angle vs Robot Pitch');
+xlabel('Robot Pitch θ [degrees]', 'FontSize', 12);
+ylabel('Ray-Terrain Angle [degrees]', 'FontSize', 12);
+title('Ray-Terrain Angle vs Robot Pitch', 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
 legend('θ_{ray}(θ)', 'Current', '90° limit', 'Location', 'best');
 ylim([0 100]);
+% exportgraphics(fig_ray_angle_pitch, 'fig_ray_angle_vs_pitch.png', 'Resolution', 300);
 
-% Subplot 4: Combined metrics
-subplot(2,2,4);
+% FIGURE 12: Measurement quality metrics
+fig_quality_metrics = figure('Name', 'Measurement Quality vs Orientation', 'NumberTitle', 'off', ...
+       'Position', [320 160 800 600], 'Tag', 'fig_quality_vs_orientation');
+
 orient_angles = linspace(0, deg2rad(30), 50);
 precision_deg = 1 ./ cos(orient_angles);
 baseline_reduction = cos(orient_angles);
 
 yyaxis left;
 plot(rad2deg(orient_angles), precision_deg, 'b-', 'LineWidth', 2);
-ylabel('Precision Degradation Factor', 'Color', 'b');
 hold on;
 plot(rad2deg(abs(robot_pitch)), precision_degradation, 'bo', 'MarkerSize', 10, 'LineWidth', 2);
+ylabel('Precision Degradation Factor', 'Color', 'b', 'FontSize', 12);
 
 yyaxis right;
 plot(rad2deg(orient_angles), baseline_reduction * 100, 'r-', 'LineWidth', 2);
-ylabel('Baseline Efficiency [%]', 'Color', 'r');
 plot(rad2deg(abs(robot_pitch)), baseline_correction_avg * 100, 'ro', 'MarkerSize', 10, 'LineWidth', 2);
+ylabel('Baseline Efficiency [%]', 'Color', 'r', 'FontSize', 12);
 
-xlabel('Robot Orientation |φ|, |θ| [degrees]');
-title('Measurement Quality vs Robot Orientation (3D)');
+xlabel('Robot Orientation |φ|, |θ| [degrees]', 'FontSize', 12);
+title('Measurement Quality vs Robot Orientation (3D)', 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
 legend('Precision degradation', 'Current', 'Baseline efficiency', 'Current', 'Location', 'best');
-
-sgtitle('SBES Performance vs Robot Pitch', 'FontSize', 14, 'FontWeight', 'bold');
-
-% Save figure
-% saveas(gcf, 'sbes_pitch_impact.png');
-% fprintf('✓ Figure saved: sbes_pitch_impact.png\n');
+% exportgraphics(fig_quality_metrics, 'fig_quality_vs_orientation.png', 'Resolution', 300);
 
 %% ============================================================================
 % 12. ROLL vs PITCH SEPARATE ANALYSIS
 %% ============================================================================
 
-figure('Name', 'Roll vs Pitch Separate Analysis', 'NumberTitle', 'off', ...
-       'Position', [250 50 1200 900]);
+% FIGURE 13: Max feasible angle vs roll
+fig_gamma_max_roll = figure('Name', 'Max Feasible Angle vs Roll', 'NumberTitle', 'off', ...
+       'Position', [340 100 800 600], 'Tag', 'fig_gamma_max_vs_roll');
 
 % Test ranges for roll and pitch independently
 roll_range = linspace(-deg2rad(60), deg2rad(60), 50);
 pitch_range = linspace(-deg2rad(60), deg2rad(60), 50);
 
-% === ROLL AXIS ANALYSIS (keep pitch constant) ===
-
-% Subplot 1: gamma_max vs roll (with constant pitch)
-subplot(3,3,1);
 gamma_max_vs_roll = zeros(size(roll_range));
 for i = 1:length(roll_range)
     if sign(roll_range(i)) == sign(alpha_terrain_max)
@@ -699,26 +707,32 @@ plot(rad2deg(roll_range), rad2deg(gamma_max_vs_roll), 'b-', 'LineWidth', 2);
 hold on;
 plot(rad2deg(robot_roll), rad2deg(gamma_max), 'r*', 'MarkerSize', 15, 'LineWidth', 2);
 plot([rad2deg(roll_range(1)), rad2deg(roll_range(end))], [0 0], 'k--', 'LineWidth', 1);
-xlabel('Robot Roll φ [degrees]');
-ylabel('γ_{max} [degrees]');
-title('Max Feasible Angle vs Roll');
+xlabel('Robot Roll φ [degrees]', 'FontSize', 12);
+ylabel('γ_{max} [degrees]', 'FontSize', 12);
+title('Max Feasible Angle vs Roll', 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
 legend('γ_{max}(φ)', 'Current', 'Location', 'best');
+% exportgraphics(fig_gamma_max_roll, 'fig_gamma_max_vs_roll.png', 'Resolution', 300);
 
-% Subplot 2: Effective baseline vs roll
-subplot(3,3,2);
+% FIGURE 14: Effective baseline vs roll
+fig_baseline_roll = figure('Name', 'Baseline (E/W sensors) vs Roll', 'NumberTitle', 'off', ...
+       'Position', [360 120 800 600], 'Tag', 'fig_baseline_vs_roll');
+
 baseline_vs_roll = 2 * h * tan(gamma_opt) .* cos(abs(roll_range));
 plot(rad2deg(roll_range), baseline_vs_roll, 'b-', 'LineWidth', 2);
 hold on;
 plot(rad2deg(robot_roll), baseline_opt * cos(robot_roll), 'r*', 'MarkerSize', 15, 'LineWidth', 2);
-xlabel('Robot Roll φ [degrees]');
-ylabel('Effective Baseline [m]');
-title('Baseline (E/W sensors) vs Roll');
+xlabel('Robot Roll φ [degrees]', 'FontSize', 12);
+ylabel('Effective Baseline [m]', 'FontSize', 12);
+title('Baseline (E/W sensors) vs Roll', 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
 legend('Baseline_{eff}(φ)', 'Current', 'Location', 'best');
+% exportgraphics(fig_baseline_roll, 'fig_baseline_vs_roll.png', 'Resolution', 300);
 
-% Subplot 3: Ray-terrain angle vs roll
-subplot(3,3,3);
+% FIGURE 15: Ray-terrain angle vs roll
+fig_ray_angle_roll = figure('Name', 'Ray-Terrain Angle (Roll Axis)', 'NumberTitle', 'off', ...
+       'Position', [380 140 800 600], 'Tag', 'fig_ray_angle_vs_roll');
+
 theta_ray_vs_roll = zeros(size(roll_range));
 for i = 1:length(roll_range)
     if sign(roll_range(i)) == sign(alpha_terrain_max)
@@ -732,17 +746,18 @@ plot(rad2deg(roll_range), rad2deg(theta_ray_vs_roll), 'b-', 'LineWidth', 2);
 hold on;
 plot(rad2deg(robot_roll), rad2deg(gamma_opt + effective_slope_roll), 'r*', 'MarkerSize', 15, 'LineWidth', 2);
 plot([rad2deg(roll_range(1)), rad2deg(roll_range(end))], [90 90], 'r--', 'LineWidth', 2);
-xlabel('Robot Roll φ [degrees]');
-ylabel('Ray-Terrain Angle [degrees]');
-title('Ray-Terrain Angle (Roll Axis)');
+xlabel('Robot Roll φ [degrees]', 'FontSize', 12);
+ylabel('Ray-Terrain Angle [degrees]', 'FontSize', 12);
+title('Ray-Terrain Angle (Roll Axis)', 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
 legend('θ_{ray}(φ)', 'Current', '90° limit', 'Location', 'best');
 ylim([0 100]);
+% exportgraphics(fig_ray_angle_roll, 'fig_ray_angle_vs_roll.png', 'Resolution', 300);
 
-% === PITCH AXIS ANALYSIS (keep roll constant) ===
+% FIGURE 16: Max feasible angle vs pitch (with constant roll)
+fig_gamma_max_pitch_full = figure('Name', 'Max Feasible Angle vs Pitch (Full Range)', 'NumberTitle', 'off', ...
+       'Position', [400 160 800 600], 'Tag', 'fig_gamma_max_vs_pitch_full');
 
-% Subplot 4: gamma_max vs pitch (with constant roll)
-subplot(3,3,4);
 gamma_max_vs_pitch = zeros(size(pitch_range));
 for i = 1:length(pitch_range)
     % Keep roll constant at current value
@@ -763,26 +778,32 @@ plot(rad2deg(pitch_range), rad2deg(gamma_max_vs_pitch), 'g-', 'LineWidth', 2);
 hold on;
 plot(rad2deg(robot_pitch), rad2deg(gamma_max), 'r*', 'MarkerSize', 15, 'LineWidth', 2);
 plot([rad2deg(pitch_range(1)), rad2deg(pitch_range(end))], [0 0], 'k--', 'LineWidth', 1);
-xlabel('Robot Pitch θ [degrees]');
-ylabel('γ_{max} [degrees]');
-title('Max Feasible Angle vs Pitch');
+xlabel('Robot Pitch θ [degrees]', 'FontSize', 12);
+ylabel('γ_{max} [degrees]', 'FontSize', 12);
+title('Max Feasible Angle vs Pitch (Full Range)', 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
 legend('γ_{max}(θ)', 'Current', 'Location', 'best');
+% exportgraphics(fig_gamma_max_pitch_full, 'fig_gamma_max_vs_pitch_full.png', 'Resolution', 300);
 
-% Subplot 5: Effective baseline vs pitch
-subplot(3,3,5);
+% FIGURE 17: Effective baseline vs pitch (N/S sensors)
+fig_baseline_pitch_ns = figure('Name', 'Baseline (N/S sensors) vs Pitch', 'NumberTitle', 'off', ...
+       'Position', [420 180 800 600], 'Tag', 'fig_baseline_vs_pitch_ns');
+
 baseline_vs_pitch = 2 * h * tan(gamma_opt) .* cos(abs(pitch_range));
 plot(rad2deg(pitch_range), baseline_vs_pitch, 'g-', 'LineWidth', 2);
 hold on;
 plot(rad2deg(robot_pitch), baseline_opt * cos(robot_pitch), 'r*', 'MarkerSize', 15, 'LineWidth', 2);
-xlabel('Robot Pitch θ [degrees]');
-ylabel('Effective Baseline [m]');
-title('Baseline (N/S sensors) vs Pitch');
+xlabel('Robot Pitch θ [degrees]', 'FontSize', 12);
+ylabel('Effective Baseline [m]', 'FontSize', 12);
+title('Baseline (N/S sensors) vs Pitch', 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
 legend('Baseline_{eff}(θ)', 'Current', 'Location', 'best');
+% exportgraphics(fig_baseline_pitch_ns, 'fig_baseline_vs_pitch_ns.png', 'Resolution', 300);
 
-% Subplot 6: Ray-terrain angle vs pitch
-subplot(3,3,6);
+% FIGURE 18: Ray-terrain angle vs pitch (full range)
+fig_ray_angle_pitch_full = figure('Name', 'Ray-Terrain Angle (Pitch Axis)', 'NumberTitle', 'off', ...
+       'Position', [440 200 800 600], 'Tag', 'fig_ray_angle_vs_pitch_full');
+
 theta_ray_vs_pitch = zeros(size(pitch_range));
 for i = 1:length(pitch_range)
     if sign(pitch_range(i)) == sign(beta_terrain_max)
@@ -796,17 +817,18 @@ plot(rad2deg(pitch_range), rad2deg(theta_ray_vs_pitch), 'g-', 'LineWidth', 2);
 hold on;
 plot(rad2deg(robot_pitch), rad2deg(gamma_opt + effective_slope_pitch), 'r*', 'MarkerSize', 15, 'LineWidth', 2);
 plot([rad2deg(pitch_range(1)), rad2deg(pitch_range(end))], [90 90], 'r--', 'LineWidth', 2);
-xlabel('Robot Pitch θ [degrees]');
-ylabel('Ray-Terrain Angle [degrees]');
-title('Ray-Terrain Angle (Pitch Axis)');
+xlabel('Robot Pitch θ [degrees]', 'FontSize', 12);
+ylabel('Ray-Terrain Angle [degrees]', 'FontSize', 12);
+title('Ray-Terrain Angle (Pitch Axis)', 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
 legend('θ_{ray}(θ)', 'Current', '90° limit', 'Location', 'best');
 ylim([0 100]);
+% exportgraphics(fig_ray_angle_pitch_full, 'fig_ray_angle_vs_pitch_full.png', 'Resolution', 300);
 
-% === COMPARISON PLOTS ===
+% FIGURE 19: Effective slopes comparison
+fig_eff_slope_comparison = figure('Name', 'Effective Slope Comparison', 'NumberTitle', 'off', ...
+       'Position', [460 100 800 600], 'Tag', 'fig_effective_slope_comparison');
 
-% Subplot 7: Effective slopes comparison
-subplot(3,3,7);
 eff_slope_roll_array = zeros(size(roll_range));
 for i = 1:length(roll_range)
     if sign(roll_range(i)) == sign(alpha_terrain_max)
@@ -828,14 +850,16 @@ hold on;
 plot(rad2deg(pitch_range), rad2deg(eff_slope_pitch_array), 'g-', 'LineWidth', 2, 'DisplayName', 'Pitch axis');
 plot(rad2deg(robot_roll), rad2deg(effective_slope_roll), 'bo', 'MarkerSize', 10, 'LineWidth', 2, 'DisplayName', 'Current roll');
 plot(rad2deg(robot_pitch), rad2deg(effective_slope_pitch), 'go', 'MarkerSize', 10, 'LineWidth', 2, 'DisplayName', 'Current pitch');
-xlabel('Robot Orientation [degrees]');
-ylabel('Effective Slope [degrees]');
-title('Effective Slope Comparison');
+xlabel('Robot Orientation [degrees]', 'FontSize', 12);
+ylabel('Effective Slope [degrees]', 'FontSize', 12);
+title('Effective Slope Comparison', 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
 legend('Location', 'best');
+% exportgraphics(fig_eff_slope_comparison, 'fig_effective_slope_comparison.png', 'Resolution', 300);
 
-% Subplot 8: Precision degradation comparison
-subplot(3,3,8);
+% FIGURE 20: Precision degradation comparison
+fig_precision_comparison = figure('Name', 'Precision Degradation Comparison', 'NumberTitle', 'off', ...
+       'Position', [480 120 800 600], 'Tag', 'fig_precision_degradation_comparison');
 precision_roll = 1 ./ cos(abs(roll_range));
 precision_pitch = 1 ./ cos(abs(pitch_range));
 plot(rad2deg(roll_range), precision_roll, 'b-', 'LineWidth', 2, 'DisplayName', 'Roll axis (E/W)');
@@ -843,14 +867,17 @@ hold on;
 plot(rad2deg(pitch_range), precision_pitch, 'g-', 'LineWidth', 2, 'DisplayName', 'Pitch axis (N/S)');
 plot(rad2deg(robot_roll), precision_degradation_roll, 'bo', 'MarkerSize', 10, 'LineWidth', 2, 'DisplayName', 'Current roll');
 plot(rad2deg(robot_pitch), precision_degradation_pitch, 'go', 'MarkerSize', 10, 'LineWidth', 2, 'DisplayName', 'Current pitch');
-xlabel('Robot Orientation [degrees]');
-ylabel('Precision Degradation Factor');
-title('Precision Degradation: Roll vs Pitch');
+xlabel('Robot Orientation [degrees]', 'FontSize', 12);
+ylabel('Precision Degradation Factor', 'FontSize', 12);
+title('Precision Degradation: Roll vs Pitch', 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
 legend('Location', 'best');
+% exportgraphics(fig_precision_comparison, 'fig_precision_degradation_comparison.png', 'Resolution', 300);
 
-% Subplot 9: 2D heatmap of worst-case effective slope
-subplot(3,3,9);
+% FIGURE 21: 2D heatmap of worst-case effective slope
+fig_heatmap_slope = figure('Name', 'Worst-Case Effective Slope Heatmap', 'NumberTitle', 'off', ...
+       'Position', [500 140 800 600], 'Tag', 'fig_effective_slope_heatmap');
+
 [Roll_grid, Pitch_grid] = meshgrid(linspace(-60, 60, 30), linspace(-60, 60, 30));
 Eff_slope_grid = zeros(size(Roll_grid));
 for i = 1:size(Roll_grid, 1)
@@ -876,16 +903,11 @@ contourf(Roll_grid, Pitch_grid, Eff_slope_grid, 20);
 hold on;
 plot(rad2deg(robot_roll), rad2deg(robot_pitch), 'r*', 'MarkerSize', 20, 'LineWidth', 3);
 colorbar;
-xlabel('Robot Roll φ [degrees]');
-ylabel('Robot Pitch θ [degrees]');
-title('Worst-Case Effective Slope [°]');
+xlabel('Robot Roll φ [degrees]', 'FontSize', 12);
+ylabel('Robot Pitch θ [degrees]', 'FontSize', 12);
+title('Worst-Case Effective Slope [°]', 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
-
-sgtitle('Roll vs Pitch: Independent Axis Analysis', 'FontSize', 14, 'FontWeight', 'bold');
-
-% Save figure
-% saveas(gcf, 'sbes_roll_pitch_separate.png');
-% fprintf('✓ Figure saved: sbes_roll_pitch_separate.png\n');
+% exportgraphics(fig_heatmap_slope, 'fig_effective_slope_heatmap.png', 'Resolution', 300);
 
 %% ============================================================================
 % 13. OPTIMIZATION RESULTS FOR ALL SCENARIOS
@@ -1000,37 +1022,6 @@ if ~isempty(invalid_scenarios)
 end
 
 fprintf('\n');
-
-%% ============================================================================
-% 14. DISPLAY VERSORS FOR MATLAB CODE GENERATION
-%% ============================================================================
-
-fprintf('\n');
-fprintf('VERSORS FOR SENSOR CONFIGURATION (Robot Frame):\n');
-fprintf('Frame: +X=forward, +Y=right, +Z=down (NED convention)\n\n');
-
-g = -gamma_opt;
-l = gamma_opt;
-sin_g = sin(g);
-cos_g = cos(g);
-sin_l = sin(l);
-cos_l = cos(l);
-
-fprintf('Final consideration:\n\n');
-fprintf('Optimal found gamma = %.2f\n\n', rad2deg(gamma_opt));
-
-fprintf('%% Versors for 4 SBES sensors\n');
-fprintf('r_s = zeros(3, 4);\n');
-fprintf('r_s(:, 1) = [sin(gamma), 0, cos(gamma)]'';  %% Rear (South)\n');
-fprintf('r_s(:, 2) = [sin(lambda), 0, cos(lambda)]'';  %% Front (North)\n');
-fprintf('r_s(:, 3) = [0, -sin(eta), cos(eta)]'';   %% Right (East)\n');
-fprintf('r_s(:, 4) = [0, -sin(zeta), cos(zeta)]'';  %% Left (West)\n\n');
-
-fprintf('Numeric values:\n');
-fprintf('r_s(:, 2) = [%+.6f, %+.6f, %+.6f]''  %% Rear\n', sin_g, 0, cos_g);
-fprintf('r_s(:, 1) = [%+.6f, %+.6f, %+.6f]''  %% Front\n', sin_l, 0, cos_l);
-fprintf('r_s(:, 3) = [%+.6f, %+.6f, %+.6f]''  %% Right\n', 0, -sin_l, cos_l);
-fprintf('r_s(:, 4) = [%+.6f, %+.6f, %+.6f]''  %% Left\n\n', 0, -sin_g, cos_g);
 
 %% ============================================================================
 % 15. DEFINE OBJECTIVE FUNCTION

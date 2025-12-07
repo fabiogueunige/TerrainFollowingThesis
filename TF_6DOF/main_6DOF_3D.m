@@ -24,7 +24,7 @@ ROLL = 4;   PITCH = 5;  YAW = 6;
 
 %% Simulation Parameters
 Ts = 0.001;         % Sampling time [s]
-Tf = 40;            % Final time [s]
+Tf = 30;            % Final time [s]
 time = 0:Ts:Tf;     % Time vector
 N = length(time);   % Number of iterations
 global DEBUG;
@@ -104,7 +104,7 @@ s = zeros(d_dim,s_dim);             % Robot echosonar
 max_planes = 300; % Circular buffer size
 step_length = 4.0; % Distance between consecutive planes
 angle_range = [-pi/4, pi/4];
-delta_limit = pi/4;
+delta_limit = pi/3;
 rate_of_change = 3;
 % Terrain must start BEHIND the robot and extend FORWARD
 % Robot starts at (0,0,0), terrain direction is [1,1,0] normalized
@@ -135,6 +135,7 @@ x0 = [10, plane(1).alpha, plane(1).beta]';      % True initial state
 x0_est = [30, plane(1).alpha, plane(1).beta]';  % Use reference altitude and initial terrain angles
 ni = zeros(s_dim, N);                           % Innovation
 S = zeros(s_dim, s_dim, N);                     % Covariance Innovation
+P_sbes = zeros(n_dim, n_dim, N);                % EKF SBES covariance history [3x3xN]
      
 %% Controller Parameters
 pid = zeros(i_dim, N);              % PID for Dynamics
@@ -150,6 +151,7 @@ speed0 = [0.3; 0; 0; 0; 0; 0];
 %% EKF Start
 % covariance 
 P = P0;
+P_sbes(:,:,1) = P0;  % Store initial covariance
 
 % State
 x_true(:,1) = x0;
@@ -221,7 +223,7 @@ for k = 2:N
     % Dynamics Jacobian
     F = jacobian_f(x_est(:,k-1), nu(:,k), Ts, n_dim, wRr(:,:,k)); 
     % Covariance prediction
-    P_pred = F * P * F' + Q;
+    P_pred = F * P_sbes(:,:,k) * F' + Q;
 
     %% Sensors Computation
     s = SBES_definition(wRr(:,:,k));
@@ -260,7 +262,8 @@ for k = 2:N
     x_est(ALPHA,k) = wrapToPi(x_est(ALPHA,k));
     x_est(BETA,k) = wrapToPi(x_est(BETA,k));
     % Covariance
-    P = (eye(n_dim) - K * H) * P_pred;
+    P_sbes(:,:,k) = (eye(n_dim) - K * H) * P_pred;
+
 
     %% Rotation Update 
     % terrain rotation
@@ -314,7 +317,7 @@ if strcmpi(save_choice, 'Y') || strcmpi(save_choice, 'Yes') || strcmpi(save_choi
         eta(1:3,:), wRr, wRt, wRt_pre, state, ...
         Q, R_SBES, Kp, Ki, Kd, speed0, x0, x0_est, ...
         max_planes, step_length, angle_range, rate_of_change, delta_limit, pp_init_w, n0, ...
-        x_loc, eta_gt, nu_gt, wRr_gt);
+        x_loc, eta_gt, nu_gt, wRr_gt, P_sbes, P_loc, P_loc_init, Q_loc);
     
     % Save to disk
     if isempty(run_name)

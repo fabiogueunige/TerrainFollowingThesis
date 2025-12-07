@@ -368,79 +368,94 @@ for i = 1:length(gamma_plot)
     f4_plot(i) = tanh(max(denom_plot, denom_min_safe) / scale_uncertainty);
 end
 
-% Create figure with subplots
-figure('Name', 'SBES Angle Optimization Analysis', 'NumberTitle', 'off', ...
-       'Position', [100 100 1200 800]);
-
-% Subplot 1: Overall objective function
-subplot(2, 3, 1);
+% FIGURE 1: Overall objective function
+fig_objective = figure('Name', 'SBES Overall Objective Function', 'NumberTitle', 'off', ...
+       'Position', [100 100 800 600], 'Tag', 'fig_objective_function');
 plot(gamma_plot*180/pi, J_plot, 'b-', 'LineWidth', 2);
 hold on;
 plot(rad2deg(gamma_opt), J_opt, 'r*', 'MarkerSize', 15, 'LineWidth', 2);
-xlabel('Angle γ [degrees]');
-ylabel('Objective J(γ)');
-title('Overall Objective Function');
+xlabel('Angle γ [degrees]', 'FontSize', 12);
+ylabel('Objective J(γ)', 'FontSize', 12);
+title('Overall Objective Function J(γ)', 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
 legend('J(γ)', sprintf('Optimum: γ*=%.2f°', rad2deg(gamma_opt)), 'Location', 'best');
+% exportgraphics(fig_objective, 'fig_objective_function.png', 'Resolution', 300);
 
-% Subplot 2-5: Individual components
-subplot(2, 3, 2);
+% FIGURE 2: Resolution component
+fig_resolution = figure('Name', 'SBES Resolution Component', 'NumberTitle', 'off', ...
+       'Position', [120 120 800 600], 'Tag', 'fig_resolution_component');
 plot(rad2deg(gamma_plot), f1_plot, 'LineWidth', 2);
 hold on;
 plot(rad2deg(gamma_opt), f_res_opt, 'r*', 'MarkerSize', 12);
-xlabel('Angle γ [degrees]');
-ylabel('f_resolution');
-title(sprintf('Component 1: Resolution (w₁=%.2f)', w1));
+xlabel('Angle γ [degrees]', 'FontSize', 12);
+ylabel('f_{resolution}', 'FontSize', 12);
+title(sprintf('Component 1: Resolution (w_1=%.2f)', w1), 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
+legend('f_{res}(γ)', sprintf('Optimum: f_{res}=%.4f', f_res_opt), 'Location', 'best');
+% exportgraphics(fig_resolution, 'fig_resolution_component.png', 'Resolution', 300);
 
-subplot(2, 3, 3);
+% FIGURE 3: Coverage component
+fig_coverage = figure('Name', 'SBES Coverage Component', 'NumberTitle', 'off', ...
+       'Position', [140 140 800 600], 'Tag', 'fig_coverage_component');
 plot(rad2deg(gamma_plot), f2_plot, 'LineWidth', 2);
 hold on;
 plot(rad2deg(gamma_opt), f_cov_opt, 'r*', 'MarkerSize', 12);
-xlabel('Angle γ [degrees]');
-ylabel('f_coverage');
-title(sprintf('Component 2: Coverage (w₂=%.2f)', w2));
+xlabel('Angle γ [degrees]', 'FontSize', 12);
+ylabel('f_{coverage}', 'FontSize', 12);
+title(sprintf('Component 2: Coverage (w_2=%.2f)', w2), 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
+legend('f_{cov}(γ)', sprintf('Optimum: f_{cov}=%.4f', f_cov_opt), 'Location', 'best');
+% exportgraphics(fig_coverage, 'fig_coverage_component.png', 'Resolution', 300);
 
-subplot(2, 3, 4);
+% FIGURE 4: Robustness component
+fig_robustness = figure('Name', 'SBES Robustness Component', 'NumberTitle', 'off', ...
+       'Position', [160 160 800 600], 'Tag', 'fig_robustness_component');
 plot(rad2deg(gamma_plot), f3_plot, 'LineWidth', 2);
 hold on;
 plot(rad2deg(gamma_opt), f_rob_opt, 'r*', 'MarkerSize', 12);
-xlabel('Angle γ [degrees]');
-ylabel('f_robustness');
-title(sprintf('Component 3: Robustness (w₃=%.2f)', w3));
+xlabel('Angle γ [degrees]', 'FontSize', 12);
+ylabel('f_{robustness}', 'FontSize', 12);
+title(sprintf('Component 3: Robustness (w_3=%.2f)', w3), 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
+legend('f_{rob}(γ)', sprintf('Optimum: f_{rob}=%.4f', f_rob_opt), 'Location', 'best');
+% exportgraphics(fig_robustness, 'fig_robustness_component.png', 'Resolution', 300);
 
-subplot(2, 3, 5);
+% FIGURE 5: Uncertainty component
+fig_uncertainty = figure('Name', 'SBES Uncertainty Component', 'NumberTitle', 'off', ...
+       'Position', [180 180 800 600], 'Tag', 'fig_uncertainty_component');
 plot(rad2deg(gamma_plot), f4_plot, 'LineWidth', 2);
 hold on;
 plot(rad2deg(gamma_opt), f_unc_opt, 'r*', 'MarkerSize', 12);
-xlabel('Angle γ [degrees]');
-ylabel('f_uncertainty');
-title(sprintf('Component 4: Uncertainty (w₄=%.2f)', w4));
+xlabel('Angle γ [degrees]', 'FontSize', 12);
+ylabel('f_{uncertainty}', 'FontSize', 12);
+title(sprintf('Component 4: Uncertainty (w_4=%.2f)', w4), 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
+legend('f_{unc}(γ)', sprintf('Optimum: f_{unc}=%.4f', f_unc_opt), 'Location', 'best');
+% exportgraphics(fig_uncertainty, 'fig_uncertainty_component.png', 'Resolution', 300);
 
-% Subplot 6: Weighted components
-subplot(2, 3, 6);
-plot(rad2deg(gamma_plot), w1*f1_plot, 'LineWidth', 1.5, 'DisplayName', sprintf('w₁·f₁ (%.2f)', w1));
+% FIGURE 6: Weighted components comparison
+fig_weighted = figure('Name', 'SBES Weighted Components', 'NumberTitle', 'off', ...
+       'Position', [200 200 800 600], 'Tag', 'fig_weighted_components');
+plot(rad2deg(gamma_plot), w1*f1_plot, 'LineWidth', 1.5, 'DisplayName', sprintf('w_1·f_1 (%.2f)', w1));
 hold on;
-plot(rad2deg(gamma_plot), w2*f2_plot, 'LineWidth', 1.5, 'DisplayName', sprintf('w₂·f₂ (%.2f)', w2));
-plot(rad2deg(gamma_plot), w3*f3_plot, 'LineWidth', 1.5, 'DisplayName', sprintf('w₃·f₃ (%.2f)', w3));
-plot(rad2deg(gamma_plot), w4*f4_plot, 'LineWidth', 1.5, 'DisplayName', sprintf('w₄·f₄ (%.2f)', w4));
+plot(rad2deg(gamma_plot), w2*f2_plot, 'LineWidth', 1.5, 'DisplayName', sprintf('w_2·f_2 (%.2f)', w2));
+plot(rad2deg(gamma_plot), w3*f3_plot, 'LineWidth', 1.5, 'DisplayName', sprintf('w_3·f_3 (%.2f)', w3));
+plot(rad2deg(gamma_plot), w4*f4_plot, 'LineWidth', 1.5, 'DisplayName', sprintf('w_4·f_4 (%.2f)', w4));
 plot(rad2deg(gamma_opt), J_opt, 'r*', 'MarkerSize', 15, 'DisplayName', 'Optimum');
-ylabel('Weighted Components');
-title('Weighted Contributions');
+xlabel('Angle γ [degrees]', 'FontSize', 12);
+ylabel('Weighted Components', 'FontSize', 12);
+title('Weighted Contributions to Objective Function', 'FontSize', 14, 'FontWeight', 'bold');
 legend('Location', 'best');
 grid on;
-
-sgtitle('SBES Angle Optimization: Multi-Objective Analysis', 'FontSize', 14, 'FontWeight', 'bold');
+% exportgraphics(fig_weighted, 'fig_weighted_components.png', 'Resolution', 300);
 
 %% ============================================================================
 % 10. GEOMETRIC CONSTRAINT VISUALIZATION
 %% ============================================================================
 
-figure('Name', 'SBES Geometric Constraints', 'NumberTitle', 'off', ...
-       'Position', [150 150 800 600]);
+% FIGURE 7: Feasibility regions
+fig_feasibility = figure('Name', 'SBES Feasibility Regions', 'NumberTitle', 'off', ...
+       'Position', [220 100 900 600], 'Tag', 'fig_feasibility_regions');
 
 % Create angle range for visualization
 gamma_viz = linspace(0, pi/2, 100);
@@ -451,7 +466,6 @@ feasible_tracking = gamma_viz <= gamma_max_tracking;
 feasible_fixed = gamma_viz <= gamma_max_fixed;
 
 % Plot feasibility regions
-subplot(2,1,1);
 hold on;
 area(rad2deg(gamma_viz), feasible_perfect, 'FaceColor', [0.7 1 0.7], 'FaceAlpha', 0.3, ...
      'DisplayName', 'Perfect (terrain-following)');
@@ -462,31 +476,34 @@ area(rad2deg(gamma_viz), feasible_fixed, 'FaceColor', [1 0.7 0.7], 'FaceAlpha', 
 
 % Mark constraint boundaries
 plot([rad2deg(gamma_min) rad2deg(gamma_min)], [0 1], 'b--', 'LineWidth', 2, ...
-     'DisplayName', sprintf('γ_min = %.2f° (resolution)', rad2deg(gamma_min)));
+     'DisplayName', sprintf('γ_{min} = %.2f° (resolution)', rad2deg(gamma_min)));
 plot([rad2deg(gamma_max_perfect) rad2deg(gamma_max_perfect)], [0 1], 'g--', 'LineWidth', 2, ...
-     'DisplayName', sprintf('γ_max (perfect) = %.2f°', rad2deg(gamma_max_perfect)));
+     'DisplayName', sprintf('γ_{max} (perfect) = %.2f°', rad2deg(gamma_max_perfect)));
 plot([rad2deg(gamma_max_fixed) rad2deg(gamma_max_fixed)], [0 1], 'r--', 'LineWidth', 2, ...
-     'DisplayName', sprintf('γ_max (fixed) = %.2f°', rad2deg(gamma_max_fixed)));
+     'DisplayName', sprintf('γ_{max} (fixed) = %.2f°', rad2deg(gamma_max_fixed)));
 
 % Mark optimal angle
 plot([rad2deg(gamma_opt) rad2deg(gamma_opt)], [0 1], 'k-', 'LineWidth', 3, ...
      'DisplayName', sprintf('γ* = %.2f° (optimal)', rad2deg(gamma_opt)));
 
-xlabel('SBES Angle γ [degrees]');
-ylabel('Feasibility');
-title('Geometric Constraints and Feasibility Regions');
+xlabel('SBES Angle γ [degrees]', 'FontSize', 12);
+ylabel('Feasibility', 'FontSize', 12);
+title('Geometric Constraints and Feasibility Regions', 'FontSize', 14, 'FontWeight', 'bold');
 legend('Location', 'best');
 grid on;
 xlim([0 90]);
 ylim([0 1.2]);
+% exportgraphics(fig_feasibility, 'fig_feasibility_regions.png', 'Resolution', 300);
 
-% Subplot 2: Effective ray angle vs terrain slope
-subplot(2,1,2);
+% FIGURE 8: Ray-terrain angle vs terrain slope
+fig_ray_terrain = figure('Name', 'Ray-Terrain Angle Analysis', 'NumberTitle', 'off', ...
+       'Position', [240 120 900 600], 'Tag', 'fig_ray_terrain_angle');
+
 beta_range = linspace(0, beta_terrain_max, 50);
 gamma_test = [gamma_min, gamma_opt, gamma_max_perfect];
-gamma_labels = {sprintf('γ_min=%.1f°', rad2deg(gamma_min)), ...
+gamma_labels = {sprintf('γ_{min}=%.1f°', rad2deg(gamma_min)), ...
                 sprintf('γ*=%.1f°', rad2deg(gamma_opt)), ...
-                sprintf('γ_max=%.1f°', rad2deg(gamma_max_perfect))};
+                sprintf('γ_{max}=%.1f°', rad2deg(gamma_max_perfect))};
 colors = {'b', 'k', 'r'};
 
 hold on;
@@ -507,28 +524,26 @@ end
 % Mark 90° limit
 plot([0 rad2deg(beta_terrain_max)], [90 90], 'r:', 'LineWidth', 2, 'DisplayName', '90° limit');
 
-xlabel('Terrain Slope β [degrees]');
-ylabel('Effective Ray Angle θ_{eff} [degrees]');
-title('Ray-Terrain Angle vs Terrain Slope');
+xlabel('Terrain Slope β [degrees]', 'FontSize', 12);
+ylabel('Effective Ray Angle θ_{eff} [degrees]', 'FontSize', 12);
+title('Ray-Terrain Angle vs Terrain Slope', 'FontSize', 14, 'FontWeight', 'bold');
 legend('Location', 'northwest');
 grid on;
 xlim([0 rad2deg(beta_terrain_max)]);
 ylim([0 100]);
-
-sgtitle('SBES Geometric Constraints Analysis', 'FontSize', 14, 'FontWeight', 'bold');
+% exportgraphics(fig_ray_terrain, 'fig_ray_terrain_angle.png', 'Resolution', 300);
 
 %% ============================================================================
 % 11. PITCH SENSITIVITY ANALYSIS
 %% ============================================================================
 
-figure('Name', 'Pitch Impact Analysis', 'NumberTitle', 'off', ...
-       'Position', [200 100 1000 700]);
+% FIGURE 9: gamma_max vs pitch
+fig_gamma_max_pitch = figure('Name', 'Max Feasible Angle vs Pitch', 'NumberTitle', 'off', ...
+       'Position', [260 100 800 600], 'Tag', 'fig_gamma_max_vs_pitch');
 
 % Test range for robot pitch
 pitch_range = linspace(-deg2rad(30), deg2rad(30), 50);
 
-% Subplot 1: gamma_max vs pitch
-subplot(2,2,1);
 gamma_max_vs_pitch = zeros(size(pitch_range));
 for i = 1:length(pitch_range)
     eff_slope_i = abs(pitch_range(i)) + beta_terrain_max + tracking_error;
@@ -539,27 +554,33 @@ plot(rad2deg(pitch_range), rad2deg(gamma_max_vs_pitch), 'b-', 'LineWidth', 2);
 hold on;
 plot(rad2deg(robot_pitch), rad2deg(gamma_max), 'r*', 'MarkerSize', 15, 'LineWidth', 2);
 plot([rad2deg(pitch_range(1)), rad2deg(pitch_range(end))], [0 0], 'k--', 'LineWidth', 1);
-xlabel('Robot Pitch θ [degrees]');
-ylabel('γ_{max} [degrees]');
-title('Maximum Feasible SBES Angle vs Robot Pitch');
+xlabel('Robot Pitch θ [degrees]', 'FontSize', 12);
+ylabel('γ_{max} [degrees]', 'FontSize', 12);
+title('Maximum Feasible SBES Angle vs Robot Pitch', 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
 legend('γ_{max}(θ)', 'Current', 'Zero line', 'Location', 'best');
+% exportgraphics(fig_gamma_max_pitch, 'fig_gamma_max_vs_pitch.png', 'Resolution', 300);
 
-% Subplot 2: Effective baseline vs pitch
-subplot(2,2,2);
+% FIGURE 10: Effective baseline vs pitch
+fig_baseline_pitch = figure('Name', 'Effective Baseline vs Pitch', 'NumberTitle', 'off', ...
+       'Position', [280 120 800 600], 'Tag', 'fig_baseline_vs_pitch');
+
 baseline_vs_pitch = 2 * h * tan(gamma_opt) .* cos(abs(pitch_range));
 
 plot(rad2deg(pitch_range), baseline_vs_pitch, 'r-', 'LineWidth', 2);
 hold on;
 plot(rad2deg(robot_pitch), baseline_effective, 'r*', 'MarkerSize', 15, 'LineWidth', 2);
-xlabel('Robot Pitch θ [degrees]');
-ylabel('Effective Baseline [m]');
-title('Effective Baseline vs Robot Pitch');
+xlabel('Robot Pitch θ [degrees]', 'FontSize', 12);
+ylabel('Effective Baseline [m]', 'FontSize', 12);
+title('Effective Baseline vs Robot Pitch', 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
 legend('Baseline_{eff}(θ)', 'Current', 'Location', 'best');
+% exportgraphics(fig_baseline_pitch, 'fig_baseline_vs_pitch.png', 'Resolution', 300);
 
-% Subplot 3: Ray-terrain angle vs pitch
-subplot(2,2,3);
+% FIGURE 11: Ray-terrain angle vs pitch
+fig_ray_angle_pitch = figure('Name', 'Ray-Terrain Angle vs Pitch', 'NumberTitle', 'off', ...
+       'Position', [300 140 800 600], 'Tag', 'fig_ray_angle_vs_pitch');
+
 theta_ray_vs_pitch = zeros(size(pitch_range));
 for i = 1:length(pitch_range)
     eff_slope_i = abs(pitch_range(i)) + beta_terrain_max + tracking_error;
@@ -570,36 +591,38 @@ plot(rad2deg(pitch_range), rad2deg(theta_ray_vs_pitch), 'g-', 'LineWidth', 2);
 hold on;
 plot(rad2deg(robot_pitch), rad2deg(theta_ray_terrain_opt), 'g*', 'MarkerSize', 15, 'LineWidth', 2);
 plot([rad2deg(pitch_range(1)), rad2deg(pitch_range(end))], [90 90], 'r--', 'LineWidth', 2);
-xlabel('Robot Pitch θ [degrees]');
-ylabel('Ray-Terrain Angle [degrees]');
-title('Ray-Terrain Angle vs Robot Pitch');
+xlabel('Robot Pitch θ [degrees]', 'FontSize', 12);
+ylabel('Ray-Terrain Angle [degrees]', 'FontSize', 12);
+title('Ray-Terrain Angle vs Robot Pitch', 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
 legend('θ_{ray}(θ)', 'Current', '90° limit', 'Location', 'best');
 ylim([0 100]);
+% exportgraphics(fig_ray_angle_pitch, 'fig_ray_angle_vs_pitch.png', 'Resolution', 300);
 
-% Subplot 4: Combined metrics
-subplot(2,2,4);
+% FIGURE 12: Measurement quality metrics
+fig_quality_metrics = figure('Name', 'Measurement Quality vs Pitch', 'NumberTitle', 'off', ...
+       'Position', [320 160 800 600], 'Tag', 'fig_quality_vs_pitch');
+
 orient_angles = linspace(0, deg2rad(30), 50);
 precision_deg = 1 ./ cos(orient_angles);
 baseline_reduction = cos(orient_angles);
 
 yyaxis left;
 plot(rad2deg(orient_angles), precision_deg, 'b-', 'LineWidth', 2);
-ylabel('Precision Degradation Factor', 'Color', 'b');
 hold on;
 plot(rad2deg(abs(robot_pitch)), precision_degradation, 'bo', 'MarkerSize', 10, 'LineWidth', 2);
+ylabel('Precision Degradation Factor', 'Color', 'b', 'FontSize', 12);
 
 yyaxis right;
 plot(rad2deg(orient_angles), baseline_reduction * 100, 'r-', 'LineWidth', 2);
-ylabel('Baseline Efficiency [%]', 'Color', 'r');
 plot(rad2deg(abs(robot_pitch)), baseline_correction * 100, 'ro', 'MarkerSize', 10, 'LineWidth', 2);
+ylabel('Baseline Efficiency [%]', 'Color', 'r', 'FontSize', 12);
 
-xlabel('Robot Pitch |θ| [degrees]');
-title('Measurement Quality vs Robot Pitch');
+xlabel('Robot Pitch |θ| [degrees]', 'FontSize', 12);
+title('Measurement Quality vs Robot Pitch', 'FontSize', 14, 'FontWeight', 'bold');
 grid on;
 legend('Precision degradation', 'Current', 'Baseline efficiency', 'Current', 'Location', 'best');
-
-sgtitle('SBES Performance vs Robot Pitch', 'FontSize', 14, 'FontWeight', 'bold');
+% exportgraphics(fig_quality_metrics, 'fig_quality_vs_pitch.png', 'Resolution', 300);
 
 %% ============================================================================
 % 12. OPTIMIZATION RESULTS FOR ALL SCENARIOS

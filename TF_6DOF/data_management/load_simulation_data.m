@@ -397,5 +397,14 @@ function sim_data = apply_backward_compatibility(sim_data)
         sim_data.Q_sbes = sim_data.Q;
     end
     
+    % P_sbes covariance history for NEES analysis (backward compatibility)
+    % Old runs may not have P_sbes, so we handle it gracefully
+    if ~isfield(sim_data, 'P_sbes')
+        fprintf('  Note: P_sbes (covariance history) not available in this run.\n');
+        fprintf('        NEES analysis will be limited. Re-run simulation to enable full NEES.\n');
+    else
+        fprintf('  P_sbes covariance history available [3x3x%d] for NEES analysis.\n', size(sim_data.P_sbes, 3));
+    end
+    
     fprintf('  Backward compatibility fixes applied.\n');
 end

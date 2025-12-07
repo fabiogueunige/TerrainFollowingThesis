@@ -177,72 +177,72 @@ function generate_all_plots(sim_data, run_name, save_plots)
     %% FIGURE 1: State Machine Transitions
     %% ========================================================================
     fprintf('  - State machine transitions...\n');
-    fig1 = figure('Name', 'State Machine Transitions', 'NumberTitle', 'off');
+    fig1 = figure('Name', 'State Machine Transitions', 'Tag', 'state_machine', 'NumberTitle', 'off');
     plot_state_machine(sim_data, time);
     if save_plots
-        saveas(fig1, fullfile(plots_dir, 'state_machine.png'));
+        exportgraphics(fig1, fullfile(plots_dir, 'state_machine.png'), 'Resolution', 300);
     end
     
     %% ========================================================================
     %% FIGURE 2: 3D Trajectory
     %% ========================================================================
     fprintf('  - 3D trajectory...\n');
-    fig2 = figure('Name', '3D Trajectory', 'NumberTitle', 'off');
+    fig2 = figure('Name', '3D Trajectory', 'Tag', 'trajectory_3d', 'NumberTitle', 'off');
     plot_3d_trajectory(sim_data, time);
     if save_plots
-        saveas(fig2, fullfile(plots_dir, 'trajectory_3d.png'));
+        exportgraphics(fig2, fullfile(plots_dir, 'trajectory_3d.png'), 'Resolution', 300);
     end
     
     %% ========================================================================
     %% FIGURE 3: Altitude Tracking
     %% ========================================================================
     fprintf('  - Altitude tracking...\n');
-    fig3 = figure('Name', 'Altitude Tracking', 'NumberTitle', 'off');
+    fig3 = figure('Name', 'Altitude Tracking', 'Tag', 'altitude_tracking', 'NumberTitle', 'off');
     plot_altitude_tracking(sim_data, time);
     if save_plots
-        saveas(fig3, fullfile(plots_dir, 'altitude_tracking.png'));
+        exportgraphics(fig3, fullfile(plots_dir, 'altitude_tracking.png'), 'Resolution', 300);
     end
     
     %% ========================================================================
     %% FIGURE 4: Terrain Angle Tracking (Alpha)
     %% ========================================================================
     fprintf('  - Terrain angle alpha...\n');
-    fig4 = figure('Name', 'Terrain Angle Alpha', 'NumberTitle', 'off');
+    fig4 = figure('Name', 'Terrain Angle Alpha', 'Tag', 'terrain_alpha', 'NumberTitle', 'off');
     plot_terrain_angle_alpha(sim_data, time);
     if save_plots
-        saveas(fig4, fullfile(plots_dir, 'terrain_alpha.png'));
+        exportgraphics(fig4, fullfile(plots_dir, 'terrain_alpha.png'), 'Resolution', 300);
     end
     
     %% ========================================================================
     %% FIGURE 5: Terrain Angle Tracking (Beta)
     %% ========================================================================
     fprintf('  - Terrain angle beta...\n');
-    fig5 = figure('Name', 'Terrain Angle Beta', 'NumberTitle', 'off');
+    fig5 = figure('Name', 'Terrain Angle Beta', 'Tag', 'terrain_beta', 'NumberTitle', 'off');
     plot_terrain_angle_beta(sim_data, time);
     if save_plots
-        saveas(fig5, fullfile(plots_dir, 'terrain_beta.png'));
+        exportgraphics(fig5, fullfile(plots_dir, 'terrain_beta.png'), 'Resolution', 300);
     end
     
     %% ========================================================================
     %% FIGURE 6-8: Robot Angles (Roll, Pitch, Yaw)
     %% ========================================================================
     fprintf('  - Robot angles (roll, pitch, yaw)...\n');
-    fig6 = figure('Name', 'Robot Roll', 'NumberTitle', 'off');
+    fig6 = figure('Name', 'Robot Roll', 'Tag', 'robot_roll', 'NumberTitle', 'off');
     plot_robot_roll(sim_data, time);
     if save_plots
-        saveas(fig6, fullfile(plots_dir, 'robot_roll.png'));
+        exportgraphics(fig6, fullfile(plots_dir, 'robot_roll.png'), 'Resolution', 300);
     end
     
-    fig7 = figure('Name', 'Robot Pitch', 'NumberTitle', 'off');
+    fig7 = figure('Name', 'Robot Pitch', 'Tag', 'robot_pitch', 'NumberTitle', 'off');
     plot_robot_pitch(sim_data, time);
     if save_plots
-        saveas(fig7, fullfile(plots_dir, 'robot_pitch.png'));
+        exportgraphics(fig7, fullfile(plots_dir, 'robot_pitch.png'), 'Resolution', 300);
     end
     
-    fig8 = figure('Name', 'Robot Yaw', 'NumberTitle', 'off');
+    fig8 = figure('Name', 'Robot Yaw', 'Tag', 'robot_yaw', 'NumberTitle', 'off');
     plot_robot_yaw(sim_data, time);
     if save_plots
-        saveas(fig8, fullfile(plots_dir, 'robot_yaw.png'));
+        exportgraphics(fig8, fullfile(plots_dir, 'robot_yaw.png'), 'Resolution', 300);
     end
     
     %% ========================================================================
@@ -250,11 +250,12 @@ function generate_all_plots(sim_data, run_name, save_plots)
     %% ========================================================================
     fprintf('  - Control inputs (6-DOF)...\n');
     control_names = {'Surge (u)', 'Sway (v)', 'Heave (w)', 'Roll (p)', 'Pitch (q)', 'Yaw (r)'};
+    control_tags = {'control_surge', 'control_sway', 'control_heave', 'control_roll', 'control_pitch', 'control_yaw'};
     for i = 1:6
-        fig = figure('Name', sprintf('Control: %s', control_names{i}), 'NumberTitle', 'off');
+        fig = figure('Name', sprintf('Control: %s', control_names{i}), 'Tag', control_tags{i}, 'NumberTitle', 'off');
         plot_control_input(sim_data, time, i, control_names{i});
         if save_plots
-            saveas(fig, fullfile(plots_dir, sprintf('control_%d.png', i)));
+            exportgraphics(fig, fullfile(plots_dir, sprintf('control_%d_%s.png', i, control_tags{i})), 'Resolution', 300);
         end
     end
     
@@ -262,30 +263,30 @@ function generate_all_plots(sim_data, run_name, save_plots)
     %% FIGURE 15: Normal Vector Parallelism
     %% ========================================================================
     fprintf('  - Normal vector analysis...\n');
-    fig15 = figure('Name', 'Normal Vector Parallelism', 'NumberTitle', 'off');
+    fig15 = figure('Name', 'Normal Vector Parallelism', 'Tag', 'normal_parallelism', 'NumberTitle', 'off');
     plot_normal_parallelism(sim_data, time);
     if save_plots
-        saveas(fig15, fullfile(plots_dir, 'normal_parallelism.png'));
+        exportgraphics(fig15, fullfile(plots_dir, 'normal_parallelism.png'), 'Resolution', 300);
     end
     
     %% ========================================================================
     %% FIGURE 16: Innovation Analysis
     %% ========================================================================
     fprintf('  - Innovation analysis...\n');
-    fig16 = figure('Name', 'EKF Innovation', 'NumberTitle', 'off');
+    fig16 = figure('Name', 'EKF Innovation', 'Tag', 'ekf_innovation', 'NumberTitle', 'off');
     plot_innovation(sim_data, time);
     if save_plots
-        saveas(fig16, fullfile(plots_dir, 'innovation.png'));
+        exportgraphics(fig16, fullfile(plots_dir, 'innovation.png'), 'Resolution', 300);
     end
     
     %% ========================================================================
     %% FIGURE 17: SBES Measurements
     %% ========================================================================
     fprintf('  - SBES measurements...\n');
-    fig17 = figure('Name', 'SBES Measurements', 'NumberTitle', 'off');
+    fig17 = figure('Name', 'SBES Measurements', 'Tag', 'sbes_measurements', 'NumberTitle', 'off');
     plot_sbes_measurements(sim_data, time);
     if save_plots
-        saveas(fig17, fullfile(plots_dir, 'sbes_measurements.png'));
+        exportgraphics(fig17, fullfile(plots_dir, 'sbes_measurements.png'), 'Resolution', 300);
     end
     
     %% ========================================================================
@@ -294,28 +295,28 @@ function generate_all_plots(sim_data, run_name, save_plots)
     if isfield(sim_data, 'x_loc') && isfield(sim_data, 'eta_gt') && ~all(sim_data.eta_gt(:) == 0)
         fprintf('  - EKF Position filter states...\n');
         
-        fig18 = figure('Name', 'EKF Position: XYZ', 'NumberTitle', 'off');
+        fig18 = figure('Name', 'EKF Position: XYZ', 'Tag', 'ekf_pos_xyz', 'NumberTitle', 'off');
         plot_ekf_position_xyz(sim_data, time);
         if save_plots
-            saveas(fig18, fullfile(plots_dir, 'ekf_pos_xyz.png'));
+            exportgraphics(fig18, fullfile(plots_dir, 'ekf_pos_xyz.png'), 'Resolution', 300);
         end
         
-        fig19 = figure('Name', 'EKF Position: Angles', 'NumberTitle', 'off');
+        fig19 = figure('Name', 'EKF Position: Angles', 'Tag', 'ekf_pos_angles', 'NumberTitle', 'off');
         plot_ekf_position_angles(sim_data, time);
         if save_plots
-            saveas(fig19, fullfile(plots_dir, 'ekf_pos_angles.png'));
+            exportgraphics(fig19, fullfile(plots_dir, 'ekf_pos_angles.png'), 'Resolution', 300);
         end
         
-        fig20 = figure('Name', 'EKF Position: Velocities', 'NumberTitle', 'off');
+        fig20 = figure('Name', 'EKF Position: Velocities', 'Tag', 'ekf_pos_velocities', 'NumberTitle', 'off');
         plot_ekf_position_velocities(sim_data, time);
         if save_plots
-            saveas(fig20, fullfile(plots_dir, 'ekf_pos_velocities.png'));
+            exportgraphics(fig20, fullfile(plots_dir, 'ekf_pos_velocities.png'), 'Resolution', 300);
         end
         
-        fig21 = figure('Name', 'EKF Position: Estimation Errors', 'NumberTitle', 'off');
+        fig21 = figure('Name', 'EKF Position: Estimation Errors', 'Tag', 'ekf_pos_errors', 'NumberTitle', 'off');
         plot_ekf_position_errors(sim_data, time);
         if save_plots
-            saveas(fig21, fullfile(plots_dir, 'ekf_pos_errors.png'));
+            exportgraphics(fig21, fullfile(plots_dir, 'ekf_pos_errors.png'), 'Resolution', 300);
         end
     end
     
@@ -323,10 +324,10 @@ function generate_all_plots(sim_data, run_name, save_plots)
     %% FIGURE 22: Sensor Failure History
     %% ========================================================================
     fprintf('  - Sensor failure history...\n');
-    fig22 = figure('Name', 'Sensor Failure History', 'NumberTitle', 'off');
+    fig22 = figure('Name', 'Sensor Failure History', 'Tag', 'sensor_failures', 'NumberTitle', 'off');
     plot_sensor_failures(sim_data, time);
     if save_plots
-        saveas(fig22, fullfile(plots_dir, 'sensor_failures.png'));
+        exportgraphics(fig22, fullfile(plots_dir, 'sensor_failures.png'), 'Resolution', 300);
     end
     
 end

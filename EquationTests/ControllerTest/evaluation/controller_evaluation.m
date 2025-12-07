@@ -119,10 +119,10 @@ function [data, metrics] = run_scenario_4_variant(Ts, Tf, angle_mag_deg)
         
         %% Error computation with intelligent altitude control
         % Surge: maintain constant speed + altitude correction
-        err(1,k) = u_star - nu(1,k-1) + 0.5 * h_contribution(1);
+        err(1,k) = u_star - nu(1,k-1) + 0.3 * h_contribution(1);
         
         % Sway: keep zero lateral velocity + altitude correction
-        err(2,k) = v_star - nu(2,k-1) + 0.5 * h_contribution(2);
+        err(2,k) = v_star - nu(2,k-1) + 0.3 * h_contribution(2);
         
         % Heave: altitude correction is primary objective
         err(3,k) = h_contribution(3);

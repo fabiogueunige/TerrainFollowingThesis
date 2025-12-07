@@ -28,8 +28,9 @@ function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u
     %% States
     fprintf('Plotting states...\n');
     ttl = {'altitude', 'alpha', 'beta'};
+    tags = {'state_altitude', 'state_alpha', 'state_beta'};
     for i = 1:n_dim
-        figure('Name', sprintf('State: %s', ttl{i}));
+        figure('Name', sprintf('State: %s', ttl{i}), 'Tag', tags{i}, 'NumberTitle', 'off');
         if (i == 1)
             plot(time, h_ref(:), 'b', 'LineWidth', 3.5, 'DisplayName', 'Desired')
             hold on;
@@ -50,8 +51,9 @@ function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u
     %% Robot angles
     fprintf('Plotting robot angles...\n');
     ttl = {'roll', 'pitch', 'yaw'};
+    tags = {'robot_roll', 'robot_pitch', 'robot_yaw'};
     for i = 1:d_dim
-        figure('Name', sprintf('Robot angle: %s', ttl{i}));
+        figure('Name', sprintf('Robot angle: %s', ttl{i}), 'Tag', tags{i}, 'NumberTitle', 'off');
         plot(time, rad2deg(clean_rot(i,:)), 'r', 'DisplayName', 'True no noise');
         hold on;
         if i == 1
@@ -70,8 +72,9 @@ function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u
     %% Inputs
     fprintf('Plotting control inputs...\n');
     ttl = {'u input', 'v input', 'w input', 'p input', 'q input', 'r input'};
+    tags = {'input_surge', 'input_sway', 'input_heave', 'input_p', 'input_q', 'input_r'};
     for i = 1:i_dim
-        figure('Name', sprintf('Input: %s', ttl{i}));
+        figure('Name', sprintf('Input: %s', ttl{i}), 'Tag', tags{i}, 'NumberTitle', 'off');
         if i <= HEAVE
             plot(time, u(i,:), 'b', 'DisplayName', 'u');
         else
@@ -85,7 +88,7 @@ function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u
     end
 
     %% Normal z-sign analysis
-    figure('Name', 'z-sign'); 
+    figure('Name', 'z-sign', 'Tag', 'normal_zsign', 'NumberTitle', 'off'); 
     plot(time, n_est(3,:), 'r', 'LineWidth', 1.5, 'DisplayName', 'z-sign estimated');
     hold on;
     plot(time, n_mes(3,:), 'g', 'LineWidth', 1.5, 'DisplayName', 'z-sign measured (t)');
@@ -113,7 +116,7 @@ function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u
     end
     
     % Plot: Angoli tra normali (parallelismo)
-    figure('Name', 'Parallelismo tra normali'); 
+    figure('Name', 'Parallelismo tra normali', 'Tag', 'normal_parallelism', 'NumberTitle', 'off'); 
     hold on; grid on;
     plot(time, aa12, 'r', 'LineWidth', 1.5, 'DisplayName', 'estimato Vs misure');
     plot(time, aa13, 'g', 'LineWidth', 1.5, 'DisplayName', 'estimato Vs robot');
@@ -170,7 +173,7 @@ function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u
     
     %% Trajectory 3D
     fprintf('Plotting 3D trajectory...\n');
-    figure('Name', 'Robot Trajectory');
+    figure('Name', 'Robot Trajectory', 'Tag', 'trajectory_3d', 'NumberTitle', 'off');
     scatter3(prob(1,:), prob(2,:), -prob(3,:), [], time);  % -prob(3,:) per NED convention
     colorbar; 
     colormap(jet);
@@ -187,7 +190,7 @@ function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u
     fprintf('Plotting EKF Position Filter states vs Ground Truth...\n');
     
     %% Position States (x, y, z)
-    figure('Name', 'EKF Position: XYZ vs Ground Truth');
+    figure('Name', 'EKF Position: XYZ vs Ground Truth', 'Tag', 'ekf_pos_xyz', 'NumberTitle', 'off');
     pos_labels = {'X (North)', 'Y (East)', 'Z (Down)'};
     for i = 1:3
         subplot(3,1,i);
@@ -204,7 +207,7 @@ function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u
     sgtitle('EKF Position Filter: Position States');
     
     %% Orientation States (phi, theta, psi)
-    figure('Name', 'EKF Position: Angles vs Ground Truth');
+    figure('Name', 'EKF Position: Angles vs Ground Truth', 'Tag', 'ekf_pos_angles', 'NumberTitle', 'off');
     ang_labels = {'Roll (φ)', 'Pitch (θ)', 'Yaw (ψ)'};
     for i = 1:3
         subplot(3,1,i);
@@ -221,7 +224,7 @@ function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u
     sgtitle('EKF Position Filter: Orientation States');
     
     %% Linear Velocity States (u, v, w)
-    figure('Name', 'EKF Position: Linear Velocities vs Ground Truth');
+    figure('Name', 'EKF Position: Linear Velocities vs Ground Truth', 'Tag', 'ekf_pos_velocities', 'NumberTitle', 'off');
     vel_labels = {'Surge (u)', 'Sway (v)', 'Heave (w)'};
     for i = 1:3
         subplot(3,1,i);
@@ -238,7 +241,7 @@ function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u
     sgtitle('EKF Position Filter: Linear Velocity States');
     
     %% Angular Velocity States (p, q, r)
-    figure('Name', 'EKF Position: Angular Velocities vs Ground Truth');
+    figure('Name', 'EKF Position: Angular Velocities vs Ground Truth', 'Tag', 'ekf_pos_angular_vel', 'NumberTitle', 'off');
     rate_labels = {'Roll rate (p)', 'Pitch rate (q)', 'Yaw rate (r)'};
     for i = 1:3
         subplot(3,1,i);
@@ -256,7 +259,7 @@ function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u
     
     %% Gyro Bias States (if present in x_loc indices 13-15)
     if size(x_loc, 1) >= 15
-        figure('Name', 'EKF Position: Gyro Bias Estimates');
+        figure('Name', 'EKF Position: Gyro Bias Estimates', 'Tag', 'ekf_pos_gyro_bias', 'NumberTitle', 'off');
         bias_labels = {'Gyro Bias X', 'Gyro Bias Y', 'Gyro Bias Z'};
         for i = 1:3
             subplot(3,1,i);
@@ -271,7 +274,7 @@ function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u
     end
     
     %% Position Estimation Errors
-    figure('Name', 'EKF Position: Estimation Errors');
+    figure('Name', 'EKF Position: Estimation Errors', 'Tag', 'ekf_pos_errors', 'NumberTitle', 'off');
     
     % Position errors
     subplot(2,2,1);
