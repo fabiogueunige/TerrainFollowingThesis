@@ -102,10 +102,10 @@ s = zeros(d_dim,s_dim);             % Robot echosonar
 
 %% Terrain Parameters
 max_planes = 300; % Circular buffer size
-step_length = 4.0; % Distance between consecutive planes
-angle_range = [-pi/4, pi/4];
+step_length = 3.0; % Distance between consecutive planes
+angle_range = [-pi/10, pi/10];
 delta_limit = pi/3;
-rate_of_change = 3;
+rate_of_change = 5;
 % Terrain must start BEHIND the robot and extend FORWARD
 % Robot starts at (0,0,0), terrain direction is [1,1,0] normalized
 % So terrain should start at negative X,Y to cover robot position
@@ -145,7 +145,7 @@ i_err = zeros(i_dim, N);            % integral error
 t_sum = zeros(i_dim,N);
 
 % initial controller
-speed0 = [0.3; 0; 0; 0; 0; 0];
+speed0 = [0.2; 0; 0; 0; 0; 0];
 [Kp, Ki, Kd] = gainComputation(speed0, i_dim);
 
 %% EKF Start

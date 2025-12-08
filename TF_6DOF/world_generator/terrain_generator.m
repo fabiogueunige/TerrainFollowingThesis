@@ -9,7 +9,7 @@ function [planes, current_idx] = terrain_generator(planes, p_robot, vel_w, curre
     end
     n0 = [0; 0; 1]; 
     
-    min_distance = 15;
+    min_distance = 20;
     
     %% Check if we need to generate a new plane
     % Calculate distance from robot to furthest plane
