@@ -102,9 +102,10 @@ s = zeros(d_dim,s_dim);             % Robot echosonar
 
 %% Terrain Parameters
 max_planes = 300; % Circular buffer size
-step_length = 3.0; % Distance between consecutive planes
+step_length = 1; % Distance between consecutive planes
+min_look_ahead = 8;
 angle_range = [-pi/10, pi/10];
-delta_limit = pi/3;
+delta_limit = 2*pi/3;
 rate_of_change = 5;
 % Terrain must start BEHIND the robot and extend FORWARD
 % Robot starts at (0,0,0), terrain direction is [1,1,0] normalized
@@ -114,7 +115,7 @@ n0 = [0, 0, 1]';
 
 % terrain generation
 [plane, t_idx] = terrain_init(pp_init_w, eta(1:3,1), max_planes, step_length, n0, ...
-                    angle_range, rate_of_change, delta_limit);
+                    angle_range, rate_of_change, delta_limit, min_look_ahead);
 
 % terrain variable estimation
 wRt = zeros(d_dim, d_dim, N);
@@ -206,7 +207,7 @@ for k = 2:N
     %% Terrain Dynamic Update (uses ground truth)
     w_sp = wRr_gt(:,:,k) * nu_gt(1:3,k);
     [plane, t_idx] = terrain_generator(plane, eta_gt(1:3,k), w_sp, t_idx, step_length, max_planes, ...
-                        k, angle_range, rate_of_change, delta_limit);
+                        k, angle_range, rate_of_change, delta_limit, min_look_ahead);
     
     %% EKF: Real Measurement
     [z_meas(:,k), hmes, n_mes(:,k), R(:,:,k), cmd, a_true, b_true] = SBES_measurament(plane, s_dim, eta_gt(1:3,k), wRr_gt(:,:,k), ...

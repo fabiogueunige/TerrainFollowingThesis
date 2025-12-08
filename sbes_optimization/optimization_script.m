@@ -14,16 +14,16 @@ clear all; close all; clc;
 
 % ALTITUDE AND VELOCITY
 h = 3.0;                % [m] Perpendicular distance from terrain (constant)
-v = 0.1;                % [m/s] Surge velocity (forward speed)
-t_react = 0.5;          % [s] Controller reaction time
+v = 0.3;                % [m/s] Surge velocity (forward speed)
+t_react = 1;          % [s] Controller reaction time
 
 % TERRAIN CHARACTERISTICS
 beta_terrain_max = deg2rad(60);  % [rad] Maximum terrain slope (pitch direction)
 
 % ROBOT ORIENTATION (pitch angle)
 % Different scenarios for gamma_max calculation
-robot_pitch = deg2rad(50);       % [rad] Robot pitch angle (θ) - positive = nose up
-tracking_error = deg2rad(10);    % [rad] Tracking error when following terrain
+robot_pitch = deg2rad(45);       % [rad] Robot pitch angle (θ) - positive = nose up
+tracking_error = deg2rad(30);    % [rad] Tracking error when following terrain
 
 fprintf('System Parameters:\n');
 fprintf('  - Altitude h = %.2f m\n', h);
@@ -739,35 +739,70 @@ end
 fprintf('\n');
 
 %% ============================================================================
-% 13. DISPLAY VERSORS FOR MATLAB CODE GENERATION
+% 13. EXPORT FIGURES FOR THESIS (UNCOMMENT TO SAVE)
 %% ============================================================================
 
-fprintf('\n');
-fprintf('VERSORS FOR SENSOR CONFIGURATION (Robot Frame):\n');
-fprintf('Frame: +X=forward, +Y=right, +Z=down (NED convention)\n\n');
+% Create output directory if it doesn't exist
+output_dir = 'figures';
 
-g = -gamma_opt;
-l = gamma_opt;
-sin_g = sin(g);
-cos_g = cos(g);
-sin_l = sin(l);
-cos_l = cos(l);
+% === ESSENTIAL FIGURES FOR THESIS (Recommended) ===
+% Uncomment the lines below to export figures as high-resolution PNG
 
-fprintf('Final consideration:\n\n');
-fprintf('Optimal found gamma = %.2f\n\n', rad2deg(gamma_opt));
+% % Figure 1: Overall Objective Function - ESSENTIAL
+% exportgraphics(fig_objective, fullfile(output_dir, 'fig_objective_function.png'), 'Resolution', 300);
+% 
+% % Figure 2: Weighted Components - ESSENTIAL  
+% exportgraphics(fig_weighted, fullfile(output_dir, 'fig_weighted_components.png'), 'Resolution', 300);
+% 
+% % Figure 5: Feasibility Regions - ESSENTIAL
+% exportgraphics(fig_feasibility, fullfile(output_dir, 'fig_feasibility_regions.png'), 'Resolution', 300);
+% 
+% % Figure 6: Robustness Component - RECOMMENDED
+% exportgraphics(fig_robustness, fullfile(output_dir, 'fig_robustness_component.png'), 'Resolution', 300);
+% 
+% % Figure 7: Stability/Uncertainty Component - RECOMMENDED
+% exportgraphics(fig_uncertainty, fullfile(output_dir, 'fig_uncertainty_component.png'), 'Resolution', 300);
 
-fprintf('%% Versors for 4 SBES sensors\n');
-fprintf('r_s = zeros(3, 4);\n');
-fprintf('r_s(:, 1) = [sin(gamma), 0, cos(gamma)]'';  %% Rear (South)\n');
-fprintf('r_s(:, 2) = [sin(lambda), 0, cos(lambda)]'';  %% Front (North)\n');
-fprintf('r_s(:, 3) = [0, -sin(eta), cos(eta)]'';   %% Right (East)\n');
-fprintf('r_s(:, 4) = [0, -sin(zeta), cos(zeta)]'';  %% Left (West)\n\n');
+% === SUPPORTING FIGURES (Optional) ===
 
-fprintf('Numeric values:\n');
-fprintf('r_s(:, 2) = [%+.6f, %+.6f, %+.6f]''  %% Rear\n', sin_g, 0, cos_g);
-fprintf('r_s(:, 1) = [%+.6f, %+.6f, %+.6f]''  %% Front\n', sin_l, 0, cos_l);
-fprintf('r_s(:, 3) = [%+.6f, %+.6f, %+.6f]''  %% Right\n', 0, -sin_l, cos_l);
-fprintf('r_s(:, 4) = [%+.6f, %+.6f, %+.6f]''  %% Left\n\n', 0, -sin_g, cos_g);
+% Figure 3: Resolution Component
+% exportgraphics(fig_resolution, fullfile(output_dir, 'fig_resolution_component.png'), 'Resolution', 300);
+
+% Figure 4: Coverage Component
+% exportgraphics(fig_coverage, fullfile(output_dir, 'fig_coverage_component.png'), 'Resolution', 300);
+
+% Figure 8: Constraint Geometry
+% exportgraphics(fig_constraint_geo, fullfile(output_dir, 'fig_constraint_geometry.png'), 'Resolution', 300);
+
+% Figure 9: Temporal/Safety Metrics
+% exportgraphics(fig_temporal, fullfile(output_dir, 'fig_temporal_metrics.png'), 'Resolution', 300);
+
+% Figure 10: Baseline Analysis
+% exportgraphics(fig_baseline, fullfile(output_dir, 'fig_baseline_analysis.png'), 'Resolution', 300);
+
+% Figure 11: Ray-Terrain Angle vs Pitch
+% exportgraphics(fig_ray_angle_pitch, fullfile(output_dir, 'fig_ray_angle_vs_pitch.png'), 'Resolution', 300);
+
+% Figure 12: Quality Metrics vs Pitch
+% exportgraphics(fig_quality_metrics, fullfile(output_dir, 'fig_quality_vs_pitch.png'), 'Resolution', 300);
+
+% === BATCH EXPORT ALL FIGURES ===
+% Uncomment the block below to export ALL figures at once
+
+fprintf('Exporting figures to %s/...\n', output_dir);
+exportgraphics(fig_objective, fullfile(output_dir, 'fig_objective_function.png'), 'Resolution', 300);
+exportgraphics(fig_weighted, fullfile(output_dir, 'fig_weighted_components.png'), 'Resolution', 300);
+exportgraphics(fig_resolution, fullfile(output_dir, 'fig_resolution_component.png'), 'Resolution', 300);
+exportgraphics(fig_coverage, fullfile(output_dir, 'fig_coverage_component.png'), 'Resolution', 300);
+exportgraphics(fig_feasibility, fullfile(output_dir, 'fig_feasibility_regions.png'), 'Resolution', 300);
+exportgraphics(fig_robustness, fullfile(output_dir, 'fig_robustness_component.png'), 'Resolution', 300);
+exportgraphics(fig_uncertainty, fullfile(output_dir, 'fig_uncertainty_component.png'), 'Resolution', 300);
+exportgraphics(fig_ray_terrain, fullfile(output_dir, 'fig_ray_terrain_angle.png'), 'Resolution', 300);
+exportgraphics(fig_gamma_max_pitch, fullfile(output_dir, 'fig_gamma_max_vs_pitch.png'), 'Resolution', 300);
+exportgraphics(fig_baseline_pitch, fullfile(output_dir, 'fig_baseline_vs_pitch.png'), 'Resolution', 300);
+exportgraphics(fig_ray_angle_pitch, fullfile(output_dir, 'fig_ray_angle_vs_pitch.png'), 'Resolution', 300);
+exportgraphics(fig_quality_metrics, fullfile(output_dir, 'fig_quality_vs_pitch.png'), 'Resolution', 300);
+fprintf('Done! Figures saved to %s/\n', output_dir);
 
 %% ============================================================================
 % 14. DEFINE OBJECTIVE FUNCTION

@@ -1,7 +1,7 @@
 === SIMULATION RUN METADATA ===
 Data Version: 2.0
-Run name: run_20251208_122128
-Date: 08-Dec-2025 12:21:32
+Run name: run_20251208_154940
+Date: 08-Dec-2025 15:49:42
 
 --- SIMULATION PARAMETERS ---
 Sampling time: 0.0010 s
@@ -25,27 +25,27 @@ Initial covariance P0:
   0.000000  0.000000  0.500000
 
 --- CONTROLLER GAINS ---
-Kp: [16.5531, 24.2942, 231.8854, 6.7760, 6.9720, 6.9720]
+Kp: [11.9235, 19.7999, 192.1336, 5.6144, 5.7768, 5.7768]
 Ki: [6.1728, 5.9923, 53.0024, 1.5488, 1.5936, 1.5936]
-Kd: [0.0000, 0.0000, 358.3093, 10.0028, 10.3066, 10.3066]
+Kd: [0.0000, 0.0000, 353.3403, 9.8576, 10.1572, 10.1572]
 
 --- TERRAIN PARAMETERS ---
 Max planes (buffer): 300
-Step length: 4.00 m
-Angle range: [-18.00, 18.00] deg ([-0.3142, 0.3142] rad)
-Rate of change: 3.00
-Delta limit: 60.00 deg (1.0472 rad)
+Step length: 3.00 m
+Angle range: [-22.50, 22.50] deg ([-0.3927, 0.3927] rad)
+Rate of change: 5.00
+Delta limit: 120.00 deg (2.0944 rad)
 Initial plane position: [-3.00, -3.00, 8.00]
 Reference normal: [0.00, 0.00, 1.00]
 
 --- FINAL RESULTS ---
-Final altitude error: 1.5282 m
-Mean altitude error: -2.2065 m
-RMS altitude error: 3.1476 m
+Final altitude error: -0.3772 m
+Mean altitude error: -1.6323 m
+RMS altitude error: 2.2346 m
 
 --- PRE-COMPUTED STATISTICS ---
 Sensor failure rate: 0.00%
-Position RMSE: [0.0012, 0.0013, 0.0099] m
+Position RMSE: [0.0027, 0.0015, 0.0099] m
 
 --- STATE MACHINE ---
 Total state transitions: 3
