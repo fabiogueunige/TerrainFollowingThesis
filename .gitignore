@@ -5,9 +5,3 @@ test/**
 *.asv
 slprj
 *.mat
-DEVELOPMENT_NOTES.md
-Writing/**
-EquationTests/ControllerTest/evaluation/**
-TF_results/**
-TF_6DOF/doc/**
-TF_6DOF/data_management/**
