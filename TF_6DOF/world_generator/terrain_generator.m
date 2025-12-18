@@ -3,10 +3,15 @@ function [planes, current_idx] = terrain_generator(planes, p_robot, vel_w, curre
     %% Dynamic terrain generation with circular buffer
     % Generates new plane when robot moves forward
     % Uses circular buffer of size max_planes
-    
+    angle_r_pitch = angle_range(1,:);
+    angle_r_roll = angle_range(2,:);
+
     if l_ite < 30
-        if (angle_range(2) > pi/5)
-            angle_range = [-pi/5, pi/5];
+        if (angle_r_pitch(2) > pi/5)
+            angle_r_pitch = [-pi/7, pi/7];
+        end
+        if angle_r_roll(2) > pi/4
+            angle_r_roll = [-pi/8, pi/8];
         end
     end
     n0 = [0; 0; 1]; 
@@ -33,8 +38,8 @@ function [planes, current_idx] = terrain_generator(planes, p_robot, vel_w, curre
         if mod(current_idx, rate_of_change) == 0
             valid = false;
             while ~valid
-                new_alpha = (angle_range(2)-angle_range(1))*rand + angle_range(1);
-                new_beta = (angle_range(2)-angle_range(1))*rand + angle_range(1);
+                new_alpha = (angle_r_roll(2)-angle_r_roll(1))*rand + angle_r_roll(1);
+                new_beta = (angle_r_pitch(2)-angle_r_pitch(1))*rand + angle_r_pitch(1);
                 if abs(new_alpha - planes(prev_idx).alpha) <= delta_limit && ...
                    abs(new_beta - planes(prev_idx).beta) <= delta_limit
                     planes(current_idx).alpha = new_alpha;
@@ -45,6 +50,9 @@ function [planes, current_idx] = terrain_generator(planes, p_robot, vel_w, curre
         else   % small angle changes
             planes(current_idx).alpha = planes(prev_idx).alpha + 0.1 * sin(0.1 * current_idx) + 0.1 * randn;
             planes(current_idx).beta = planes(prev_idx).beta + 0.1 * sin(0.1 * current_idx) + 0.1 * randn;
+            % Saturazione per restare nei limiti
+            planes(current_idx).alpha = min(max(planes(current_idx).alpha, angle_r_roll(1)), angle_r_roll(2));
+            planes(current_idx).beta  = min(max(planes(current_idx).beta,  angle_r_pitch(1)), angle_r_pitch(2));
         end
         
         %% Definition in inertial frame

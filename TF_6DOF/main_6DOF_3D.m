@@ -23,12 +23,23 @@ global ROLL; global PITCH; global YAW;
 ROLL = 4;   PITCH = 5;  YAW = 6;
 
 %% Simulation Parameters
-Ts = 0.001;         % Sampling time [s]
-Tf = 30;            % Final time [s]
+Ts = 0.001;         % Sampling time [s] - 1000 Hz
+Tf = 100;            % Final time [s]
 time = 0:Ts:Tf;     % Time vector
 N = length(time);   % Number of iterations
 global DEBUG;
 DEBUG = false;
+
+%% Sensor Update Frequencies
+freq_AHRS = 100;    % AHRS frequency [Hz]
+freq_DVL = 10;      % DVL frequency [Hz]
+freq_PS = 20;       % Pressure Sensor frequency [Hz]
+freq_SBES = 50;
+% Calculate update periods in samples (1 kHz base)
+period_AHRS = round(1000 / freq_AHRS);  % Update ogni 10 samples (100 Hz)
+period_DVL = round(1000 / freq_DVL);    % Update ogni 100 samples (10 Hz)
+period_PS = round(1000 / freq_PS);      % Update ogni 50 samples (20 Hz)
+period_SBES = round(1000 / freq_SBES);
 
 %% Matrix Dimensions
 n_dim = 3;          % Number of states
@@ -79,9 +90,12 @@ h_ref(:) = 3;
 %% AUV Parameters 
 % position & orientation 
 x_loc = zeros(dim_ekf, N);                  % EKF position state
+x_loc_pre = zeros(dim_ekf, N);              % EKF predicted state
 [Q_loc, P_loc_init] = stateLoc_init(dim_ekf);    % EKF covariance and process noise
 P_loc = zeros(dim_ekf, dim_ekf, N);         % 3D array for covariance history
 P_loc(:,:,1) = P_loc_init;                  % Initialize first slice
+P_loc_pre = zeros(dim_ekf, dim_ekf, N);     % EKF predicted covariance
+P_loc_pre(:,:,1) = P_loc_init;              % Initialize first slice
 
 eta = zeros(w_dim,N);                       % robot position & orientation
 eta_gt = zeros(w_dim,N);                    % NO Noise Position & Orientation for real state
@@ -102,15 +116,16 @@ s = zeros(d_dim,s_dim);             % Robot echosonar
 
 %% Terrain Parameters
 max_planes = 300; % Circular buffer size
-step_length = 1; % Distance between consecutive planes
+step_length = 3; % Distance between consecutive planes
 min_look_ahead = 8;
-angle_range = [-pi/10, pi/10];
-delta_limit = 2*pi/3;
+angle_range = [-pi/6, pi/6;
+                -pi/7, pi/7];
+delta_limit = pi/8;
 rate_of_change = 5;
 % Terrain must start BEHIND the robot and extend FORWARD
 % Robot starts at (0,0,0), terrain direction is [1,1,0] normalized
 % So terrain should start at negative X,Y to cover robot position
-pp_init_w = [-3; -3; 8];
+pp_init_w = [-10; -10; 10];
 n0 = [0, 0, 1]';
 
 % terrain generation
@@ -129,7 +144,7 @@ x_pred = zeros(n_dim, N);                       % State predicted
 x_est = zeros(n_dim, N);                        % Estimated state
 x_true = zeros(n_dim, N);                       % True state
 z_meas = zeros(s_dim, N);                       % Measurements
-z_pred = zeros(s_dim, N);                       % Predicted output
+y_pred = zeros(s_dim, N);                       % Predicted output
 R = repmat(R_SBES, 1, 1, N);                      % Observation matrix
 x0 = [10, plane(1).alpha, plane(1).beta]';      % True initial state 
 % Initialize estimate close to true state (realistic initial guess)
@@ -137,6 +152,7 @@ x0_est = [30, plane(1).alpha, plane(1).beta]';  % Use reference altitude and ini
 ni = zeros(s_dim, N);                           % Innovation
 S = zeros(s_dim, s_dim, N);                     % Covariance Innovation
 P_sbes = zeros(n_dim, n_dim, N);                % EKF SBES covariance history [3x3xN]
+P_pred = zeros(n_dim, n_dim, N);                % EKF SBES predicted covariance
      
 %% Controller Parameters
 pid = zeros(i_dim, N);              % PID for Dynamics
@@ -151,8 +167,8 @@ speed0 = [0.2; 0; 0; 0; 0; 0];
 
 %% EKF Start
 % covariance 
-P = P0;
 P_sbes(:,:,1) = P0;  % Store initial covariance
+P_pred(:,:,1) = P0;  % Store initial predicted covariance
 
 % State
 x_true(:,1) = x0;
@@ -194,8 +210,17 @@ for k = 2:N
     % Update ground truth rotation matrix (stored in 3D array)
     wRr_gt(:,:,k) = rotz(eta_gt(YAW,k))*roty(eta_gt(PITCH,k))*rotx(eta_gt(ROLL,k));
 
-    %% EKF Position estimation
-    [x_loc(:,k), P_loc(:,:,k), wRr(:,:,k)] = ekf_position(x_loc(:,k-1), pid(:,k), wRr(:,:,k-1), nu_gt(:,k), eta_gt(:,k), P_loc(:,:,k-1), Q_loc, Ts);
+    %% EKF Position estimation con update condizionali
+    % Determina quali sensori devono essere aggiornati in questo ciclo
+    update_AHRS = (mod(k, period_AHRS) == 0);  % Ogni 10 ms (100 Hz)
+    update_DVL = (mod(k, period_DVL) == 0);    % Ogni 100 ms (10 Hz)
+    update_PS = (mod(k, period_PS) == 0);      % Ogni 50 ms (20 Hz)
+    update_SBES = (mod(k, period_SBES) == 0);  % Ogni 20 ms (50 Hz)
+    
+    % Chiamata EKF con flag di update per ogni sensore
+    [x_loc(:,k), P_loc(:,:,k), wRr(:,:,k), x_loc_pre(:,k), P_loc_pre(:,:,k)] = ...
+        ekf_position(x_loc(:,k-1), pid(:,k), wRr(:,:,k-1), nu_gt(:,k), eta_gt(:,k), ...
+                    P_loc(:,:,k-1), Q_loc, Ts, P_loc_pre(:,:,k-1), x_loc_pre(:,k-1), update_DVL, update_AHRS, update_PS);
     eta(:,k) = x_loc(1:6,k);
     nu(:,k) = x_loc(7:12,k);
     %%%%%%%%%%% NO EKF %%%%%%%%%%%%%%%%%
@@ -209,7 +234,7 @@ for k = 2:N
     [plane, t_idx] = terrain_generator(plane, eta_gt(1:3,k), w_sp, t_idx, step_length, max_planes, ...
                         k, angle_range, rate_of_change, delta_limit, min_look_ahead);
     
-    %% EKF: Real Measurement
+    %% EKF: Real Measurement SBES
     [z_meas(:,k), hmes, n_mes(:,k), R(:,:,k), cmd, a_true, b_true] = SBES_measurament(plane, s_dim, eta_gt(1:3,k), wRr_gt(:,:,k), ...
                                             t_idx, R(:,:,k), cmd, k);
 
@@ -219,12 +244,12 @@ for k = 2:N
 
     %% EKF: Prediction
     % State prediction
-    [x_pred(:,k), wRt_pre(:,:,k)] = f(x_est(:,k-1), nu(:,k), Ts, wRr(:,:,k),  wRt(:,:,k-1));
+    [x_pred(:,k), wRt_pre(:,:,k)] = f(x_pred(:,k-1), nu(:,k), Ts, wRr(:,:,k),  wRt_pre(:,:,k-1));
     
     % Dynamics Jacobian
-    F = jacobian_f(x_est(:,k-1), nu(:,k), Ts, n_dim, wRr(:,:,k)); 
+    F = jacobian_f(x_pred(:,k-1), nu(:,k), Ts, n_dim, wRr(:,:,k)); 
     % Covariance prediction
-    P_pred = F * P_sbes(:,:,k) * F' + Q;
+    P_pred(:,:,k) = F * P_pred(:,:,k-1) * F' + Q;
 
     %% Sensors Computation
     s = SBES_definition(wRr(:,:,k));
@@ -234,51 +259,58 @@ for k = 2:N
     if (norm(n_pre(:,k)) ~= 1)
         n_pre(:,k) = vector_normalization(n_pre(:,k));
     end
-   
-    %% EKF: Gain and Prediction Update
-    % Measurament prediction
-    z_pred(:,k) = h(x_pred(:,k), s, s_dim, s_dim, n_pre(:,k));  
 
-    % Observation Jacobian
-    H = jacobian_h(x_pred(:,k), s, s_dim, n_dim, s_dim, n_pre(:,k), n0);
-    if any(isnan(H(:)))
-        error('Esecuzione interrotta: H contiene valori NaN. Istante %0.f', k);
+    if update_SBES
+        %% EKF: Gain and Prediction Update
+        % Measurament prediction
+        y_pred(:,k) = h(x_pred(:,k), s, s_dim, s_dim, n_pre(:,k));  
+
+        % Observation Jacobian
+        H = jacobian_h(x_pred(:,k), s, s_dim, n_dim, s_dim, n_pre(:,k), n0);
+        if any(isnan(H(:)))
+            error('Esecuzione interrotta: H contiene valori NaN. Istante %0.f', k);
+        end
+        % Covariance Innovation
+        S(:,:,k) = (H * P_pred(:,:,k) * H' + R(:,:,k));
+        % Kalman Gain
+        K = P_pred(:,:,k) * H' / S(:,:,k); % Kalman Gain
+        if any(isnan(K(:)))
+            error('Esecuzione interrotta: K contiene valori NaN. Istante %0.f', k);
+        end    
+
+        %% EKF: State Update
+        % State Innovation
+        ni(:,k) = (z_meas(:,k) - y_pred(:,k));
+        
+        % State Estimated
+        x_est(:,k) = x_pred(:,k) + K * ni(:,k); 
+        % Wrap estimated terrain angles to [-pi, pi]
+        x_est(ALPHA,k) = wrapToPi(x_est(ALPHA,k));
+        x_est(BETA,k) = wrapToPi(x_est(BETA,k));
+        % Covariance
+        P_sbes(:,:,k) = (eye(n_dim) - K * H) * P_pred(:,:,k);
+
+        %% Rotation Update 
+        % terrain rotation
+        wRt(:,:,k) = rotz(0)*roty(x_est(BETA, k))*rotx(x_est(ALPHA,k))*rotx(pi);
+
+        %% Check for Z direction
+        n_est(:,k) = wRt(:,:,k)*n0;
+        if (norm(n_est(:,k)) ~= 1)
+            n_est(:,k) = vector_normalization(n_est(:,k));
+        end
+        [x_est(ALPHA,k), x_est(BETA, k)] = reference_correction(n_est(:,k),x_est(ALPHA,k), x_est(BETA,k));
+
+        %% Store predicted state and covariance
+        x_pred(:,k) = x_est(:,k);
+        P_pred(:,:,k) = P_sbes(:,:,k);
+        wRt_pre(:,:,k) = wRt(:,:,k);
+    else
+        x_est(:,k) = x_est(:,k-1);
+        P_sbes(:,:,k) = P_sbes(:,:,k-1);
+        wRt(:,:,k) = wRt(:,:,k-1);
+        n_est(:,k) = n_est(:,k-1);
     end
-    % Covariance Innovation
-    S(:,:,k) = (H * P_pred * H' + R(:,:,k));
-    % Kalman Gain
-    K = P_pred * H' / S(:,:,k); % Kalman Gain
-    if any(isnan(K(:)))
-        error('Esecuzione interrotta: K contiene valori NaN. Istante %0.f', k);
-    end    
-
-    %% EKF: State Update
-    % State Innovation
-    ni(:,k) = (z_meas(:,k) - z_pred(:,k));
-    
-    
-    % State Estimated
-    x_est(:,k) = x_pred(:,k) + K * ni(:,k); 
-    % Wrap estimated terrain angles to [-pi, pi]
-    x_est(ALPHA,k) = wrapToPi(x_est(ALPHA,k));
-    x_est(BETA,k) = wrapToPi(x_est(BETA,k));
-    % Covariance
-    P_sbes(:,:,k) = (eye(n_dim) - K * H) * P_pred;
-
-
-    %% Rotation Update 
-    % terrain rotation
-    wRt(:,:,k) = rotz(0)*roty(x_est(BETA, k))*rotx(x_est(ALPHA,k))*rotx(pi);
-
-    %% Check for Z direction
-    n_est(:,k) = wRt(:,:,k)*n0;
-    if (norm(n_est(:,k)) ~= 1)
-        n_est(:,k) = vector_normalization(n_est(:,k));
-    end
-    [x_est(ALPHA,k), x_est(BETA, k)] = reference_correction(n_est(:,k),x_est(ALPHA,k), x_est(BETA,k));
-    % if n_est(3,k) > 0
-    %     warning('Normal still pointing upward at iteration %d!', k);
-    % end
 
     %% State Machine Check of Results
     cmd = goal_controller(cmd, x_est(:,k), eta(4:6,k), goal(k), N, state(k), k, d_dim);
@@ -289,7 +321,7 @@ end
 fprintf('\nGenerating plots and statistics...\n');
 plot_results(time, N, h_ref, x_true, x_est, eta(4:6,:), eta_gt(4:6,:), goal, nu, ...
              n_est, n_mes, wRr, eta(1:3,:), n_dim, d_dim, i_dim, ...
-             x_loc, eta_gt, nu_gt, wRr_gt);
+             x_loc, eta_gt, nu_gt);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% Data Saving %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -312,8 +344,8 @@ if strcmpi(save_choice, 'Y') || strcmpi(save_choice, 'Yes') || strcmpi(save_choi
     % Collect all simulation data
     fprintf('\nCollecting simulation data...\n');
     sim_data = collect_simulation_data(time, Ts, Tf, N, h_ref, ...
-        x_true, x_est, x_pred, ni, S, P, P0, ...
-        z_meas, z_pred, n_mes, n_est, n_pre, eta(4:6,:), eta_gt(4:6,:), R, ...
+        x_true, x_est, x_pred, ni, S, P0, ...
+        z_meas, y_pred, n_mes, n_est, n_pre, eta(4:6,:), eta_gt(4:6,:), R, ...
         pid, nu, nu_dot, goal, integral_err, p_err, i_err, t_sum, ...
         eta(1:3,:), wRr, wRt, wRt_pre, state, ...
         Q, R_SBES, Kp, Ki, Kd, speed0, x0, x0_est, ...
@@ -322,9 +354,43 @@ if strcmpi(save_choice, 'Y') || strcmpi(save_choice, 'Yes') || strcmpi(save_choi
     
     % Save to disk
     if isempty(run_name)
-        save_simulation_data(sim_data);
+        [saved_run_name, run_dir] = save_simulation_data(sim_data);
     else
-        save_simulation_data(sim_data, run_name);
+        [saved_run_name, run_dir] = save_simulation_data(sim_data, run_name);
+    end
+    
+    % Export all figures as PNG
+    fprintf('\nExporting figures to PNG...\n');
+    all_figs = findall(0, 'Type', 'figure');
+    if ~isempty(all_figs)
+        fig_dir = fullfile(run_dir, 'figures');
+        if ~exist(fig_dir, 'dir')
+            mkdir(fig_dir);
+        end
+        
+        for i = 1:length(all_figs)
+            fig = all_figs(i);
+            % Get figure name or use number
+            if ~isempty(fig.Name)
+                fig_name = fig.Name;
+                % Remove invalid filename characters
+                fig_name = regexprep(fig_name, '[^\w\s-]', '_');
+                fig_name = regexprep(fig_name, '\s+', '_');
+            else
+                fig_name = sprintf('Figure_%d', fig.Number);
+            end
+            
+            output_file = fullfile(fig_dir, [fig_name, '.png']);
+            try
+                exportgraphics(fig, output_file, 'Resolution', 300);
+                fprintf('  ✓ Saved: %s\n', [fig_name, '.png']);
+            catch ME
+                warning('Could not save figure %s: %s', fig_name, ME.message);
+            end
+        end
+        fprintf('\n✓ All figures exported to: %s\n', fig_dir);
+    else
+        fprintf('  No figures to export.\n');
     end
     
     fprintf('\n✓ Data saved successfully!\n');
@@ -336,6 +402,8 @@ if strcmpi(save_choice, 'Y') || strcmpi(save_choice, 'Yes') || strcmpi(save_choi
     else
         fprintf('  >> sim_data = load_simulation_data();\n');
     end
+
+    analyze_single_run();
 else
     fprintf('\nData not saved. Simulation complete.\n');
 end

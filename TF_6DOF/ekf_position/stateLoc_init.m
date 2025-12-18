@@ -2,16 +2,7 @@ function [Q, P0] = stateLoc_init(dim_f)
     % Initial state covariance
     P0 = eye(dim_f) * 1.0;  % Reduced initial uncertainty (was 3)
     P0(12:15, 12:15) = eye(4) * 0.1; % Gyro biases start from 0
-    
-    % =================================================================
-    % TUNING NOTES (based on NEES analysis):
-    % - NEES was ~1.0 (should be ~3 = DOF for position)
-    %   -> Q was OVERESTIMATED, filter was pessimistic
-    % - High autocorrelation on X,Y innovation
-    %   -> Model doesn't capture horizontal dynamics well
-    % =================================================================
-    
-    % Position: slightly increased to account for unmodeled dynamics
+
     q_pos_xy = 0.05;   % Horizontal position (reduced from 0.1)
     q_pos_z  = 0.02;   % Vertical position (more observable via PS)
     
@@ -27,7 +18,7 @@ function [Q, P0] = stateLoc_init(dim_f)
     q_rates = 0.3;     % Reduced from 1.0
     
     % Gyro bias: very slow varying
-    q_gyro = 0.001;    % Reduced from 0.01
+    q_gyro = 0.0001;    % Reduced from 0.01
 
     % Process noise covariance Q
     Q = diag([...

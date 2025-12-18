@@ -57,7 +57,7 @@ function [a, b] = reference_correction(n_cap, alph, bet)
     % In world frame (NED), terrain normal should point upward and be negative (n_z < 0)
     if n_cap(3) > epsilon
         % Normal points downward → needs correction
-        fprintf('Reference correction: Inverting normal vector (n_z = %.4f)\n', n_cap(3));
+        % fprintf('Reference correction: Inverting normal vector (n_z = %.4f)\n', n_cap(3));
         
         %% Invert and Normalize
         new_n_cap = -n_cap;

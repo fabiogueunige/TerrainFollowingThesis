@@ -5,3 +5,4 @@ test/**
 *.asv
 slprj
 *.mat
+TF_6DOF/results/**

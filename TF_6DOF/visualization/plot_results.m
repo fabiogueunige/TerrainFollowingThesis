@@ -1,6 +1,6 @@
 function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u, ...
                       n_est, n_mes, wRr, prob, n_dim, d_dim, i_dim, ...
-                      x_loc, eta_gt, nu_gt, wRr_gt)
+                      x_loc, eta_gt, nu_gt)
     %% PLOT_RESULTS - Visualizzazione completa dei risultati della simulazione
     % 
     % Inputs:
@@ -25,78 +25,65 @@ function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u
     
     global HEAVE;
     
-    %% States
+    %% States - Ogni stato in una figura separata
     fprintf('Plotting states...\n');
-    ttl = {'altitude', 'alpha', 'beta'};
-    tags = {'state_altitude', 'state_alpha', 'state_beta'};
+    ttl = {'Altitude', 'Terrain Angle \alpha', 'Terrain Angle \beta'};
+    ylabels = {'Altitude [m]', 'Alpha [deg]', 'Beta [deg]'};
     for i = 1:n_dim
-        figure('Name', sprintf('State: %s', ttl{i}), 'Tag', tags{i}, 'NumberTitle', 'off');
+        figure('Name', sprintf('State: %s', ttl{i}), 'Tag', sprintf('state_%d', i), 'NumberTitle', 'off');
         if (i == 1)
-            plot(time, h_ref(:), 'b', 'LineWidth', 3.5, 'DisplayName', 'Desired')
-            hold on;
-            plot(time, x_true(i,:), 'r', 'DisplayName', 'True');
-            plot(time, x_est(i,:), 'g', 'DisplayName', 'Estimated');
+            plot(time, x_est(i,:), 'g', 'LineWidth', 2.2, 'DisplayName', 'Estimated'); hold on;
+            plot(time, x_true(i,:), 'r', 'LineWidth', 2, 'DisplayName', 'True');
+            plot(time, h_ref(:), 'b', 'LineWidth', 3.5, 'DisplayName', 'Desired');
+            ylabel(ylabels{i});
         else
+            plot(time, rad2deg(x_est(i,:)), 'g', 'LineWidth', 2.2, 'DisplayName', 'Estimated'); hold on;
+            plot(time, rad2deg(rob_rot(i-1,:)), 'r', 'LineWidth', 2, 'DisplayName', 'Robot angle');
             plot(time, rad2deg(x_true(i,:)), 'b', 'LineWidth', 3.5, 'DisplayName', 'True (desired) Terrain');
-            hold on;
-            plot(time, rad2deg(rob_rot(i-1,:)), 'r', 'DisplayName', 'Rob angle');
-            plot(time, rad2deg(x_est(i,:)), 'g', 'DisplayName', 'Estimated');
+            ylabel(ylabels{i});
         end
-        xlabel('Time [s]'); ylabel(sprintf('x_%d', i));
-        legend; grid on;
-        title(ttl{i})
+        xlabel('Time [s]');
+        legend('Location','best'); grid on;
+        title(ttl{i});
         hold off;
     end
     
-    %% Robot angles
+    %% Robot angles - Ogni angolo in una figura separata
     fprintf('Plotting robot angles...\n');
-    ttl = {'roll', 'pitch', 'yaw'};
-    tags = {'robot_roll', 'robot_pitch', 'robot_yaw'};
+    ttl = {'Roll', 'Pitch', 'Yaw'};
+    ylabels = {'Roll [deg]', 'Pitch [deg]', 'Yaw [deg]'};
     for i = 1:d_dim
-        figure('Name', sprintf('Robot angle: %s', ttl{i}), 'Tag', tags{i}, 'NumberTitle', 'off');
-        plot(time, rad2deg(clean_rot(i,:)), 'r', 'DisplayName', 'True no noise');
-        hold on;
+        figure('Name', sprintf('Robot angle: %s', ttl{i}), 'Tag', sprintf('robot_angle_%d', i), 'NumberTitle', 'off');
         if i == 1
-            plot(time, rad2deg([goal.roll]), 'b', 'DisplayName', 'Goal');
+            plot(time, rad2deg([goal.roll]), 'b--', 'LineWidth', 1.5, 'DisplayName', 'Goal'); hold on;
         end
         if i == 2
-            plot(time, rad2deg([goal.pitch]), 'b', 'DisplayName', 'Goal');
+            plot(time, rad2deg([goal.pitch]), 'b--', 'LineWidth', 1.5, 'DisplayName', 'Goal'); hold on;
         end
-        plot(time, rad2deg(rob_rot(i,:)), 'g', 'DisplayName', 'Rotation with Noise');
-        xlabel('Time [s]'); ylabel(sprintf('x_%d', i));
-        legend; grid on;
-        title(ttl{i})
+        plot(time, rad2deg(rob_rot(i,:)), 'g', 'LineWidth', 2.3, 'DisplayName', 'EKF Estimate'); hold on;
+        plot(time, rad2deg(clean_rot(i,:)), 'r', 'LineWidth', 2, 'DisplayName', 'True (no noise)');
+        xlabel('Time [s]'); ylabel(ylabels{i});
+        legend('Location','best'); grid on;
+        title(ttl{i});
         hold off;
     end
     
-    %% Inputs
+    %% Inputs - Ogni input in una figura separata
     fprintf('Plotting control inputs...\n');
-    ttl = {'u input', 'v input', 'w input', 'p input', 'q input', 'r input'};
-    tags = {'input_surge', 'input_sway', 'input_heave', 'input_p', 'input_q', 'input_r'};
+    ttl = {'Surge (u)', 'Sway (v)', 'Heave (w)', 'Roll rate (p)', 'Pitch rate (q)', 'Yaw rate (r)'};
+    ylabels = {'u [m/s]', 'v [m/s]', 'w [m/s]', 'p [deg/s]', 'q [deg/s]', 'r [deg/s]'};
     for i = 1:i_dim
-        figure('Name', sprintf('Input: %s', ttl{i}), 'Tag', tags{i}, 'NumberTitle', 'off');
+        figure('Name', sprintf('Input: %s', ttl{i}), 'Tag', sprintf('input_%d', i), 'NumberTitle', 'off');
         if i <= HEAVE
-            plot(time, u(i,:), 'b', 'DisplayName', 'u');
+            plot(time, u(i,:), 'b', 'LineWidth', 2, 'DisplayName', ttl{i});
         else
-            plot(time, rad2deg(u(i,:)), 'b', 'DisplayName', ttl{i});
+            plot(time, rad2deg(u(i,:)), 'b', 'LineWidth', 2, 'DisplayName', ttl{i});
         end
-        hold on
-        xlabel('Time [s]'); ylabel('Space [m]');
-        grid on;
-        title(ttl{i})
+        xlabel('Time [s]'); ylabel(ylabels{i});
+        legend('Location','best'); grid on;
+        title(ttl{i});
         hold off;
     end
-
-    %% Normal z-sign analysis
-    figure('Name', 'z-sign', 'Tag', 'normal_zsign', 'NumberTitle', 'off'); 
-    plot(time, n_est(3,:), 'r', 'LineWidth', 1.5, 'DisplayName', 'z-sign estimated');
-    hold on;
-    plot(time, n_mes(3,:), 'g', 'LineWidth', 1.5, 'DisplayName', 'z-sign measured (t)');
-    xlabel('Tempo [s]');
-    ylabel('z value');
-    title('Sign of the z of the normal plane');
-    legend('Location', 'best');
-    hold off;
     
     %% Normal vectors analysis: parallelism and z-component alignment
     fprintf('Analyzing normal vectors...\n');
@@ -189,14 +176,12 @@ function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u
     %% ========================================================================
     fprintf('Plotting EKF Position Filter states vs Ground Truth...\n');
     
-    %% Position States (x, y, z)
-    figure('Name', 'EKF Position: XYZ vs Ground Truth', 'Tag', 'ekf_pos_xyz', 'NumberTitle', 'off');
+    %% Position States (x, y, z) - Figure separate
     pos_labels = {'X (North)', 'Y (East)', 'Z (Down)'};
     for i = 1:3
-        subplot(3,1,i);
-        plot(time, eta_gt(i,:), 'b', 'LineWidth', 1.5, 'DisplayName', 'Ground Truth');
-        hold on;
-        plot(time, x_loc(i,:), 'r--', 'LineWidth', 1.2, 'DisplayName', 'EKF Estimate');
+        figure('Name', sprintf('EKF Position: %s vs Ground Truth', pos_labels{i}), 'Tag', sprintf('ekf_pos_xyz_%d', i), 'NumberTitle', 'off');
+        plot(time, x_loc(i,:), 'r--', 'LineWidth', 2.7, 'DisplayName', 'EKF Estimate'); hold on;
+        plot(time, eta_gt(i,:), 'b', 'LineWidth', 2.5, 'DisplayName', 'Ground Truth');
         xlabel('Time [s]');
         ylabel([pos_labels{i} ' [m]']);
         title(['Position ' pos_labels{i}]);
@@ -204,16 +189,13 @@ function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u
         grid on;
         hold off;
     end
-    sgtitle('EKF Position Filter: Position States');
     
-    %% Orientation States (phi, theta, psi)
-    figure('Name', 'EKF Position: Angles vs Ground Truth', 'Tag', 'ekf_pos_angles', 'NumberTitle', 'off');
-    ang_labels = {'Roll (φ)', 'Pitch (θ)', 'Yaw (ψ)'};
+    %% Orientation States (phi, theta, psi) - Figure separate
+    ang_labels = {'Roll (\phi)', 'Pitch (\theta)', 'Yaw (\psi)'};
     for i = 1:3
-        subplot(3,1,i);
-        plot(time, rad2deg(eta_gt(3+i,:)), 'b', 'LineWidth', 1.5, 'DisplayName', 'Ground Truth');
-        hold on;
-        plot(time, rad2deg(x_loc(3+i,:)), 'r--', 'LineWidth', 1.2, 'DisplayName', 'EKF Estimate');
+        figure('Name', sprintf('EKF Position: %s vs Ground Truth', ang_labels{i}), 'Tag', sprintf('ekf_pos_angle_%d', i), 'NumberTitle', 'off');
+        plot(time, rad2deg(x_loc(3+i,:)), 'r--', 'LineWidth', 2.7, 'DisplayName', 'EKF Estimate'); hold on;
+        plot(time, rad2deg(eta_gt(3+i,:)), 'b', 'LineWidth', 2.5, 'DisplayName', 'Ground Truth');
         xlabel('Time [s]');
         ylabel([ang_labels{i} ' [deg]']);
         title(['Orientation ' ang_labels{i}]);
@@ -221,16 +203,13 @@ function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u
         grid on;
         hold off;
     end
-    sgtitle('EKF Position Filter: Orientation States');
     
-    %% Linear Velocity States (u, v, w)
-    figure('Name', 'EKF Position: Linear Velocities vs Ground Truth', 'Tag', 'ekf_pos_velocities', 'NumberTitle', 'off');
+    %% Linear Velocity States (u, v, w) - Figure separate
     vel_labels = {'Surge (u)', 'Sway (v)', 'Heave (w)'};
     for i = 1:3
-        subplot(3,1,i);
-        plot(time, nu_gt(i,:), 'b', 'LineWidth', 1.5, 'DisplayName', 'Ground Truth');
-        hold on;
-        plot(time, x_loc(6+i,:), 'r--', 'LineWidth', 1.2, 'DisplayName', 'EKF Estimate');
+        figure('Name', sprintf('EKF Position: %s vs Ground Truth', vel_labels{i}), 'Tag', sprintf('ekf_pos_vel_%d', i), 'NumberTitle', 'off');
+        plot(time, x_loc(6+i,:), 'r--', 'LineWidth', 2.7, 'DisplayName', 'EKF Estimate'); hold on;
+        plot(time, nu_gt(i,:), 'b', 'LineWidth', 2.5, 'DisplayName', 'Ground Truth');
         xlabel('Time [s]');
         ylabel([vel_labels{i} ' [m/s]']);
         title(['Velocity ' vel_labels{i}]);
@@ -238,16 +217,13 @@ function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u
         grid on;
         hold off;
     end
-    sgtitle('EKF Position Filter: Linear Velocity States');
     
-    %% Angular Velocity States (p, q, r)
-    figure('Name', 'EKF Position: Angular Velocities vs Ground Truth', 'Tag', 'ekf_pos_angular_vel', 'NumberTitle', 'off');
+    %% Angular Velocity States (p, q, r) - Figure separate
     rate_labels = {'Roll rate (p)', 'Pitch rate (q)', 'Yaw rate (r)'};
     for i = 1:3
-        subplot(3,1,i);
-        plot(time, rad2deg(nu_gt(3+i,:)), 'b', 'LineWidth', 1.5, 'DisplayName', 'Ground Truth');
-        hold on;
-        plot(time, rad2deg(x_loc(9+i,:)), 'r--', 'LineWidth', 1.2, 'DisplayName', 'EKF Estimate');
+        figure('Name', sprintf('EKF Position: %s vs Ground Truth', rate_labels{i}), 'Tag', sprintf('ekf_pos_angvel_%d', i), 'NumberTitle', 'off');
+        plot(time, rad2deg(x_loc(9+i,:)), 'r--', 'LineWidth', 2.7, 'DisplayName', 'EKF Estimate'); hold on;
+        plot(time, rad2deg(nu_gt(3+i,:)), 'b', 'LineWidth', 2.5, 'DisplayName', 'Ground Truth');
         xlabel('Time [s]');
         ylabel([rate_labels{i} ' [deg/s]']);
         title(['Angular Rate ' rate_labels{i}]);
@@ -255,80 +231,89 @@ function plot_results(time, N, h_ref, x_true, x_est, rob_rot, clean_rot, goal, u
         grid on;
         hold off;
     end
-    sgtitle('EKF Position Filter: Angular Velocity States');
     
-    %% Gyro Bias States (if present in x_loc indices 13-15)
+    %% Gyro Bias States (if present in x_loc indices 13-15) - Figure separate
     if size(x_loc, 1) >= 15
-        figure('Name', 'EKF Position: Gyro Bias Estimates', 'Tag', 'ekf_pos_gyro_bias', 'NumberTitle', 'off');
         bias_labels = {'Gyro Bias X', 'Gyro Bias Y', 'Gyro Bias Z'};
         for i = 1:3
-            subplot(3,1,i);
-            plot(time, rad2deg(x_loc(12+i,:)), 'r', 'LineWidth', 1.2, 'DisplayName', 'Bias Estimate');
+            figure('Name', sprintf('EKF Position: %s', bias_labels{i}), 'Tag', sprintf('ekf_pos_gyro_bias_%d', i), 'NumberTitle', 'off');
+            plot(time, rad2deg(x_loc(12+i,:)), 'r', 'LineWidth', 2.0, 'DisplayName', 'Bias Estimate');
             xlabel('Time [s]');
             ylabel([bias_labels{i} ' [deg/s]']);
             title(bias_labels{i});
             legend('Location', 'best');
             grid on;
         end
-        sgtitle('EKF Position Filter: Gyro Bias Estimates');
     end
     
-    %% Position Estimation Errors
-    figure('Name', 'EKF Position: Estimation Errors', 'Tag', 'ekf_pos_errors', 'NumberTitle', 'off');
-    
+    %% Position Estimation Errors - Figure separate for each error type
     % Position errors
-    subplot(2,2,1);
     pos_err = x_loc(1:3,:) - eta_gt(1:3,:);
-    plot(time, pos_err(1,:), 'r', 'LineWidth', 1.2, 'DisplayName', 'X error');
-    hold on;
-    plot(time, pos_err(2,:), 'g', 'LineWidth', 1.2, 'DisplayName', 'Y error');
-    plot(time, pos_err(3,:), 'b', 'LineWidth', 1.2, 'DisplayName', 'Z error');
-    xlabel('Time [s]');
-    ylabel('Position Error [m]');
-    title('Position Estimation Errors');
-    legend('Location', 'best');
-    grid on;
+    figure('Name', 'EKF Position Error: X', 'Tag', 'ekf_pos_err_x', 'NumberTitle', 'off');
+    plot(time, pos_err(1,:), 'r', 'LineWidth', 2.5, 'DisplayName', 'X error');
+    xlabel('Time [s]'); ylabel('X Error [m]');
+    title('EKF Position Error: X'); legend('X error', 'Location', 'best'); grid on;
     
-    % Orientation errors  
-    subplot(2,2,2);
+    figure('Name', 'EKF Position Error: Y', 'Tag', 'ekf_pos_err_y', 'NumberTitle', 'off');
+    plot(time, pos_err(2,:), 'g', 'LineWidth', 2.5, 'DisplayName', 'Y error');
+    xlabel('Time [s]'); ylabel('Y Error [m]');
+    title('EKF Position Error: Y'); legend('Y error', 'Location', 'best'); grid on;
+    
+    figure('Name', 'EKF Position Error: Z', 'Tag', 'ekf_pos_err_z', 'NumberTitle', 'off');
+    plot(time, pos_err(3,:), 'b', 'LineWidth', 2.5, 'DisplayName', 'Z error');
+    xlabel('Time [s]'); ylabel('Z Error [m]');
+    title('EKF Position Error: Z'); legend('Z error', 'Location', 'best'); grid on;
+    
+    % Orientation errors
     ang_err = rad2deg(x_loc(4:6,:) - eta_gt(4:6,:));
-    plot(time, ang_err(1,:), 'r', 'LineWidth', 1.2, 'DisplayName', 'φ error');
-    hold on;
-    plot(time, ang_err(2,:), 'g', 'LineWidth', 1.2, 'DisplayName', 'θ error');
-    plot(time, ang_err(3,:), 'b', 'LineWidth', 1.2, 'DisplayName', 'ψ error');
-    xlabel('Time [s]');
-    ylabel('Orientation Error [deg]');
-    title('Orientation Estimation Errors');
-    legend('Location', 'best');
-    grid on;
+    figure('Name', 'EKF Orientation Error: Roll (φ)', 'Tag', 'ekf_ang_err_phi', 'NumberTitle', 'off');
+    plot(time, ang_err(1,:), 'r', 'LineWidth', 2.5, 'DisplayName', 'Roll (φ) error');
+    xlabel('Time [s]'); ylabel('Roll Error [deg]');
+    title('EKF Orientation Error: Roll (φ)'); legend('Roll (φ) error', 'Location', 'best'); grid on;
+    
+    figure('Name', 'EKF Orientation Error: Pitch (θ)', 'Tag', 'ekf_ang_err_theta', 'NumberTitle', 'off');
+    plot(time, ang_err(2,:), 'g', 'LineWidth', 2.5, 'DisplayName', 'Pitch (θ) error');
+    xlabel('Time [s]'); ylabel('Pitch Error [deg]');
+    title('EKF Orientation Error: Pitch (θ)'); legend('Pitch (θ) error', 'Location', 'best'); grid on;
+    
+    figure('Name', 'EKF Orientation Error: Yaw (ψ)', 'Tag', 'ekf_ang_err_psi', 'NumberTitle', 'off');
+    plot(time, ang_err(3,:), 'b', 'LineWidth', 2.5, 'DisplayName', 'Yaw (ψ) error');
+    xlabel('Time [s]'); ylabel('Yaw Error [deg]');
+    title('EKF Orientation Error: Yaw (ψ)'); legend('Yaw (ψ) error', 'Location', 'best'); grid on;
     
     % Velocity errors
-    subplot(2,2,3);
     vel_err = x_loc(7:9,:) - nu_gt(1:3,:);
-    plot(time, vel_err(1,:), 'r', 'LineWidth', 1.2, 'DisplayName', 'u error');
-    hold on;
-    plot(time, vel_err(2,:), 'g', 'LineWidth', 1.2, 'DisplayName', 'v error');
-    plot(time, vel_err(3,:), 'b', 'LineWidth', 1.2, 'DisplayName', 'w error');
-    xlabel('Time [s]');
-    ylabel('Velocity Error [m/s]');
-    title('Linear Velocity Estimation Errors');
-    legend('Location', 'best');
-    grid on;
+    figure('Name', 'EKF Linear Velocity Error: u', 'Tag', 'ekf_vel_err_u', 'NumberTitle', 'off');
+    plot(time, vel_err(1,:), 'r', 'LineWidth', 2.5, 'DisplayName', 'u error');
+    xlabel('Time [s]'); ylabel('u Error [m/s]');
+    title('EKF Linear Velocity Error: u'); legend('u error', 'Location', 'best'); grid on;
+    
+    figure('Name', 'EKF Linear Velocity Error: v', 'Tag', 'ekf_vel_err_v', 'NumberTitle', 'off');
+    plot(time, vel_err(2,:), 'g', 'LineWidth', 2.5, 'DisplayName', 'v error');
+    xlabel('Time [s]'); ylabel('v Error [m/s]');
+    title('EKF Linear Velocity Error: v'); legend('v error', 'Location', 'best'); grid on;
+    
+    figure('Name', 'EKF Linear Velocity Error: w', 'Tag', 'ekf_vel_err_w', 'NumberTitle', 'off');
+    plot(time, vel_err(3,:), 'b', 'LineWidth', 2.5, 'DisplayName', 'w error');
+    xlabel('Time [s]'); ylabel('w Error [m/s]');
+    title('EKF Linear Velocity Error: w'); legend('w error', 'Location', 'best'); grid on;
     
     % Angular rate errors
-    subplot(2,2,4);
     rate_err = rad2deg(x_loc(10:12,:) - nu_gt(4:6,:));
-    plot(time, rate_err(1,:), 'r', 'LineWidth', 1.2, 'DisplayName', 'p error');
-    hold on;
-    plot(time, rate_err(2,:), 'g', 'LineWidth', 1.2, 'DisplayName', 'q error');
-    plot(time, rate_err(3,:), 'b', 'LineWidth', 1.2, 'DisplayName', 'r error');
-    xlabel('Time [s]');
-    ylabel('Angular Rate Error [deg/s]');
-    title('Angular Rate Estimation Errors');
-    legend('Location', 'best');
-    grid on;
+    figure('Name', 'EKF Angular Rate Error: p', 'Tag', 'ekf_rate_err_p', 'NumberTitle', 'off');
+    plot(time, rate_err(1,:), 'r', 'LineWidth', 2.5, 'DisplayName', 'p error');
+    xlabel('Time [s]'); ylabel('p Error [deg/s]');
+    title('EKF Angular Rate Error: p'); legend('p error', 'Location', 'best'); grid on;
     
-    sgtitle('EKF Position Filter: Estimation Errors');
+    figure('Name', 'EKF Angular Rate Error: q', 'Tag', 'ekf_rate_err_q', 'NumberTitle', 'off');
+    plot(time, rate_err(2,:), 'g', 'LineWidth', 2.5, 'DisplayName', 'q error');
+    xlabel('Time [s]'); ylabel('q Error [deg/s]');
+    title('EKF Angular Rate Error: q'); legend('q error', 'Location', 'best'); grid on;
+    
+    figure('Name', 'EKF Angular Rate Error: r', 'Tag', 'ekf_rate_err_r', 'NumberTitle', 'off');
+    plot(time, rate_err(3,:), 'b', 'LineWidth', 2.5, 'DisplayName', 'r error');
+    xlabel('Time [s]'); ylabel('r Error [deg/s]');
+    title('EKF Angular Rate Error: r'); legend('r error', 'Location', 'best'); grid on;
     
     %% RMSE Summary for EKF Position Filter
     fprintf('\n=== EKF POSITION FILTER: ERROR STATISTICS ===\n');

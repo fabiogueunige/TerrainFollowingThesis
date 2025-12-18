@@ -67,7 +67,7 @@ function [n, p1, alpha, beta] = plane_computation(t, p_points)
             % Complete sensor failure
             n = [0; 0; 0];
             p1 = p_points(:,1);
-            warning('No valid points to compute plane normal. All sensors failed.');
+            % warning('No valid points to compute plane normal. All sensors failed.');
             % Angles undefined in failure mode
             alpha = NaN;
             beta = NaN;
